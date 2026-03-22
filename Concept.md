@@ -2,20 +2,20 @@
 
 ## Working Summary
 
-Olite is a lightweight compliance scanner for websites and web apps.
+Olite is a lightweight compliance scanner for websites.
 
 The initial focus is developer-related compliance issues that can be detected automatically, especially:
 
 - accessibility issues
 - privacy and cookie consent issues
 - basic web security and configuration issues
-- marketing consent issues tied to forms and user communications
+- communication consent issues tied to forms and user communications
 
 The product should feel practical, fast, and lightweight rather than enterprise-heavy.
 
 ## Core Positioning
 
-Olite helps teams identify obvious compliance risks on websites and web apps before those risks become legal, accessibility, trust, or conversion problems.
+Olite helps teams identify obvious compliance risks on websites before those risks become legal, accessibility, trust, or conversion problems.
 
 Core positioning ideas:
 
@@ -32,11 +32,11 @@ Proposed product line:
 
 Suggested message:
 
-Olite scans your website or app for accessibility, privacy, consent, and security issues. Scans can run locally, and source code is not uploaded.
+Olite scans your website for accessibility, privacy, communication consent, and security issues. Scans can run locally, and source code is not uploaded.
 
 ## Product Vision
 
-The long-term vision is to become a lightweight compliance layer for websites and apps.
+The long-term vision is to become a lightweight compliance layer for websites first, then web and mobile apps over time.
 
 That does not mean covering every compliance category immediately. The first version should focus on issues that are:
 
@@ -48,18 +48,18 @@ That does not mean covering every compliance category immediately. The first ver
 
 Olite should help users answer a simple question:
 
-What obvious compliance problems exist on this website or app right now?
+What obvious compliance problems exist on this website right now?
 
 ## Narrowed MVP Scope
 
-The MVP should stay focused on website and web app compliance checks that are developer-adjacent.
+The MVP should stay focused on website compliance checks that are developer-adjacent.
 
 Included for MVP:
 
 - Accessibility
 - Privacy and cookie consent
 - Basic web security
-- Marketing consent around forms and communication capture
+- Communication consent around forms and communication capture
 
 Excluded:
 
@@ -77,13 +77,13 @@ Possible future areas, but not MVP:
 - AI compliance and AI regulation readiness checks
 - affiliate disclosure and copyright checks
 - cloud infrastructure and data residency reporting
-- full certification workflows such as complete SOC 2 management
+- web and mobile app scanning beyond websites
 
 ## Target Users
 
 Primary target users:
 
-- small and mid-sized companies with websites or web apps
+- small and mid-sized companies with websites
 - developers maintaining web properties
 - agencies responsible for client websites
 - startup teams without dedicated compliance staff
@@ -122,7 +122,7 @@ Existing solutions can be expensive, enterprise-focused, or too broad.
 
 Olite should offer a simpler first step:
 
-scan a website or app, detect obvious problems, explain what they mean, and show what to fix next.
+scan a website, detect obvious problems, explain what they mean, and show what to fix next.
 
 ## MVP Feature Areas
 
@@ -171,14 +171,14 @@ Important note:
 
 This should be framed as basic web security posture checks, not full security auditing.
 
-### 4. Marketing Consent
+### 4. Communication Consent
 
 Initial checks:
 
 - email capture forms detected
 - consent checkbox present or absent
 - unsubscribe or consent-related policy links where detectable
-- SMS consent risks as a future extension
+- SMS and TCPA-related consent risks as a future extension
 
 ## Product Experience Model
 
@@ -191,6 +191,11 @@ Example model:
 - users can scan a small number of public webpages per day
 - the results show headline issues and a limited summary
 - deeper scans require the desktop app or CLI
+
+Operational note:
+
+- rate limits should likely be enforced by IP for the public tool
+- the public tool should stay intentionally narrow to avoid becoming a high-cost hosted crawler
 
 Why this works:
 
@@ -229,6 +234,47 @@ The CLI can emphasize:
 - deeper crawl control
 - automation
 - team workflows later on
+
+## Product Decisions
+
+The following decisions are the current working direction for the MVP.
+
+### Initial Promise
+
+- start with website scanning only
+- position web app and mobile app scanning as roadmap items
+
+### Primary Wedge
+
+- accessibility and privacy are the main wedge
+- communication consent is part of the initial promise
+- basic security is included as a secondary feature set
+
+### Early Customer Profile
+
+- developers, agencies, and business owners are all relevant early users
+- messaging may need separate landing pages for each audience
+- the product itself should remain simple enough for non-technical users while still being useful to developers
+
+### Free Tool Model
+
+- the free web scanner should use a public URL only
+- it should be rate-limited, likely by IP, to a small number of scans per day
+- it should show major issues and useful pointers rather than a full audit
+- it should direct users toward the CLI or later desktop app for deeper analysis
+
+### First Paid Product Direction
+
+- the first paid product should likely be built around the CLI
+- this fits the goal of keeping robust scanning local-first and inexpensive to operate
+- a future desktop app can be built on top of the same scan engine once the core scanner is solid
+
+## Go-To-Market Direction
+
+- use the free website scanner as top-of-funnel acquisition
+- market the CLI to developers and technical agencies
+- test messaging on X and other developer channels
+- create landing pages around high-risk website categories and common compliance pain points
 
 ## Product Principles
 
@@ -295,4 +341,4 @@ Olite could likely support AI compliance readiness checks, but it should not cla
 
 If we want the concept to stay sharp, this is the cleanest current framing:
 
-Olite is a lightweight website compliance scanner focused on accessibility, privacy, communication consent, and basic security. Users can try a limited public scan on the web, then use the desktop app or CLI for deeper local-first analysis.
+Olite is a lightweight website compliance scanner focused on accessibility, privacy, communication consent, and basic security. Users can try a limited public scan on the web, then use the CLI for deeper local-first analysis, with desktop software as a future extension.

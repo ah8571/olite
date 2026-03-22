@@ -1,6 +1,6 @@
 # Olite
 
-Olite is a lightweight compliance scanner for websites and web apps.
+Olite is a lightweight compliance scanner for websites.
 
 The goal is to help teams identify practical, machine-detectable compliance issues before they become legal, accessibility, trust, or conversion problems.
 
@@ -21,7 +21,7 @@ Many teams do not know they have obvious compliance-related website issues until
 - legal risk starts to appear
 - a client or auditor flags a gap
 
-Existing tools can be expensive, broad, or designed for large enterprises. Olite is intended to be a simpler first step: scan a website or web app, surface obvious issues, and point users toward what to fix next.
+Existing tools can be expensive, broad, or designed for large enterprises. Olite is intended to be a simpler first step: scan a website, surface obvious issues, and point users toward what to fix next.
 
 ## Core Principles
 
@@ -43,15 +43,15 @@ This is intended to let users quickly evaluate a site and see headline issues be
 
 ### 2. Desktop App
 
-A more guided experience for users who want deeper scans, readable reports, and a visual workflow.
+A future guided experience for users who want deeper scans, readable reports, and a visual workflow.
 
 ### 3. CLI
 
-A command-line scanner for developers who want local analysis, repeatable scans, and future workflow integration.
+The likely first paid product: a command-line scanner for developers who want local analysis, repeatable scans, and future workflow integration.
 
 ## Planned MVP Scope
 
-The MVP is intentionally narrow. The focus is on developer-adjacent website and web/ mobile app compliance checks that can be detected automatically.
+The MVP is intentionally narrow. The focus is on developer-adjacent website compliance checks that can be detected automatically.
 
 ### Accessibility
 
@@ -73,7 +73,7 @@ The MVP is intentionally narrow. The focus is on developer-adjacent website and 
 - missing security headers
 - basic public web configuration checks
 
-### Marketing Consent
+### Communication Consent
 
 - email capture forms detected
 - consent checkbox present or absent
@@ -97,6 +97,8 @@ As frameworks such as the EU AI Act develop, there may be room for machine-detec
 
 This is not part of the initial MVP, but it is a meaningful area the project may explore later.
 
+Web and mobile app scanning may also be explored later, after the website-focused scanner is established.
+
 ## Current Status
 
 Olite is in the early concept and planning stage.
@@ -106,6 +108,7 @@ This repository currently serves as the project home while the product scope, MV
 ## Repository Docs
 
 - [Concept.md](Concept.md) contains the current structured concept and MVP framing.
+- [Pricing.md](Pricing.md) captures early pricing model thoughts and tradeoffs.
 
 ## License
 
