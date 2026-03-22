@@ -1,0 +1,123 @@
+# Olite
+
+Olite is a lightweight compliance scanner for websites and web apps.
+
+The goal is to help teams identify practical, machine-detectable compliance issues before they become legal, accessibility, trust, or conversion problems.
+
+The initial product direction is focused on:
+
+- accessibility issues
+- privacy and cookie consent issues
+- basic web security and configuration issues
+- marketing consent issues tied to forms and user communications
+
+## Why Olite
+
+Many teams do not know they have obvious compliance-related website issues until:
+
+- a customer reports a problem
+- an accessibility blocker is discovered
+- privacy practices are questioned
+- legal risk starts to appear
+- a client or auditor flags a gap
+
+Existing tools can be expensive, broad, or designed for large enterprises. Olite is intended to be a simpler first step: scan a website or web app, surface obvious issues, and point users toward what to fix next.
+
+## Core Principles
+
+- Practical rather than enterprise-heavy
+- Local-first where possible
+- No source code uploaded by default
+- Focused on actionable findings
+- Clear enough for developers, agencies, and non-technical operators
+
+## Planned Product Shape
+
+Olite is currently planned around three experiences:
+
+### 1. Public Website Scanner
+
+A limited scan available from the web for a small number of public pages per day.
+
+This is intended to let users quickly evaluate a site and see headline issues before installing anything.
+
+### 2. Desktop App
+
+A more guided experience for users who want deeper scans, readable reports, and a visual workflow.
+
+### 3. CLI
+
+A command-line scanner for developers who want local analysis, repeatable scans, and future workflow integration.
+
+## Planned MVP Scope
+
+The MVP is intentionally narrow. The focus is on developer-adjacent website and web app compliance checks that can be detected automatically.
+
+### Accessibility
+
+- missing alt text
+- missing form labels
+- color contrast issues
+- other obvious WCAG-related issues where detectable
+
+### Privacy and Cookie Consent
+
+- tracking scripts detected
+- cookie banner detected or missing
+- privacy policy detected or missing
+- possible tracking before consent
+
+### Basic Web Security
+
+- HTTPS enforcement
+- missing security headers
+- basic public web configuration checks
+
+### Marketing Consent
+
+- email capture forms detected
+- consent checkbox present or absent
+- basic consent-related signals where detectable
+
+## What Olite Is Not
+
+Olite is not initially intended to be:
+
+- a law firm
+- a formal auditor
+- a complete SOC 2 management platform
+- a full enterprise GRC suite
+- a general HR compliance platform
+
+## Future Direction
+
+One possible future expansion area for Olite is AI compliance readiness.
+
+As frameworks such as the EU AI Act develop, there may be room for machine-detectable checks around areas like transparency, disclosure, governance signals, and privacy-related implementation issues.
+
+This is not part of the initial MVP, but it is a meaningful area the project may explore later.
+
+## Current Status
+
+Olite is in the early concept and planning stage.
+
+This repository currently serves as the project home while the product scope, MVP, and implementation approach are being defined.
+
+## Repository Docs
+
+- [Concept.md](Concept.md) contains the current structured concept and MVP framing.
+- [Concept initial notes.md](Concept%20initial%20notes.md) preserves the original brainstorming notes.
+
+## License
+
+This project is licensed under the GPL-3.0 license.
+
+In general, that means people can use, study, modify, and redistribute the software, but redistributed derivative versions must remain open under the same license terms.
+
+## Disclaimer
+
+Olite is intended to help identify practical compliance risks and implementation issues. It is not legal advice, and it is not a substitute for a lawyer, auditor, or qualified compliance expert.
+
+## AI Disclosure
+
+This README was drafted with AI assistance and reviewed for project use.
