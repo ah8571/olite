@@ -61,7 +61,7 @@ Included for MVP:
 - Basic web security
 - Marketing consent around forms and communication capture
 
-Excluded from MVP for now:
+Excluded:
 
 - HR compliance
 - payroll or labor compliance
@@ -77,6 +77,7 @@ Possible future areas, but not MVP:
 - AI compliance and AI regulation readiness checks
 - affiliate disclosure and copyright checks
 - cloud infrastructure and data residency reporting
+- full certification workflows such as complete SOC 2 management
 
 ## Target Users
 
@@ -243,6 +244,9 @@ Reference points mentioned in early notes:
 
 - AccessiBe in accessibility-related positioning
 - Vanta and Drata in compliance workflow positioning
+
+## Examples to Learn
+
 - Semgrep, Sentry, and Terraform as examples of products that started with strong technical tooling and expanded outward
 
 Olite should likely position closer to:
@@ -271,11 +275,9 @@ To keep positioning clear, Olite is not initially:
 - What should the free website scan show before asking users to install the desktop app or CLI?
 - Is the first paid product the desktop app, the CLI, or cloud reporting tied to both?
 
-## Future Expansion: AI Compliance
+## Future AI Compliance
 
 AI compliance is a credible future expansion area for Olite, especially as EU and other regulatory frameworks mature.
-
-This should not be part of the initial MVP, but it is worth keeping in view as a later module or product area.
 
 Potential future checks could include:
 
@@ -293,4 +295,4 @@ Olite could likely support AI compliance readiness checks, but it should not cla
 
 If we want the concept to stay sharp, this is the cleanest current framing:
 
-Olite is a lightweight website compliance scanner focused on accessibility, privacy, consent, and basic security. Users can try a limited public scan on the web, then use the desktop app or CLI for deeper local-first analysis.
+Olite is a lightweight website compliance scanner focused on accessibility, privacy, communication consent, and basic security. Users can try a limited public scan on the web, then use the desktop app or CLI for deeper local-first analysis.

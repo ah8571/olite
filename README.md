@@ -9,7 +9,7 @@ The initial product direction is focused on:
 - accessibility issues
 - privacy and cookie consent issues
 - basic web security and configuration issues
-- marketing consent issues tied to forms and user communications
+- communication consent issues tied to forms
 
 ## Why Olite
 
@@ -51,7 +51,7 @@ A command-line scanner for developers who want local analysis, repeatable scans,
 
 ## Planned MVP Scope
 
-The MVP is intentionally narrow. The focus is on developer-adjacent website and web app compliance checks that can be detected automatically.
+The MVP is intentionally narrow. The focus is on developer-adjacent website and web/ mobile app compliance checks that can be detected automatically.
 
 ### Accessibility
 
@@ -106,7 +106,6 @@ This repository currently serves as the project home while the product scope, MV
 ## Repository Docs
 
 - [Concept.md](Concept.md) contains the current structured concept and MVP framing.
-- [Concept initial notes.md](Concept%20initial%20notes.md) preserves the original brainstorming notes.
 
 ## License
 
