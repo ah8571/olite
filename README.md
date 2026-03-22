@@ -21,7 +21,7 @@ Many teams do not know they have obvious compliance-related website issues until
 - legal risk starts to appear
 - a client or auditor flags a gap
 
-Existing tools can be expensive, broad, or designed for large enterprises. Olite is intended to be a simpler first step: scan a website, surface obvious issues, and point users toward what to fix next.
+Existing tools can be expensive, broad, or designed for large enterprises. Olite is intended to be a simpler first step: crawl a website, surface obvious issues, and point users toward what to fix next.
 
 ## Core Principles
 
@@ -41,6 +41,8 @@ A limited scan available from the web for a small number of public pages per day
 
 This is intended to let users quickly evaluate a site and see headline issues before installing anything.
 
+The first product direction is based on public website crawling and analysis rather than requiring source code access.
+
 ### 2. Desktop App
 
 A future guided experience for users who want deeper scans, readable reports, and a visual workflow.
@@ -52,6 +54,8 @@ The likely first paid product: a command-line scanner for developers who want lo
 ## Planned MVP Scope
 
 The MVP is intentionally narrow. The focus is on developer-adjacent website compliance checks that can be detected automatically.
+
+The first version is centered on publicly crawlable websites. Deeper codebase-aware and authenticated scanning are later roadmap items.
 
 ### Accessibility
 
@@ -108,6 +112,7 @@ This repository currently serves as the project home while the product scope, MV
 ## Repository Docs
 
 - [Concept.md](Concept.md) contains the current structured concept and MVP framing.
+- [MVP.md](MVP.md) captures the version 0.1 URL-crawling-first product specification.
 - [Pricing.md](Pricing.md) captures early pricing model thoughts and tradeoffs.
 
 ## License

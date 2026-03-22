@@ -4,7 +4,7 @@
 
 Olite is a lightweight compliance scanner for websites.
 
-The initial focus is developer-related compliance issues that can be detected automatically, especially:
+The initial focus is public website crawling and analysis for compliance issues that can be detected automatically, especially:
 
 - accessibility issues
 - privacy and cookie consent issues
@@ -20,6 +20,7 @@ Olite helps teams identify obvious compliance risks on websites before those ris
 Core positioning ideas:
 
 - local-first scanning
+- public website crawling first
 - no source code uploaded by default
 - useful for both developers and non-technical operators
 - focused on practical findings, not vague legal language
@@ -32,7 +33,7 @@ Proposed product line:
 
 Suggested message:
 
-Olite scans your website for accessibility, privacy, communication consent, and security issues. Scans can run locally, and source code is not uploaded.
+Olite crawls your public website and identifies observable accessibility, privacy, communication consent, and security issues. Deeper analysis can run locally when broader access is available.
 
 ## Product Vision
 
@@ -52,7 +53,7 @@ What obvious compliance problems exist on this website right now?
 
 ## Narrowed MVP Scope
 
-The MVP should stay focused on website compliance checks that are developer-adjacent.
+The MVP should stay focused on website compliance checks that can be identified from public crawling and analysis.
 
 Included for MVP:
 
@@ -122,7 +123,7 @@ Existing solutions can be expensive, enterprise-focused, or too broad.
 
 Olite should offer a simpler first step:
 
-scan a website, detect obvious problems, explain what they mean, and show what to fix next.
+crawl a website, detect obvious problems, explain what they mean, and show what to fix next.
 
 ## MVP Feature Areas
 
@@ -219,6 +220,11 @@ The desktop app can emphasize:
 - reports and exports
 - local scanning trust
 
+Technical note:
+
+- a browser-based crawler does not require a browser extension
+- the same local browser automation engine could later power either a desktop app or the CLI
+
 ### CLI
 
 The CLI is likely best for:
@@ -234,6 +240,37 @@ The CLI can emphasize:
 - deeper crawl control
 - automation
 - team workflows later on
+
+- future codebase-aware checks when source access exists
+- future authenticated scanning when credentials or session access are available
+
+## Access Model And Limitations
+
+Olite should be explicit about what each type of access allows.
+
+### Public Crawl
+
+- can inspect publicly reachable pages
+- can analyze rendered page output, scripts, forms, and headers
+- works well for many websites, including builder-based sites
+- cannot inspect backend code or protected flows
+
+### Codebase Access
+
+- enables deeper analysis beyond what is visible publicly
+- should be positioned as a later CLI-focused capability
+- is useful when developers have direct access to the source
+
+### Authenticated Access
+
+- would be needed for member areas, dashboards, checkout flows, and account-only paths
+- should be treated as roadmap work, not MVP
+
+### Website Builder Reality
+
+- Shopify, Wix, Squarespace, Webflow, and similar platforms can still be scanned through public crawling
+- however, some platform-specific issues may be hard to assess without theme, app, or administrative access
+- Olite should document these limitations clearly
 
 ## Product Decisions
 
@@ -267,7 +304,8 @@ The following decisions are the current working direction for the MVP.
 
 - the first paid product should likely be built around the CLI
 - this fits the goal of keeping robust scanning local-first and inexpensive to operate
-- a future desktop app can be built on top of the same scan engine once the core scanner is solid
+- a future desktop app can be built on top of the same scan engine once the core crawler is solid
+- codebase scanning and authenticated sessions should be part of the later roadmap
 
 ## Go-To-Market Direction
 
@@ -312,14 +350,12 @@ To keep positioning clear, Olite is not initially:
 - a general HR compliance platform
 - a complete enterprise GRC system
 
-## Open Questions
+## Roadmap Direction
 
-- Should the initial promise be website scanning only, or website plus web app scanning?
-- Should accessibility and privacy be the main wedge, with security as a secondary feature?
-- Will the first customer be developers, agencies, or business owners?
-- How much of the scan should work from a public URL alone versus local code or authenticated app access?
-- What should the free website scan show before asking users to install the desktop app or CLI?
-- Is the first paid product the desktop app, the CLI, or cloud reporting tied to both?
+- start with publicly crawlable websites
+- later add codebase scanning when the source is available
+- later add authenticated session support for protected flows
+- later expand into broader rendering and app-specific analysis
 
 ## Future AI Compliance
 
@@ -341,4 +377,4 @@ Olite could likely support AI compliance readiness checks, but it should not cla
 
 If we want the concept to stay sharp, this is the cleanest current framing:
 
-Olite is a lightweight website compliance scanner focused on accessibility, privacy, communication consent, and basic security. Users can try a limited public scan on the web, then use the CLI for deeper local-first analysis, with desktop software as a future extension.
+Olite is a lightweight website compliance scanner focused on accessibility, privacy, communication consent, and basic security. It starts with public website crawling and analysis, then expands later into codebase-aware and authenticated scanning where broader access is available.
