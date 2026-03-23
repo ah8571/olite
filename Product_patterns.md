@@ -141,3 +141,4 @@ Like Terraform especially, Olite will benefit from:
 ## Bottom Line
 
 The strongest shared lesson is that Olite should start with a focused technical core, communicate clearly, keep signal quality high, and expand into broader workflow features only after the scanner itself is trusted.
+
