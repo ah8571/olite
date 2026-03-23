@@ -75,7 +75,19 @@ Responsible for:
 
 This layer should be usable by both the CLI and future desktop app.
 
-### 5. Interfaces
+### 5. Transparency And Guidance Layer
+
+Responsible for:
+
+- communicating scan coverage
+- recording crawl failures and bottlenecks
+- identifying confidence level and uncertainty
+- explaining what access is missing
+- asking the user for help when broader access is needed
+
+This layer is important because Olite operates in a compliance-sensitive area where false confidence can be risky.
+
+### 6. Interfaces
 
 The same underlying engine should support multiple interfaces.
 
@@ -134,11 +146,13 @@ Poor early cloud candidates:
 For a local scan, the flow can look like this:
 
 1. user provides a URL
-2. crawler discovers in-scope pages
-3. render layer loads each page
-4. normalized signals are extracted
-5. rule engine evaluates findings
-6. reporting layer produces summaries and exports
+2. optional pre-scan qualification captures provider and access context
+3. crawler discovers in-scope pages
+4. render layer loads each page
+5. normalized signals are extracted
+6. rule engine evaluates findings
+7. transparency layer records limitations and needed user assistance
+8. reporting layer produces summaries and exports
 
 For the free web tool, the same logic can be used with tighter limits and smaller output.
 
@@ -163,6 +177,34 @@ The architecture should keep different access models separate.
 - credentials, cookies, or user-assisted login available
 - useful for protected flows later
 - should be isolated from the public crawl implementation
+
+## Provider And Access Detection
+
+The architecture should support lightweight environment detection.
+
+Useful signals include:
+
+- likely website platform or builder
+- presence of protected areas
+- evidence of bot protection or rate limiting
+- likely need for JavaScript rendering
+- whether a crawl appears incomplete
+
+This can help Olite set expectations and ask better follow-up questions.
+
+## User Assistance Model
+
+When the scan hits a limitation, Olite should be able to request user help rather than failing silently.
+
+Examples of user assistance:
+
+- confirm website platform
+- provide source code access later
+- provide credentials or a saved session later
+- approve a deeper local scan
+- confirm whether a protected area matters for the audit goal
+
+This should be designed as guided product behavior, not just error text.
 
 ## Why Not Start With A Browser Extension
 
@@ -192,6 +234,8 @@ A local browser automation engine is a better foundation because it can power bo
 - exports
 - cleaner evidence capture
 - stronger consent and script detection
+- platform detection and limitation reporting
+- scan coverage and confidence reporting
 
 ### Priority 3
 
@@ -199,6 +243,7 @@ A local browser automation engine is a better foundation because it can power bo
 - codebase-aware rules
 - team workflows
 - optional cloud history
+- guided user assistance for blocked or partial scans
 
 ## Architecture Risks
 
@@ -223,6 +268,7 @@ Then layer on top of it in this order:
 - public crawl workflow
 - CLI interface
 - better reporting and exports
+- transparency, coverage, and limitation messaging
 - authenticated access later
 - desktop app later
 - optional lightweight cloud features after the local product is working well

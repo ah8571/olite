@@ -36,6 +36,8 @@ Deeper analysis may be possible later when:
 - authenticated sessions are available
 - browser rendering and interaction workflows are expanded
 
+Olite should communicate clearly when a result is limited by access, rendering constraints, or incomplete scan coverage.
+
 ## Why This Direction
 
 This approach makes the product usable for:
@@ -47,6 +49,38 @@ This approach makes the product usable for:
 - developers doing quick public checks
 
 It also supports the planned free website scanner and keeps the first product easier to try.
+
+## Transparency And User Communication
+
+Trust is a core product requirement.
+
+Olite should not quietly fail, overstate certainty, or hide scan gaps when access is limited.
+
+The product should explicitly communicate:
+
+- what was successfully crawled
+- what could not be crawled
+- what was only partially analyzed
+- what kind of access would improve the scan
+- which findings are high-confidence versus more tentative
+
+This matters both for product trust and for reducing the risk of misleading users in a legally sensitive area.
+
+## Pre-Scan Qualification
+
+Before or during a scan, Olite should gather enough context to set expectations properly.
+
+Potential inputs:
+
+- website provider or platform if known, such as Shopify, Webflow, WordPress, Wix, or custom
+- whether the user has source code access
+- whether the user has administrative or theme access
+- whether protected areas need to be scanned
+- whether credentials or a saved session may be available later
+
+This does not need to be a heavy enterprise questionnaire.
+
+It can start as a simple guided intake that helps Olite explain likely limitations and next steps.
 
 ## Version 0.1 Scope
 
@@ -136,6 +170,8 @@ Important caution:
 - MFA, CAPTCHAs, and anti-bot protections make full automation harder
 - some sites will always require partial manual setup or user-assisted session capture
 
+Olite should explain this to users in plain language rather than treating authenticated crawl failures as silent technical problems.
+
 ## Technical Direction
 
 The crawler should be browser-based rather than raw-HTML-only.
@@ -180,6 +216,8 @@ The MVP should produce:
 - severity or priority level
 - simple explanations of why an issue matters
 - suggested next steps
+- scan coverage and limitation notes
+- explicit requests for user help when broader access is needed
 
 ## Important Limitations
 
@@ -203,6 +241,26 @@ The roadmap must clearly explain what cannot be fully verified.
 - account areas, checkout steps, and member-only pages may require credentials or saved sessions
 - this should be documented as a later capability rather than an MVP promise
 
+## Real-Time Communication Requirements
+
+When Olite encounters a crawl bottleneck, it should tell the user what happened and what to do next.
+
+Examples:
+
+- page blocked by robots, auth, or bot protection
+- JavaScript rendering incomplete
+- login required to continue
+- provider-specific limitation detected
+- page cap reached before full site coverage
+
+The product should prefer honest messages such as:
+
+- this area could not be scanned with public access
+- this finding is limited to publicly observable behavior
+- source access or authenticated access would improve confidence
+
+It should avoid implying that a clean result means full compliance when the crawl was incomplete.
+
 ## Suggested User Messaging
 
 Olite checks publicly observable compliance signals from a website crawl. Deeper analysis may be possible later when the codebase or authenticated access is available.
@@ -223,6 +281,8 @@ Olite checks publicly observable compliance signals from a website crawl. Deeper
 - better consent-flow detection
 - exports
 - more refined issue explanations
+- platform-aware limitation messaging
+- basic pre-scan qualification flow
 
 ### Phase 3
 
@@ -230,6 +290,7 @@ Olite checks publicly observable compliance signals from a website crawl. Deeper
 - codebase-aware checks when source is available
 - authenticated session support
 - web and mobile app scanning roadmap
+- richer real-time guidance when a scan needs user assistance
 
 ## Non-Goals for Version 0.1
 
