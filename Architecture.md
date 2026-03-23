@@ -288,4 +288,4 @@ Why this fits the current product stage:
 - the same codebase can power the CLI and later a desktop app
 - this keeps founder speed and product iteration high
 
-If the product later expands into much heavier codebase analysis or hits real performance bottlenecks, a hybrid approach can be considered. See [Tech_stack_profiles.md](Tech_stack_profiles.md).
+If the product later expands into much heavier codebase analysis or hits real performance bottlenecks, a hybrid approach can be considered. See the tech stack section in [Product_patterns.md](Product_patterns.md).

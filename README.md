@@ -114,7 +114,6 @@ This repository currently serves as the project home while the product scope, MV
 - [Concept.md](Concept.md) contains the current structured concept and MVP framing.
 - [Development_roadmap.md](Development_roadmap.md) captures the URL-crawling-first roadmap and later scanning phases.
 - [Architecture.md](Architecture.md) sketches the shared local scan engine, crawler, rule system, interfaces, and lightweight cloud model.
-- [Tech_stack_profiles.md](Tech_stack_profiles.md) explains the current TypeScript recommendation and future performance-oriented stack options.
 - [Product_patterns.md](Product_patterns.md) summarizes lessons from Semgrep, Sentry, and Terraform that may apply to Olite.
 - [Pricing.md](Pricing.md) captures early pricing model thoughts and tradeoffs.
 
