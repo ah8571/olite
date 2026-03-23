@@ -1,4 +1,24 @@
-# Olite MVP Spec
+# Olite Development Roadmap
+
+## Current Direction
+
+Olite starts as a lightweight compliance scanner for publicly crawlable websites.
+
+The early product direction is:
+
+- public URL crawl as the MVP
+- browser-rendered crawling as part of the architecture
+- codebase scanning later when source access is available
+- authenticated sessions later after the public crawler is stable
+
+## Core Recommendation
+
+The current recommended sequence is:
+
+- Public URL crawl is the MVP.
+- Browser-rendered crawling should be part of the architecture, even if the first release is narrow.
+- Codebase scanning is a later CLI enhancement.
+- Authenticated sessions are a later roadmap item after the public crawler is stable.
 
 ## Version 0.1 Goal
 
@@ -16,7 +36,7 @@ Deeper analysis may be possible later when:
 - authenticated sessions are available
 - browser rendering and interaction workflows are expanded
 
-## Why This MVP Direction
+## Why This Direction
 
 This approach makes the product usable for:
 
@@ -97,6 +117,25 @@ Roadmap only.
 - useful for dashboards, account areas, and protected flows
 - should only be added after the public crawl workflow is stable
 
+## Authenticated Sessions
+
+Authenticated crawling does not need to stay manual forever.
+
+Once credentials, session cookies, or a supported login flow are available, parts of the crawl can be automated.
+
+Realistically, the progression is likely:
+
+- manual public crawl first
+- guided local browser automation later
+- saved authenticated session support after that
+- more automated protected-flow crawling once the login patterns are reliable enough
+
+Important caution:
+
+- login flows vary heavily across sites
+- MFA, CAPTCHAs, and anti-bot protections make full automation harder
+- some sites will always require partial manual setup or user-assisted session capture
+
 ## Technical Direction
 
 The crawler should be browser-based rather than raw-HTML-only.
@@ -144,7 +183,7 @@ The MVP should produce:
 
 ## Important Limitations
 
-The MVP must clearly explain what it cannot fully verify.
+The roadmap must clearly explain what cannot be fully verified.
 
 ### Public Website Limitations
 

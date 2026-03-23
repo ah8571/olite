@@ -112,7 +112,8 @@ This repository currently serves as the project home while the product scope, MV
 ## Repository Docs
 
 - [Concept.md](Concept.md) contains the current structured concept and MVP framing.
-- [MVP.md](MVP.md) captures the version 0.1 URL-crawling-first product specification.
+- [Development_roadmap.md](Development_roadmap.md) captures the URL-crawling-first roadmap and later scanning phases.
+- [Architecture.md](Architecture.md) sketches the shared local scan engine, crawler, rule system, interfaces, and lightweight cloud model.
 - [Pricing.md](Pricing.md) captures early pricing model thoughts and tradeoffs.
 
 ## License
