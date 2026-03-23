@@ -1,15 +1,8 @@
 # Olite
 
-Olite is a lightweight compliance scanner for websites.
+Olite is a lightweight website compliance scanner focused on accessibility, privacy, communication consent, and basic security. It starts with public website crawling and analysis, then expands later into codebase-aware and authenticated scanning where broader access is available.
 
 The goal is to help teams identify practical, machine-detectable compliance issues before they become legal, accessibility, trust, or conversion problems.
-
-The initial product direction is focused on:
-
-- accessibility issues
-- privacy and cookie consent issues
-- basic web security and configuration issues
-- communication consent issues tied to forms
 
 ## Why Olite
 
@@ -114,7 +107,7 @@ This repository currently serves as the project home while the product scope, MV
 - [Concept.md](Concept.md) contains the current structured concept and MVP framing.
 - [Development_roadmap.md](Development_roadmap.md) captures the URL-crawling-first roadmap and later scanning phases.
 - [Architecture.md](Architecture.md) sketches the shared local scan engine, crawler, rule system, interfaces, and lightweight cloud model.
-- [Product_patterns.md](Product_patterns.md) summarizes lessons from Semgrep, Sentry, and Terraform that may apply to Olite.
+- [Product_patterns.md](Product_patterns.md) captures concise case study profiles for Semgrep, Sentry, and Terraform.
 - [Pricing.md](Pricing.md) captures early pricing model thoughts and tradeoffs.
 
 ## License
