@@ -5,7 +5,7 @@ import { BlogArticleHero } from "@/components/blog-article-hero";
 import { BlogToc } from "@/components/blog-toc";
 
 export const metadata: Metadata = {
-  title: "Best Privacy Compliance Tools For Websites | Olite",
+  title: "Best Privacy Compliance Tools For Websites",
   description:
     "A practical guide to privacy compliance tools for websites, including cookie-consent products, policy tools, and lighter privacy signal scanners."
 };

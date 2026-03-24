@@ -58,6 +58,10 @@ function normalizeSubmittedUrl(rawUrl: string): string {
 
 function issueRemediation(tool: ToolType, title: string): string {
   if (tool === "accessibility") {
+    if (title === "Missing page title") {
+      return "Add a concise, descriptive title element so browsers and assistive technologies can identify the page correctly.";
+    }
+
     if (title === "Missing html lang attribute") {
       return "Add a valid language attribute to the html element so assistive technologies can interpret the page correctly.";
     }
@@ -69,6 +73,18 @@ function issueRemediation(tool: ToolType, title: string): string {
     if (title === "Inputs missing visible or programmatic labels") {
       return "Ensure each form control has a visible label, or a reliable programmatic label through aria-label or aria-labelledby when appropriate.";
     }
+
+    if (title === "Buttons without accessible names") {
+      return "Give each button a meaningful accessible name through visible text, aria-label, or another reliable naming pattern that matches the control's purpose.";
+    }
+
+    if (title === "Links without accessible names") {
+      return "Make sure each link exposes a readable name through link text, linked image alt text, or an explicit aria-label when needed.";
+    }
+
+    if (title === "Iframes missing title attributes") {
+      return "Add a short, descriptive title attribute to each iframe so users understand the embedded content before entering it.";
+    }
   }
 
   if (tool === "privacy") {
@@ -78,6 +94,14 @@ function issueRemediation(tool: ToolType, title: string): string {
 
     if (title === "No obvious privacy or cookie policy links detected") {
       return "Add clearly visible privacy and cookie-policy links in the header, footer, or near form capture points.";
+    }
+
+    if (title === "Cookie banner without obvious reject or manage controls") {
+      return "Add a clear reject-all option or a visible manage-preferences path so the banner does not read like accept-only consent.";
+    }
+
+    if (title === "Email capture without visible privacy cues") {
+      return "Place a privacy link or clear notice near the email form so visitors can understand how their data will be used before submitting.";
     }
 
     if (title === "Limited security header coverage") {

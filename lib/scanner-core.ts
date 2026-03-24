@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
 import { Agent } from "undici";
 
 import type { ToolType } from "./scanner-config";
@@ -67,7 +68,10 @@ const TRACKING_PATTERNS = [
   { label: "Google Analytics", match: /(google-analytics|gtag\(|googletagmanager)/i },
   { label: "Meta Pixel", match: /(connect\.facebook\.net|fbq\()/i },
   { label: "LinkedIn Insight", match: /(snap\.licdn\.com)/i },
-  { label: "Hotjar", match: /(static\.hotjar\.com|hj\()/i }
+  { label: "Hotjar", match: /(static\.hotjar\.com|hj\()/i },
+  { label: "Microsoft Clarity", match: /(clarity\.ms|clarity\()/i },
+  { label: "TikTok Pixel", match: /(analytics\.tiktok\.com|ttq\()/i },
+  { label: "X Ads", match: /(static\.ads-twitter\.com|twq\()/i }
 ];
 
 const SECURITY_HEADERS = [
@@ -83,17 +87,67 @@ const developmentInsecureDispatcher =
 
 const TOOL_ISSUE_TITLES: Record<ToolType, string[]> = {
   accessibility: [
+    "Missing page title",
     "Missing html lang attribute",
     "Images missing alt text",
     "Inputs missing visible or programmatic labels",
-    "Weak heading structure signals"
+    "Weak heading structure signals",
+    "Buttons without accessible names",
+    "Links without accessible names",
+    "Iframes missing title attributes"
   ],
   privacy: [
     "Tracking signals without visible cookie wording",
     "No obvious privacy or cookie policy links detected",
+    "Cookie banner without obvious reject or manage controls",
+    "Email capture without visible privacy cues",
     "Limited security header coverage"
   ]
 };
+
+function normalizeText(value: string | null | undefined): string {
+  return (value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function getReferencedText($: cheerio.CheerioAPI, idList: string): string {
+  const ids = idList.split(/\s+/).filter(Boolean);
+
+  return normalizeText(
+    ids
+      .map((id) => {
+        const safeId = id.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        return normalizeText($(`[id="${safeId}"]`).first().text());
+      })
+      .filter(Boolean)
+      .join(" ")
+  );
+}
+
+function getAccessibleName($: cheerio.CheerioAPI, element: AnyNode): string {
+  const node = $(element);
+  const ariaLabel = normalizeText(node.attr("aria-label"));
+  const ariaLabelledBy = normalizeText(node.attr("aria-labelledby"));
+  const titleAttr = normalizeText(node.attr("title"));
+  const textContent = normalizeText(node.text());
+  const inputValue = normalizeText(node.attr("value"));
+  const imageAlt = normalizeText(
+    node
+      .find("img[alt]")
+      .map((_, image) => normalizeText($(image).attr("alt")))
+      .get()
+      .filter(Boolean)
+      .join(" ")
+  );
+
+  return (
+    ariaLabel ||
+    (ariaLabelledBy ? getReferencedText($, ariaLabelledBy) : "") ||
+    titleAttr ||
+    inputValue ||
+    textContent ||
+    imageAlt
+  );
+}
 
 function normalizeUrl(rawUrl: string): URL {
   const value = rawUrl.trim();
@@ -198,7 +252,8 @@ async function fetchHtmlPage(url: URL) {
 
 function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, headers: Headers): AnalyzedPage {
   const $ = cheerio.load(html);
-  const title = $("title").first().text().trim() || baseUrl.hostname;
+  const pageTitleText = normalizeText($("title").first().text());
+  const title = pageTitleText || baseUrl.hostname;
   const htmlLangPresent = Boolean($("html").attr("lang")?.trim());
   const imageCount = $("img").length;
   const missingAltCount = $("img")
@@ -219,9 +274,13 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
   const emailFieldCount = $("input[type='email']").length;
   const checkboxCount = $("input[type='checkbox']").length;
   const policyLinkCount = $("a")
-    .filter((_, element) => /(privacy|cookie|terms)/i.test($(element).text()))
+    .filter((_, element) => /(privacy|cookie|data protection)/i.test($(element).text()))
     .length;
   const cookieBannerSignal = /(cookie consent|accept cookies|cookie settings|privacy preferences)/i.test($.text());
+  const cookieControlSignal =
+    /(reject all|reject cookies|decline|manage preferences|manage cookies|customi[sz]e|privacy preferences|cookie settings)/i.test(
+      $.text()
+    );
   const consentSignal = /(subscribe|opt in|marketing consent|agree to receive|email updates)/i.test($.text());
   const trackingSignals = TRACKING_PATTERNS.filter((entry) => entry.match.test(html)).map((entry) => entry.label);
   const securityHeadersPresent = SECURITY_HEADERS.filter((header) => headers.has(header));
@@ -230,6 +289,15 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     .get();
   const h1Count = headings.filter((level) => level === 1).length;
   const headingLevelSkip = headings.some((level, index) => index > 0 && level - headings[index - 1] > 1);
+  const buttonWithoutNameCount = $("button, input[type='button'], input[type='submit'], input[type='reset'], [role='button']")
+    .filter((_, element) => !getAccessibleName($, element))
+    .length;
+  const linkWithoutNameCount = $("a[href]")
+    .filter((_, element) => !getAccessibleName($, element))
+    .length;
+  const iframeMissingTitleCount = $("iframe")
+    .filter((_, element) => !normalizeText($(element).attr("title")))
+    .length;
   const internalLinks = $("a[href]")
     .map((_, element) => normalizeLink(new URL(responseUrl), $(element).attr("href") ?? ""))
     .get()
@@ -237,6 +305,16 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     .filter((value) => new URL(value).origin === new URL(responseUrl).origin);
 
   const issues: ScanIssue[] = [];
+
+  if (!pageTitleText) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Missing page title",
+      detail: "The page does not expose a non-empty title element.",
+      severity: "medium"
+    });
+  }
 
   if (!htmlLangPresent) {
     issues.push({
@@ -281,6 +359,36 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     });
   }
 
+  if (buttonWithoutNameCount > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Buttons without accessible names",
+      detail: `${buttonWithoutNameCount} button${buttonWithoutNameCount === 1 ? "" : "s"} may not expose a readable accessible name.`,
+      severity: buttonWithoutNameCount > 2 ? "high" : "medium"
+    });
+  }
+
+  if (linkWithoutNameCount > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Links without accessible names",
+      detail: `${linkWithoutNameCount} link${linkWithoutNameCount === 1 ? "" : "s"} may not expose a readable accessible name.`,
+      severity: linkWithoutNameCount > 3 ? "high" : "medium"
+    });
+  }
+
+  if (iframeMissingTitleCount > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Iframes missing title attributes",
+      detail: `${iframeMissingTitleCount} iframe${iframeMissingTitleCount === 1 ? "" : "s"} appear to be missing a descriptive title attribute.`,
+      severity: "medium"
+    });
+  }
+
   if (!cookieBannerSignal && trackingSignals.length > 0) {
     issues.push({
       layer: "privacy",
@@ -291,12 +399,32 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     });
   }
 
+  if (cookieBannerSignal && trackingSignals.length > 0 && !cookieControlSignal) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: responseUrl,
+      title: "Cookie banner without obvious reject or manage controls",
+      detail: "Cookie wording was detected, but no obvious reject-all or manage-preferences wording was found alongside active tracking signals.",
+      severity: "medium"
+    });
+  }
+
   if (policyLinkCount === 0) {
     issues.push({
       layer: "privacy",
       pageUrl: responseUrl,
       title: "No obvious privacy or cookie policy links detected",
       detail: "This page did not expose a visible privacy, cookie, or terms link in its markup.",
+      severity: "medium"
+    });
+  }
+
+  if (emailFieldCount > 0 && policyLinkCount === 0 && !consentSignal) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: responseUrl,
+      title: "Email capture without visible privacy cues",
+      detail: "An email field was found, but no nearby privacy-policy or clear data-use wording signal was detected on the page.",
       severity: "medium"
     });
   }

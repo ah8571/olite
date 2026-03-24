@@ -1,7 +1,20 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { blogPages } from "@/lib/blog-pages";
 import { toolConfig, toolOrder } from "@/lib/scanner-config";
+
+export const metadata: Metadata = {
+  title: "Accessibility and Privacy Website Scanner",
+  description:
+    "Run free accessibility and privacy checks for public webpages to catch visible WCAG, policy, cookie, and tracking issues before deeper review.",
+  openGraph: {
+    title: "Accessibility and Privacy Website Scanner | Olite",
+    description:
+      "Run free accessibility and privacy checks for public webpages to catch visible issues before moving into a deeper review.",
+    url: "https://olite.dev"
+  }
+};
 
 export default function HomePage() {
   return (

@@ -6,7 +6,7 @@ import { BlogToc } from "@/components/blog-toc";
 import { ComparisonTable } from "@/components/comparison-table";
 
 export const metadata: Metadata = {
-  title: "Siteimprove vs Olite | Olite",
+  title: "Siteimprove vs Olite",
   description:
     "Compare Siteimprove and Olite for accessibility and website compliance workflows, from enterprise governance to lighter local-first scanning."
 };

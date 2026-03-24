@@ -6,7 +6,7 @@ import { BlogToc } from "@/components/blog-toc";
 import { ComparisonTable } from "@/components/comparison-table";
 
 export const metadata: Metadata = {
-  title: "Cookiebot vs Olite | Olite",
+  title: "Cookiebot vs Olite",
   description:
     "Compare Cookiebot and Olite for privacy standards checks, cookie-consent workflows, and broader website accessibility plus privacy positioning."
 };

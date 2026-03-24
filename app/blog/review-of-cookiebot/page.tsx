@@ -5,7 +5,7 @@ import { BlogArticleHero } from "@/components/blog-article-hero";
 import { BlogToc } from "@/components/blog-toc";
 
 export const metadata: Metadata = {
-  title: "Review of Cookiebot | Olite",
+  title: "Review of Cookiebot",
   description:
     "A practical review of Cookiebot for teams evaluating cookie-consent tooling versus a lighter privacy standards checker like Olite."
 };

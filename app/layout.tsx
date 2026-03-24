@@ -6,15 +6,19 @@ import { SiteHeader } from "@/components/site-header";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://olite.dev"),
-  title: "Olite",
+  title: {
+    default: "Accessibility and Privacy Website Scanner | Olite",
+    template: "%s | Olite"
+  },
   description:
-    "Accessibility and privacy standards scanning for public websites, with free tools and a local-first roadmap.",
+    "Accessibility and privacy standards scanning for public websites, with free tools for quick verification and a local-first roadmap for deeper checks.",
   openGraph: {
     title: "Olite",
     description:
       "Free accessibility and privacy standards checks for public websites, with deeper local-first workflows planned later.",
     url: "https://olite.dev",
-    siteName: "Olite"
+    siteName: "Olite",
+    type: "website"
   }
 };
 

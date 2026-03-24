@@ -4,7 +4,7 @@ import Link from "next/link";
 import { blogPages } from "@/lib/blog-pages";
 
 export const metadata: Metadata = {
-  title: "Blog | Olite",
+  title: "Blog",
   description:
     "Olite blog pages covering competitor reviews, comparison articles, and best-of guides for accessibility and privacy tooling."
 };

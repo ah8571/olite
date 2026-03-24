@@ -17,7 +17,7 @@ export const toolConfig: Record<
   accessibility: {
     title: "Free Accessibility Scanner",
     description:
-      "Run a lightweight public-page accessibility scan to surface visible WCAG warning signs like missing alt text, missing labels, and missing document language.",
+      "Run a lightweight public-page accessibility scan to surface visible WCAG warning signs like missing alt text, missing labels, missing page titles, unlabeled controls, and missing iframe titles.",
     slug: "accessibility",
     eyebrow: "Free Accessibility Scanner",
     ctaLabel: "Run accessibility scan",
@@ -25,8 +25,8 @@ export const toolConfig: Record<
     sampleChecks: [
       "Images missing alt text",
       "Form inputs without labels",
-      "Missing html lang attribute",
-      "Weak heading structure signals"
+      "Buttons or links without accessible names",
+      "Missing page title or iframe title"
     ],
     bestFor: [
       "Agencies reviewing client sites before handoff",
@@ -42,16 +42,16 @@ export const toolConfig: Record<
   privacy: {
     title: "Free Privacy Standards Checker",
     description:
-      "Check a public page for GDPR and privacy-facing signals like policy links, cookie wording, tracking scripts, and basic security headers.",
+      "Check a public page for GDPR and privacy-facing signals like policy links, cookie controls, tracking scripts, email capture transparency, and basic security headers.",
     slug: "privacy",
     eyebrow: "Free Privacy Standards Checker",
     ctaLabel: "Run privacy check",
     scoreLabel: "Privacy standards score",
     sampleChecks: [
       "Privacy policy link detection",
-      "Cookie banner wording detection",
-      "Google and Meta tracking scripts",
-      "Basic security header review"
+      "Cookie banner control detection",
+      "Modern tracking script detection",
+      "Email capture without privacy cues"
     ],
     bestFor: [
       "Teams validating public GDPR-facing website signals",

@@ -5,7 +5,7 @@ import { BlogArticleHero } from "@/components/blog-article-hero";
 import { BlogToc } from "@/components/blog-toc";
 
 export const metadata: Metadata = {
-  title: "Review of Siteimprove | Olite",
+  title: "Review of Siteimprove",
   description:
     "A practical review of Siteimprove for teams comparing accessibility and website-governance tools against a lighter product like Olite."
 };

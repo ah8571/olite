@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Pricing | Olite",
+  title: "Pricing",
   description:
     "Pricing for Olite's free accessibility scanner, free privacy standards checker, and planned deeper local-first workflows."
 };

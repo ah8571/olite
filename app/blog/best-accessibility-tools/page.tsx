@@ -5,7 +5,7 @@ import { BlogArticleHero } from "@/components/blog-article-hero";
 import { BlogToc } from "@/components/blog-toc";
 
 export const metadata: Metadata = {
-  title: "Best Accessibility Tools For Websites | Olite",
+  title: "Best Accessibility Tools For Websites",
   description:
     "A practical guide to accessibility tools for websites, including lightweight scanners, developer tools, and broader platform options."
 };
