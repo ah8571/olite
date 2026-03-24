@@ -5,7 +5,10 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="container site-header-inner">
         <Link className="brand" href="/">
-          <span className="brand-mark">O</span>
+          <span aria-hidden="true" className="brand-mark">
+            <span className="brand-mark-outer">O</span>
+            <span className="brand-mark-inner">o</span>
+          </span>
           <span>Olite</span>
         </Link>
         <nav className="nav-links" aria-label="Primary">

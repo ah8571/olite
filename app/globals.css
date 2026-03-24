@@ -86,11 +86,31 @@ select {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  display: grid;
-  place-items: center;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
   background: linear-gradient(135deg, var(--brand), var(--brand-dark));
   box-shadow: 0 10px 20px rgba(125, 47, 18, 0.2);
+  overflow: hidden;
+}
+
+.brand-mark-outer,
+.brand-mark-inner {
+  position: absolute;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.brand-mark-outer {
+  font-size: 1.45rem;
+  transform: translateY(-0.5px);
+}
+
+.brand-mark-inner {
+  font-size: 0.72rem;
+  transform: translateY(1px);
 }
 
 .nav-links,

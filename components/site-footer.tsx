@@ -8,7 +8,10 @@ export function SiteFooter() {
       <div className="container footer-grid">
         <div>
           <Link className="brand" href="/">
-            <span className="brand-mark">O</span>
+            <span aria-hidden="true" className="brand-mark">
+              <span className="brand-mark-outer">O</span>
+              <span className="brand-mark-inner">o</span>
+            </span>
             <span>Olite</span>
           </Link>
           <p className="muted">
