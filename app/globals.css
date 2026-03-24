@@ -109,8 +109,8 @@ select {
 }
 
 .brand-mark-inner {
-  font-size: 0.72rem;
-  transform: translateY(1px);
+  font-size: 0.8rem;
+  transform: translateY(-0.5px);
 }
 
 .nav-links,

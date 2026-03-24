@@ -33,6 +33,7 @@ Likely competitors:
 - AudioEye
 - DubBot
 - accessiBe
+- UsableNet
 
 Why this matters for Olite:
 
@@ -80,6 +81,7 @@ Examples:
 
 - Siteimprove
 - Monsido
+- BrowserStack
 - Contentsquare in adjacent analysis workflows
 
 Why this matters for Olite:
@@ -121,6 +123,7 @@ Reasons:
 
 - axe DevTools
 - accessiBe
+- UsableNet
 
 Reasons:
 
@@ -166,6 +169,8 @@ Second wave later:
 
 - axe DevTools review
 - accessiBe review
+- UsableNet review
+- BrowserStack accessibility review or comparison page
 - Best cookie consent tools
 
 Adjacent-content wave later:

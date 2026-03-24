@@ -10,7 +10,7 @@ export function SiteFooter() {
           <Link className="brand" href="/">
             <span aria-hidden="true" className="brand-mark">
               <span className="brand-mark-outer">O</span>
-              <span className="brand-mark-inner">o</span>
+              <span className="brand-mark-inner">+</span>
             </span>
             <span>Olite</span>
           </Link>
