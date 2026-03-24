@@ -99,18 +99,21 @@ select {
 .brand-mark-outer,
 .brand-mark-inner {
   position: absolute;
-  font-weight: 700;
-  line-height: 1;
 }
 
 .brand-mark-outer {
+  font-weight: 700;
+  line-height: 1;
   font-size: 1.45rem;
   transform: translateY(-0.5px);
 }
 
 .brand-mark-inner {
-  font-size: 0.8rem;
-  transform: translateY(-0.5px);
+  width: 2px;
+  height: 22px;
+  border-radius: 999px;
+  background: #fff;
+  transform: translateY(0.5px);
 }
 
 .nav-links,

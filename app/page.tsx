@@ -93,7 +93,11 @@ export default function HomePage() {
       <section className="page-section">
         <div className="container">
           <p className="kicker">Free Tools</p>
-          <h2 className="section-title">Two focused scanners. No bloated menu.</h2>
+          <h2 className="section-title">Two free scanners to test site. Then download the app.</h2>
+          <p className="section-copy">
+            Use the hosted tools for a quick first pass. You get 2 free scans per day here. If you need
+            more coverage, broader crawls, or repeatable scans, move into the desktop app.
+          </p>
           <div className="cards-grid two-up">
             {toolOrder.map((tool) => (
               <article className="tool-card" key={tool}>
@@ -143,23 +147,24 @@ export default function HomePage() {
         <div className="container split-grid">
           <div>
             <p className="kicker">Pricing</p>
-            <h2 className="section-title">Start with free public-page checks.</h2>
+            <h2 className="section-title">Start with 2 free scans per day.</h2>
             <p className="section-copy">
-              The free tools are meant to make the product easy to try. If you need broader local scans,
-              repeatable reports, or workflow support later, that can expand into paid plans.
+              The hosted scanners are meant to make the product easy to try. Once you need more than 2 free
+              scans per day, broader local scans, or repeatable workflows, the desktop app is the path
+              forward.
             </p>
           </div>
           <div className="section-panel">
             <p className="kicker">Current Offer</p>
-            <h2>Start free, then move deeper only if you need to.</h2>
+            <h2>Test the site here, then move into the app for more.</h2>
             <ul className="bullet-list">
-              <li>Free accessibility scanner for one public page at a time</li>
-              <li>Free privacy standards checker for one public page at a time</li>
-              <li>Planned paid path for local-first, repeatable scans and broader workflows</li>
+              <li>2 free hosted scans per day across the accessibility and privacy tools</li>
+              <li>Fast public-page checks to see whether the site is worth a deeper pass</li>
+              <li>Desktop app path for broader local scans and repeatable workflows</li>
             </ul>
             <div className="hero-actions compact">
-              <Link className="button" href="/pricing">
-                See pricing details
+              <Link className="button" href="/#download">
+                Download path
               </Link>
             </div>
           </div>
@@ -170,10 +175,10 @@ export default function HomePage() {
         <div className="container split-grid">
           <div>
             <p className="kicker">Download</p>
-            <h2 className="section-title">Desktop app beta coming next.</h2>
+            <h2 className="section-title">Use the free scans first. Then download the app.</h2>
             <p className="section-copy">
-              The downloadable desktop app is the path to broader local-first scanning. The public beta is
-              not ready to download yet, but this is where the desktop release will live once it is ready.
+              The hosted tools are for quick testing and are capped at 2 free scans per day. The desktop app
+              is the path to broader local-first scanning once you want more coverage.
             </p>
             <div className="hero-actions">
               <Link
@@ -191,12 +196,14 @@ export default function HomePage() {
             <p className="kicker">Current Status</p>
             <h2>What to expect from the first desktop MVP</h2>
             <ul className="bullet-list">
+              <li>Step beyond the 2 free hosted scans per day</li>
               <li>Local crawl of a simple public website starting from one URL</li>
               <li>Grouped findings for accessibility, privacy, consent, and basic security signals</li>
               <li>Exportable results for early remediation and client review workflows</li>
             </ul>
             <p className="section-copy">
-              Until the packaged beta is available, the free hosted tools remain the best way to try Olite.
+              Start with the hosted scanners to test the site, then move into the desktop app when you need
+              more depth.
             </p>
           </div>
         </div>

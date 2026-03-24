@@ -207,9 +207,9 @@ export function ScannerForm({ tool }: { tool: ToolType }) {
           </div>
           <p className="form-note">
             {tool === "accessibility"
-              ? "Enter a public page to check for visible accessibility warning signs. You can use a full URL or just a domain. This hosted pass is intentionally lightweight and does not replace manual WCAG testing."
+              ? "Enter a public page to check for visible accessibility warning signs. You can use a full URL or just a domain. This hosted pass is intentionally lightweight, capped at 2 free scans per day, and does not replace manual WCAG testing."
               : tool === "privacy"
-                ? "Enter a public page to check for policy visibility, cookie wording, tracking signals, and baseline privacy-facing signals. You can use a full URL or just a domain. This is not legal advice."
+                ? "Enter a public page to check for policy visibility, cookie controls, tracking signals, and baseline privacy-facing signals. You can use a full URL or just a domain. This hosted pass is capped at 2 free scans per day. This is not legal advice."
                 : "Enter a public page to check for visible form and opt-in signals. Deeper flow validation belongs in a broader review."}
           </p>
           <div className="inline-row">
