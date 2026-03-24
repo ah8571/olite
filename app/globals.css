@@ -349,6 +349,19 @@ select {
   font-size: 0.92rem;
 }
 
+.limit-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(198, 92, 44, 0.12);
+  color: var(--brand-dark);
+  border: 1px solid rgba(198, 92, 44, 0.16);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
 .result-header {
   display: flex;
   justify-content: space-between;

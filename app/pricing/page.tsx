@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Pricing for Olite's free accessibility scanner, free privacy standards checker, and planned deeper local-first workflows."
+    "Pricing for Olite's free accessibility scanner, free privacy checker, and planned deeper local-first workflows."
 };
 
 type PricingPlan = {
@@ -26,7 +26,7 @@ const plans: PricingPlan[] = [
     note: "Best for quick first-pass checks",
     features: [
       "Free accessibility scanner for one public page at a time",
-      "Free privacy standards checker for one public page at a time",
+      "Free privacy checker for one public page at a time",
       "Instant, lightweight results for obvious public-page signals",
       "No setup required"
     ],

@@ -25,10 +25,10 @@ export function SiteFooter() {
               Pricing
             </Link>
             <Link className="footer-link" href="/tools/accessibility">
-              Accessibility Scanner
+              Free Accessibility Scanner
             </Link>
             <Link className="footer-link" href="/tools/privacy">
-              Privacy Checker
+              Free Privacy Checker
             </Link>
             <Link className="footer-link" href="/blog">
               Blog

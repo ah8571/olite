@@ -40,11 +40,11 @@ export const toolConfig: Record<
     ]
   },
   privacy: {
-    title: "Free Privacy Standards Checker",
+    title: "Free Privacy Checker",
     description:
       "Check a public page for GDPR and privacy-facing signals like policy links, cookie controls, tracking scripts, email capture transparency, and basic security headers.",
     slug: "privacy",
-    eyebrow: "Free Privacy Standards Checker",
+    eyebrow: "Free Privacy Checker",
     ctaLabel: "Run privacy check",
     scoreLabel: "Privacy standards score",
     sampleChecks: [

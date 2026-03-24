@@ -213,6 +213,7 @@ export function ScannerForm({ tool }: { tool: ToolType }) {
                 : "Enter a public page to check for visible form and opt-in signals. Deeper flow validation belongs in a broader review."}
           </p>
           <div className="inline-row">
+            <span className="limit-badge">2 free scans/day</span>
             <button className="button" type="submit" disabled={pending}>
               {pending ? "Scanning..." : config.ctaLabel}
             </button>

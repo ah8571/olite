@@ -22,10 +22,10 @@ export function SiteHeader() {
             Pricing
           </Link>
           <Link className="nav-link" href="/tools/accessibility">
-            Accessibility Scanner
+            Free Accessibility Scanner
           </Link>
           <Link className="nav-link" href="/tools/privacy">
-            Privacy Checker
+            Free Privacy Checker
           </Link>
           <Link className="nav-link" href="/blog">
             Blog

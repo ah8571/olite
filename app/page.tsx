@@ -48,7 +48,7 @@ export default function HomePage() {
             </ul>
             <div className="hero-actions compact">
               <Link className="button-secondary" href="/tools/privacy">
-                Open privacy checker
+                Open free privacy checker
               </Link>
             </div>
           </div>
@@ -163,8 +163,8 @@ export default function HomePage() {
               <li>Desktop app path for broader local scans and repeatable workflows</li>
             </ul>
             <div className="hero-actions compact">
-              <Link className="button" href="/#download">
-                Download path
+              <Link className="button" href="https://github.com/ah8571/olite/releases">
+                Open release page
               </Link>
             </div>
           </div>
@@ -183,12 +183,15 @@ export default function HomePage() {
             <div className="hero-actions">
               <Link
                 className="button"
+                href="https://github.com/ah8571/olite/releases"
+              >
+                Open release page
+              </Link>
+              <Link
+                className="button-secondary"
                 href="mailto:hello@olite.dev?subject=Olite%20desktop%20beta%20interest"
               >
                 Join desktop beta list
-              </Link>
-              <Link className="button-secondary" href="/pricing">
-                See pricing and access
               </Link>
             </div>
           </div>
