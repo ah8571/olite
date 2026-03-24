@@ -1,13 +1,17 @@
 import type { MetadataRoute } from "next";
 
+import { blogPages } from "@/lib/blog-pages";
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://olite.dev";
 
   return [
     "",
+    "/blog",
+    "/pricing",
     "/tools/accessibility",
     "/tools/privacy",
-    "/tools/consent"
+    ...blogPages.map((page) => page.href)
   ].map((path) => ({
     url: `${base}${path}`,
     lastModified: new Date(),

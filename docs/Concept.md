@@ -25,6 +25,14 @@ Core positioning ideas:
 - useful for both developers and non-technical operators
 - focused on practical findings, not vague legal language
 
+Olite should be framed more as a verification scanner than a policy-generation or consent-management product.
+
+In other words:
+
+- it checks whether accessibility, privacy, consent, and related website signals appear to be implemented correctly
+- it starts with the live site and later expands into codebase-aware verification
+- it does not begin as a policy generator, legal-document workflow, or consent-management platform
+
 Proposed product line:
 
 - Website experience: limited public webpage scans for quick evaluation
@@ -34,6 +42,10 @@ Proposed product line:
 Suggested message:
 
 Olite crawls your public website and identifies observable accessibility, privacy, communication consent, and security issues. Deeper analysis can run locally when broader access is available.
+
+Sharper positioning message:
+
+Olite checks whether accessibility, privacy, consent, and related website signals appear to be implemented correctly in the live site and later in the codebase. It is closer to a verification scanner than a policy-generation or consent-management product.
 
 ## Product Vision
 
@@ -378,3 +390,7 @@ Olite could likely support AI compliance readiness checks, but it should not cla
 If we want the concept to stay sharp, this is the cleanest current framing:
 
 Olite is a lightweight website compliance scanner focused on accessibility, privacy, communication consent, and basic security. It starts with public website crawling and analysis, then expands later into codebase-aware and authenticated scanning where broader access is available.
+
+## Disclosures
+
+Written with Chatgpt 5.4/ edited by team

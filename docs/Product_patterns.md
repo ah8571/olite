@@ -1,5 +1,15 @@
 # Product Case Study Profiles
 
+## Table Of Contents
+
+- [Purpose](#purpose)
+- [Semgrep](#semgrep)
+- [Sentry](#sentry)
+- [Terraform](#terraform)
+- [PostHog](#posthog)
+- [Resend](#resend)
+- [Shared Patterns](#shared-patterns)
+
 ## Purpose
 
 Minimal internal case study profiles for related SaaS developer tools.
@@ -77,9 +87,52 @@ The goal is to keep a concise reference for:
 - plugin thinking may become relevant later
 - declared infrastructure is cleaner than live website crawling, so Olite needs stronger limitation messaging
 
+## PostHog
+
+### Product Profile
+
+- product analytics platform with a strong developer-first posture
+- supports multiple usage modes including hosted and self-hosted paths
+- expands from one core workflow into a broader product suite over time
+- strong free tier and usage-based expansion logic
+
+### Languages Used
+
+- TypeScript and JavaScript across product surfaces
+- Python in backend and data workflows
+- a broader polyglot stack typical of analytics infrastructure
+
+### Relevant Takeaways For Olite
+
+- a free tier can work well when it is tied to clear usage boundaries
+- multiple usage modes can expand adoption if the product shape remains understandable
+- self-serve onboarding and strong docs matter when the product has technical depth
+- local-first or downloadable paths can coexist with lightweight hosted surfaces
+
+## Resend
+
+### Product Profile
+
+- developer-first email delivery product
+- clean API-first and documentation-first experience
+- simple product framing with a usage-based free tier and expansion path
+- strong emphasis on onboarding clarity and fast time to value
+
+### Languages Used
+
+- TypeScript and modern web tooling on the user-facing side
+- backend infrastructure built around email delivery services and APIs
+
+### Relevant Takeaways For Olite
+
+- crisp messaging can make a technical product feel much easier to adopt
+- a generous free tier works best when usage thresholds are simple to understand
+- polished developer experience can be part of the product moat
+- the product can stay narrow and still be compelling if the workflow is clear
+
 ## Shared Patterns
 
-Across all three case studies:
+Across all five case studies:
 
 - start with a strong technical core
 - deliver clear value quickly

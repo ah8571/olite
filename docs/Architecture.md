@@ -15,6 +15,15 @@ The most important architectural principle is that robust scanning should run lo
 
 The product can be split into five main parts:
 
+At the repository and product level, the cleanest long-term structure is:
+
+- web app for marketing, free tools, docs, and downloads
+- shared scanner core for crawling, rule evaluation, and normalized findings
+- CLI wrapper around the shared core
+- desktop app built on the same shared core
+
+That keeps the real scanner as one engine exposed through multiple interfaces rather than rebuilding scan logic separately for web, CLI, and desktop.
+
 ### 1. Crawl Engine
 
 Responsible for:
@@ -103,12 +112,55 @@ The same underlying engine should support multiple interfaces.
 - full local scans
 - configurable crawl settings
 - exports and automation
+- URL, path, or config-driven execution
+- terminal summaries plus JSON and HTML-style report output
 
 #### Desktop App
 
 - future UX layer built on the same engine
 - guided setup and issue review
 - simpler experience for non-technical users
+- local project history, diffs, exports, and saved scan settings
+
+## Shared Engine Product Structure
+
+The scanner should be built once and then exposed through the CLI and desktop app.
+
+### Scanner Core
+
+Responsible for:
+
+- fetching pages
+- crawling sites
+- running Playwright when needed
+- applying rules
+- producing normalized findings
+
+This should stay independent from the UI layers so the same scan engine can power:
+
+- the limited hosted free tools
+- the downloadable CLI
+- the future desktop app
+
+### CLI Layer
+
+Responsible for:
+
+- taking a URL, local path, or config file
+- invoking the shared core
+- rendering terminal summaries
+- exporting JSON and later richer report formats
+
+The CLI is the cleanest first downloadable product because it proves the local-first engine without needing a second UI stack immediately.
+
+### Desktop Layer
+
+Responsible for:
+
+- providing a GUI on top of the same scan engine
+- storing projects locally
+- showing findings, history, diffs, and exports
+- guiding non-technical users through scan setup and interpretation
 
 ## Recommended Execution Model
 
@@ -122,6 +174,14 @@ Benefits:
 - better privacy posture
 - easier scaling
 - better fit for larger crawls and rendered page analysis
+- avoids turning the product into a SaaS platform before the local scanner is mature
+
+In practical terms, the hosted site should mainly be:
+
+- marketing
+- docs
+- lightweight public tools
+- download and release distribution
 
 ### Lightweight Cloud Optionality
 
@@ -134,12 +194,43 @@ Good cloud candidates:
 - optional report sync
 - saved scan history
 - team collaboration
+- release metadata and update checks
 
 Poor early cloud candidates:
 
 - large-scale hosted crawling
 - deep authenticated scan orchestration
 - high-volume browser automation for all users
+- cloud-first storage of scan data by default
+
+## Download And Distribution Model
+
+If the goal is to minimize hosting, the main product should be distributed as downloadable software rather than operated as a hosted scan service.
+
+### CLI Distribution
+
+Practical options include:
+
+- npm package distribution
+- standalone binaries via GitHub Releases
+- package manager distribution later through Homebrew, Scoop, or Winget
+
+GitHub Releases is sufficient early on if the goal is to avoid building custom download infrastructure.
+
+### Desktop Distribution
+
+The two serious desktop shell choices are Electron and Tauri.
+
+The pragmatic recommendation at this stage is to start with Electron.
+
+Reasons:
+
+- the current stack is already TypeScript and Node friendly
+- Playwright and filesystem access fit naturally
+- packaging and installer tooling are mature
+- updates and cross-platform build workflows are well understood
+
+Tauri may become attractive later if bundle size or runtime efficiency becomes a more important concern, but Electron is the faster path to a coherent first desktop product.
 
 ## Suggested Data Flow
 
@@ -156,6 +247,67 @@ For a local scan, the flow can look like this:
 
 For the free web tool, the same logic can be used with tighter limits and smaller output.
 
+## Scan Modes
+
+Olite should treat different kinds of scanning as separate but related modes rather than forcing everything through one engine path.
+
+### 1. Runtime Scan
+
+Best for:
+
+- public websites
+- rendered JavaScript experiences
+- cookie banners and tracking behavior
+- live headers, forms, scripts, and visible page output
+
+Typical implementation layers:
+
+- HTTP fetch for raw responses
+- HTML parsing for lightweight signal extraction
+- Playwright for rendered pages and browser-driven checks
+
+This is the right mode when the product needs to understand what a user or browser actually experiences.
+
+### 2. Source Scan
+
+Best for:
+
+- local repositories
+- template and component inspection
+- config analysis
+- finding issues that may not be visible from public crawling alone
+
+Typical implementation layers:
+
+- filesystem traversal
+- TypeScript or JavaScript AST analysis
+- HTML and template parsing
+- CSS and config-file inspection
+
+This mode should be responsible for code-aware checks rather than trying to force source analysis into browser automation.
+
+### 3. Hybrid Scan
+
+Best for:
+
+- teams that can provide both source access and a running site
+- comparing configured intent against runtime behavior
+- correlating implementation risk with what actually renders in production or staging
+
+The hybrid mode is where the product becomes strongest because it can combine:
+
+- code-level evidence
+- rendered-page evidence
+- configuration evidence
+
+Examples of hybrid value:
+
+- analytics appears in source before a visible consent gate is confirmed at runtime
+- accessibility issues are suggested by component patterns and then confirmed in rendered output
+- security or privacy configuration can be compared with live response behavior
+
+Architecturally, these modes should share the same reporting model and rule vocabulary even if they use different collectors underneath.
+
 ## Access Levels
 
 The architecture should keep different access models separate.
@@ -171,6 +323,7 @@ The architecture should keep different access models separate.
 - local repository available
 - enables deeper static or code-aware checks later
 - likely CLI-only at first
+- should remain separate from runtime crawling concerns
 
 ### Authenticated Access
 
@@ -219,6 +372,43 @@ Reasons:
 
 A local browser automation engine is a better foundation because it can power both CLI and desktop workflows.
 
+## Local Data And Storage Model
+
+The desktop product should default to local storage rather than backend-hosted project storage.
+
+Local data should include:
+
+- project definitions
+- scan histories
+- rule configuration
+- exported reports and related attachments
+
+Recommended storage split:
+
+- SQLite for structured findings, runs, and history
+- local filesystem for exports and report artifacts
+- JSON or YAML for project settings and portable config
+
+This keeps the privacy posture cleaner and avoids introducing backend storage requirements before they are necessary.
+
+## Licensing And Paid Access Without A Custom Backend
+
+The easiest way to accidentally reintroduce hosting is through accounts, licensing, and purchase flows.
+
+To stay lean, use a third-party commerce or licensing provider such as:
+
+- Lemon Squeezy
+- Gumroad
+- Paddle
+
+Practical licensing models include:
+
+- simple downloadable purchase with provider-managed or manual license delivery
+- signed license key verification with optional periodic checks
+- strict offline-first signed license files with no mandatory online verification
+
+If minimal hosting is the goal, the simplest or most offline-friendly approach is preferable even if enforcement is less strict.
+
 ## Early Technical Priorities
 
 ### Priority 1
@@ -245,6 +435,18 @@ A local browser automation engine is a better foundation because it can power bo
 - optional cloud history
 - guided user assistance for blocked or partial scans
 
+## What To Avoid Early
+
+Do not introduce the following too early:
+
+- user accounts
+- cloud project sync
+- hosted scan queues
+- team collaboration backend
+- browser-based authenticated crawling in the cloud
+
+Those choices would push Olite toward a SaaS architecture before the local-first scanner is proven.
+
 ## Architecture Risks
 
 ### Risk 1: Overbuilding Too Early
@@ -265,13 +467,13 @@ Build one shared local scan engine first.
 
 Then layer on top of it in this order:
 
-- public crawl workflow
-- CLI interface
-- better reporting and exports
-- transparency, coverage, and limitation messaging
-- authenticated access later
-- desktop app later
-- optional lightweight cloud features after the local product is working well
+- extract the current scan logic into a reusable scanner core
+- replace lightweight fetch-only checks with a stronger rule engine over time
+- keep the website focused on marketing, docs, downloads, and free top-of-funnel tools
+- ship the CLI first as the first serious downloadable product
+- build the desktop app on top of the same core after the engine and reports are working well
+- add authenticated access and codebase-aware depth later
+- add optional lightweight cloud features only after the local product is clearly valuable
 
 ## Current Stack Recommendation
 
@@ -280,6 +482,7 @@ The current recommended implementation stack is:
 - TypeScript for the main codebase
 - Node.js for the runtime
 - Playwright for browser-rendered crawling
+- Electron as the most pragmatic initial desktop shell
 
 Why this fits the current product stage:
 
@@ -287,5 +490,6 @@ Why this fits the current product stage:
 - browser rendering is central to the scan engine
 - the same codebase can power the CLI and later a desktop app
 - this keeps founder speed and product iteration high
+- Electron reduces packaging and integration friction compared with introducing another stack too early
 
 If the product later expands into much heavier codebase analysis or hits real performance bottlenecks, a hybrid approach can be considered. See the implementation strategy section in [Development_roadmap.md](Development_roadmap.md).

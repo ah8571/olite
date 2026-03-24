@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import "@/app/globals.css";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://olite.dev"),
   title: "Olite",
   description:
-    "Website compliance scanning for accessibility, privacy, communication consent, and basic security.",
+    "Accessibility and privacy standards scanning for public websites, with free tools and a local-first roadmap.",
   openGraph: {
     title: "Olite",
     description:
-      "Lightweight website compliance scanning with free public tools and a local-first roadmap.",
+      "Free accessibility and privacy standards checks for public websites, with deeper local-first workflows planned later.",
     url: "https://olite.dev",
     siteName: "Olite"
   }
@@ -22,57 +23,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body>
         <div className="site-shell">
-          <header className="site-header">
-            <div className="container site-header-inner">
-              <Link className="brand" href="/">
-                <span className="brand-mark">O</span>
-                <span>Olite</span>
-              </Link>
-              <nav className="nav-links" aria-label="Primary">
-                <Link className="nav-link" href="/">
-                  Product
-                </Link>
-                <Link className="nav-link" href="/tools/accessibility">
-                  Accessibility Audit
-                </Link>
-                <Link className="nav-link" href="/tools/privacy">
-                  Privacy Scanner
-                </Link>
-                <Link className="nav-link" href="/tools/consent">
-                  Consent Scanner
-                </Link>
-              </nav>
-            </div>
-          </header>
+          <SiteHeader />
           <main>{children}</main>
-          <footer className="site-footer">
-            <div className="container footer-grid">
-              <div>
-                <Link className="brand" href="/">
-                  <span className="brand-mark">O</span>
-                  <span>Olite</span>
-                </Link>
-                <p className="muted">
-                  Lightweight website compliance scanning focused on accessibility, privacy, communication
-                  consent, and basic security.
-                </p>
-              </div>
-              <div>
-                <h3 className="footer-heading">Free Tools</h3>
-                <div className="footer-tools">
-                  <Link className="footer-link" href="/tools/accessibility">
-                    Accessibility Audit
-                  </Link>
-                  <Link className="footer-link" href="/tools/privacy">
-                    Privacy Scanner
-                  </Link>
-                  <Link className="footer-link" href="/tools/consent">
-                    Consent Scanner
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </footer>
+          <SiteFooter />
         </div>
       </body>
     </html>

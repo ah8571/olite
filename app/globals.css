@@ -169,6 +169,10 @@ select {
   margin-top: 24px;
 }
 
+.hero-actions.compact {
+  margin-top: 18px;
+}
+
 .button,
 .button-secondary {
   display: inline-flex;
@@ -247,6 +251,10 @@ select {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.cards-grid.two-up {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .bullet-list,
 .mini-list,
 .result-list {
@@ -258,6 +266,10 @@ select {
 
 .tool-page-hero {
   padding: 56px 0 30px;
+}
+
+.tool-hero-grid {
+  align-items: start;
 }
 
 .scanner-form {
@@ -301,6 +313,10 @@ select {
   margin-top: 18px;
 }
 
+.spaced-list {
+  margin-top: 18px;
+}
+
 .badge {
   padding: 6px 12px;
   border-radius: 999px;
@@ -330,6 +346,63 @@ select {
   color: var(--muted);
 }
 
+.issue-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+
+.issue-item {
+  padding: 16px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.issue-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.issue-copy {
+  margin: 10px 0 0;
+}
+
+.issue-remediation {
+  margin: 10px 0 0;
+  line-height: 1.6;
+}
+
+.severity-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.severity-low {
+  background: rgba(14, 107, 98, 0.1);
+  color: var(--accent);
+}
+
+.severity-medium {
+  background: rgba(198, 92, 44, 0.12);
+  color: var(--brand-dark);
+}
+
+.severity-high {
+  background: rgba(125, 47, 18, 0.16);
+  color: #5d1f0a;
+}
+
 .site-footer {
   margin-top: 50px;
   border-top: 1px solid var(--line);
@@ -346,13 +419,145 @@ select {
   font-size: 1rem;
 }
 
+.pricing-hero {
+  padding: 72px 0 24px;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.pricing-card {
+  position: relative;
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.pricing-card.featured {
+  border-color: rgba(198, 92, 44, 0.28);
+  transform: translateY(-6px);
+}
+
+.plan-label {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(198, 92, 44, 0.1);
+  color: var(--brand-dark);
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.price-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.price-value {
+  font-size: clamp(2.2rem, 5vw, 3.3rem);
+  line-height: 1;
+}
+
+.price-note {
+  color: var(--muted);
+}
+
+.tool-link-row {
+  margin-top: 18px;
+}
+
+.waitlist-panel {
+  background:
+    radial-gradient(circle at top right, rgba(198, 92, 44, 0.12), transparent 40%),
+    rgba(255, 252, 247, 0.82);
+}
+
+.blog-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.blog-content {
+  display: grid;
+  gap: 24px;
+}
+
+.toc-panel {
+  position: sticky;
+  top: 96px;
+}
+
+.toc-list {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.8;
+}
+
+.toc-list a {
+  color: var(--muted);
+}
+
+.toc-list a:hover {
+  color: var(--text);
+}
+
+.comparison-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.comparison-row {
+  display: grid;
+  grid-template-columns: 0.7fr 1fr 1fr;
+  gap: 16px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.comparison-topic {
+  font-weight: 700;
+}
+
+.comparison-cell p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 @media (max-width: 980px) {
   .hero-grid,
   .split-grid,
   .tool-grid,
   .cards-grid,
   .cards-grid.three,
+  .cards-grid.two-up,
+  .pricing-grid,
   .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .blog-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .toc-panel {
+    position: static;
+  }
+
+  .comparison-row {
     grid-template-columns: 1fr;
   }
 
@@ -378,11 +583,16 @@ select {
   .result-panel,
   .section-panel,
   .feature-card,
-  .tool-card {
+  .tool-card,
+  .pricing-card {
     padding: 20px;
   }
 
   .display {
     font-size: clamp(2.5rem, 14vw, 4rem);
+  }
+
+  .pricing-card.featured {
+    transform: none;
   }
 }

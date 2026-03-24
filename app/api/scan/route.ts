@@ -12,7 +12,7 @@ type RequestBody = {
 };
 
 function isTool(value: string): value is ToolType {
-  return value === "accessibility" || value === "privacy" || value === "consent";
+  return value === "accessibility" || value === "privacy";
 }
 
 export async function POST(request: Request) {

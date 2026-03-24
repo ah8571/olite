@@ -1,0 +1,58 @@
+export type BlogPage = {
+  href: string;
+  shortTitle: string;
+  title: string;
+  description: string;
+  category: "review" | "comparison" | "best-of";
+};
+
+export const blogPages: BlogPage[] = [
+  {
+    href: "/blog/review-of-siteimprove",
+    shortTitle: "Review of Siteimprove",
+    title: "Review of Siteimprove",
+    description:
+      "A practical look at where Siteimprove appears strong, where it feels heavier, and how Olite can position against it.",
+    category: "review"
+  },
+  {
+    href: "/blog/review-of-cookiebot",
+    shortTitle: "Review of Cookiebot",
+    title: "Review of Cookiebot",
+    description:
+      "A practical look at Cookiebot as a privacy and cookie-consent tool and where Olite differs.",
+    category: "review"
+  },
+  {
+    href: "/blog/siteimprove-vs-olite",
+    shortTitle: "Siteimprove vs Olite",
+    title: "Siteimprove vs Olite",
+    description:
+      "A decision page comparing broader governance tooling with Olite's lighter accessibility and privacy scanning direction.",
+    category: "comparison"
+  },
+  {
+    href: "/blog/cookiebot-vs-olite",
+    shortTitle: "Cookiebot vs Olite",
+    title: "Cookiebot vs Olite",
+    description:
+      "A decision page comparing cookie-consent tooling with Olite's broader privacy standards entry point.",
+    category: "comparison"
+  },
+  {
+    href: "/blog/best-accessibility-tools",
+    shortTitle: "Best Accessibility Tools",
+    title: "Best Accessibility Tools For Websites",
+    description:
+      "A practical guide to picking an accessibility tool based on whether you need quick scans, developer checks, or governance.",
+    category: "best-of"
+  },
+  {
+    href: "/blog/best-privacy-compliance-tools",
+    shortTitle: "Best Privacy Tools",
+    title: "Best Privacy Compliance Tools For Websites",
+    description:
+      "A practical guide to privacy tooling for websites, from cookie-consent products to lighter signal scanners.",
+    category: "best-of"
+  }
+];

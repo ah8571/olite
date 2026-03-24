@@ -104,11 +104,11 @@ This repository currently serves as the project home while the product scope, MV
 
 ## Repository Docs
 
-- [Concept.md](Concept.md) contains the current structured concept and MVP framing.
-- [Development_roadmap.md](Development_roadmap.md) captures the URL-crawling-first roadmap and later scanning phases.
-- [Architecture.md](Architecture.md) sketches the shared local scan engine, crawler, rule system, interfaces, and lightweight cloud model.
-- [Product_patterns.md](Product_patterns.md) captures concise case study profiles for Semgrep, Sentry, and Terraform.
-- [Pricing.md](Pricing.md) captures early pricing model thoughts and tradeoffs.
+- [docs/Concept.md](docs/Concept.md) contains the current structured concept and MVP framing.
+- [docs/Development_roadmap.md](docs/Development_roadmap.md) captures the URL-crawling-first roadmap and later scanning phases.
+- [docs/Architecture.md](docs/Architecture.md) sketches the shared local scan engine, crawler, rule system, interfaces, and lightweight cloud model.
+- [docs/Product_patterns.md](docs/Product_patterns.md) captures concise case study profiles for Semgrep, Sentry, and Terraform.
+- [docs/Pricing.md](docs/Pricing.md) captures early pricing model thoughts and tradeoffs.
 
 ## License
 

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Olite Desktop</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="desktop-shell">
+      <aside class="desktop-sidebar">
+        <div>
+          <p class="eyebrow">Olite Desktop</p>
+          <h1>Local-first website compliance scanning for everyday site owners.</h1>
+          <p class="lede">
+            Start with a simple crawl of your public website. This first desktop pass focuses on visible
+            accessibility, privacy, consent, and basic security signals.
+          </p>
+        </div>
+
+        <section class="panel">
+          <p class="kicker">What This First Version Does</p>
+          <ul class="bullet-list">
+            <li>Crawls the same domain starting from your homepage or a target URL</li>
+            <li>Checks visible accessibility and privacy signals page by page</li>
+            <li>Groups issues into compliance layers so the result is easier to act on</li>
+          </ul>
+        </section>
+
+        <section class="panel muted-panel">
+          <p class="kicker">Current Boundaries</p>
+          <ul class="bullet-list">
+            <li>No authenticated flows in this first pass</li>
+            <li>No JavaScript interaction automation yet</li>
+            <li>No source-code-aware verification yet</li>
+          </ul>
+        </section>
+
+        <section class="panel">
+          <p class="kicker">Recent Scans</p>
+          <div id="recent-scans" class="recent-list empty-list">
+            <p class="form-note">Your recent desktop scans will appear here for quick reruns.</p>
+          </div>
+        </section>
+      </aside>
+
+      <main class="desktop-main">
+        <section class="panel form-panel">
+          <div class="form-header">
+            <div>
+              <p class="kicker">Start A Crawl</p>
+              <h2>Run a simple site scan</h2>
+            </div>
+            <div class="badge-row">
+              <span class="badge">Accessibility</span>
+              <span class="badge">Privacy</span>
+              <span class="badge">Consent</span>
+              <span class="badge">Security</span>
+            </div>
+          </div>
+
+          <form id="scan-form" class="scan-form">
+            <label class="label" for="url">
+              Website URL
+              <input id="url" name="url" class="input" type="url" inputmode="url" placeholder="https://example.com" required />
+            </label>
+
+            <label class="label" for="maxPages">
+              Max pages to scan
+              <select id="maxPages" name="maxPages" class="select">
+                <option value="5">5 pages</option>
+                <option value="10" selected>10 pages</option>
+                <option value="25">25 pages</option>
+              </select>
+            </label>
+
+            <p id="status" class="form-note">The scan stays on the same domain and is best suited to simpler public websites in this first version.</p>
+
+            <div class="actions">
+              <button id="submit-button" class="button" type="submit">Run local site scan</button>
+            </div>
+          </form>
+        </section>
+
+        <section id="summary-panel" class="panel result-panel empty-state">
+          <p class="kicker">Summary</p>
+          <h2>Your scan summary will appear here.</h2>
+          <p class="lede">After the crawl finishes, you will see total pages scanned, grouped issues by layer, and per-page findings.</p>
+        </section>
+
+        <section id="layer-panel" class="panel result-panel hidden"></section>
+        <section id="pages-panel" class="panel result-panel hidden"></section>
+      </main>
+    </div>
+
+    <script src="./renderer.js"></script>
+  </body>
+  </html>
