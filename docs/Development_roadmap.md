@@ -14,6 +14,7 @@
 - [Authenticated Sessions](#authenticated-sessions)
 - [Technical Direction](#technical-direction)
 - [Implementation Strategy](#implementation-strategy)
+- [Pattern Library And Rule Design](#pattern-library-and-rule-design)
 
 ## Current Direction
 
@@ -378,6 +379,31 @@ Until then, the better move is usually:
 - optimize algorithms and scheduling
 - improve crawl boundaries
 - reduce unnecessary work
+
+## Pattern Library And Rule Design
+
+Olite should build a reusable interaction-pattern library alongside the rule engine.
+
+The reason is straightforward:
+
+- common compliance issues often appear as recurring UI patterns rather than isolated DOM mistakes
+- product language gets much clearer when findings map to patterns like menus, dialogs, forms, and cookie banners
+- automation quality improves when each pattern is split into static checks, runtime checks, advisory heuristics, and manual-review boundaries
+
+The first pattern-library targets should be:
+
+- mobile navigation and hamburger menus
+- dialogs and modal overlays
+- cookie banners and consent panels
+- forms and validation flows
+- accordions and disclosure widgets
+
+That pattern library should inform:
+
+- which checks are safe for the hosted tools
+- which checks require desktop or CLI interaction automation
+- how Olite groups findings in reports
+- how the product explains confidence versus limitation
 
 ### Practical Takeaway
 
