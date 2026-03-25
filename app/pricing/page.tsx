@@ -36,8 +36,8 @@ const plans: PricingPlan[] = [
   {
     name: "Pro",
     label: "Planned",
-    price: "$29",
-    note: "Per month, likely for solo developers and small teams",
+    price: "$10",
+    note: "Per user per month, likely for solo developers and small teams",
     features: [
       "Local-first scans for broader coverage",
       "Repeatable reports and project history",
@@ -47,20 +47,6 @@ const plans: PricingPlan[] = [
     href: "/",
     cta: "See product shape",
     featured: true
-  },
-  {
-    name: "Agency",
-    label: "Planned",
-    price: "$99",
-    note: "Per month, shaped for client work and recurring reviews",
-    features: [
-      "Multiple client properties and reusable workflows",
-      "Shareable reports for accessibility and privacy reviews",
-      "Repeat scanning across projects",
-      "A cleaner path for ongoing agency monitoring"
-    ],
-    href: "/tools/privacy",
-    cta: "Try privacy checker"
   }
 ];
 
@@ -91,15 +77,6 @@ export default function PricingPage() {
                 Join early access waitlist
               </Link>
             </div>
-          </div>
-          <div className="section-panel">
-            <p className="kicker">Principle</p>
-            <h2>Free should be useful. Paid should go deeper, not just add friction.</h2>
-            <ul className="bullet-list">
-              <li>Keep the hosted free tools simple and concrete</li>
-              <li>Reserve deeper crawling and repeatable workflows for paid tiers</li>
-              <li>Avoid enterprise packaging before the product actually needs it</li>
-            </ul>
           </div>
         </div>
       </section>
