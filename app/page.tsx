@@ -161,10 +161,10 @@ export default function HomePage() {
         <div className="container split-grid">
           <div>
             <p className="kicker">Download</p>
-            <h2 className="section-title">Use the free scans first. Then download the app.</h2>
+            <h2 className="section-title">Use the free scans first. The desktop app is not available yet.</h2>
             <p className="section-copy">
               The hosted tools are for quick testing and are capped at 2 free scans per day. The desktop app
-              is the path to broader local-first scanning once you want more coverage.
+              is still in development and there is not a public download available yet.
             </p>
             <div className="hero-actions">
               <Link
@@ -185,14 +185,15 @@ export default function HomePage() {
             <p className="kicker">Current Status</p>
             <h2>What to expect from the first desktop MVP</h2>
             <ul className="bullet-list">
+              <li>Desktop app currently unavailable while the first MVP is still being built</li>
               <li>Step beyond the 2 free hosted scans per day</li>
               <li>Local crawl of a simple public website starting from one URL</li>
               <li>Grouped findings for accessibility, privacy, consent, and basic security signals</li>
               <li>Exportable results for early remediation and client review workflows</li>
             </ul>
             <p className="section-copy">
-              Start with the hosted scanners to test the site, then move into the desktop app when you need
-              more depth.
+              Start with the hosted scanners to test the site today. The desktop app will come later once the
+              first installable version is ready.
             </p>
           </div>
         </div>

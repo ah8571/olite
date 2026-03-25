@@ -8,6 +8,7 @@ import type { SiteScanResult } from "../../lib/scanner-core";
 
 const HISTORY_FILE_NAME = "scan-history.json";
 const MAX_STORED_SCANS = 12;
+const isDevelopment = !app.isPackaged;
 
 type StoredScanHistoryItem = {
   url: string;
@@ -58,6 +59,10 @@ function createWindow() {
   });
 
   void window.loadFile(path.resolve(__dirname, "../../../index.html"));
+
+  if (isDevelopment) {
+    window.webContents.openDevTools({ mode: "detach" });
+  }
 }
 
 ipcMain.handle("scanner:run-site-scan", async (_event, payload: { url: string; maxPages: number }) => {
