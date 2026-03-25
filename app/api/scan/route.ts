@@ -95,8 +95,7 @@ export async function POST(request: Request) {
     if (!rateLimit.allowed) {
       return NextResponse.json(
         {
-          error:
-            "Free hosted scans are limited to 2 per day. Please try again tomorrow or use the desktop app for broader local scanning."
+          error: "Free checks used for today. Try again tomorrow or download the desktop app."
         },
         {
           status: 429,

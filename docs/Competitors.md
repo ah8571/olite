@@ -34,6 +34,7 @@ Likely competitors:
 - DubBot
 - accessiBe
 - UsableNet
+- BrowserStack
 
 Why this matters for Olite:
 
@@ -77,6 +78,16 @@ Why this matters for Olite:
 
 These products overlap less directly but may still appear in buyer research.
 
+In this document, "governance" means products that help larger teams manage website quality and compliance as an ongoing organizational process, not just run a single scanner.
+
+That can include things like:
+
+- dashboards for many sites or teams
+- recurring monitoring and scheduled reports
+- workflow ownership across marketing, content, engineering, and compliance teams
+- enterprise reporting, approvals, and remediation tracking
+- broader website quality or experience oversight beyond one focused scan
+
 Examples:
 
 - Siteimprove
@@ -86,8 +97,8 @@ Examples:
 
 Why this matters for Olite:
 
-- these products often bundle more enterprise governance and reporting
-- Olite should be clearer about where it is intentionally lighter and more local-first
+- these products often bundle recurring oversight, team workflows, and executive-style reporting rather than just one-off verification scans
+- Olite should be clearer that it is intentionally lighter, more focused, and more local-first than a broader enterprise governance platform
 
 ### 4. Developer-First Static Or Code Scanners
 
@@ -104,47 +115,6 @@ Why this matters for Olite:
 - they demonstrate how developer-first scanning products package CLI workflows, rules, and pricing
 - they are useful for product design thinking even if they are not landing-page SEO targets yet
 
-## Priority Competitors For Early SEO Pages
-
-The best early targets are companies that match the current Olite wedge closely enough to create credible pages.
-
-### Priority 1
-
-- Siteimprove
-- Cookiebot
-
-Reasons:
-
-- one maps well to accessibility and website governance
-- the other maps well to privacy and cookie-consent workflows
-- both help Olite explain its lighter local-first positioning
-
-### Priority 2
-
-- axe DevTools
-- accessiBe
-- UsableNet
-
-Reasons:
-
-- strong search relevance
-- clear category recognition
-- good material for comparison and best-of pages later
-
-### Adjacent Review Candidates
-
-These are worth writing about, but the angle should be different.
-
-- OneTrust
-- Termly
-- iubenda
-- Osano
-
-Recommended angle:
-
-- explain the benefit of the adjacent product on its own terms
-- explain that Olite is not primarily a policy-generation or consent-management platform
-- position Olite as a complementary verification layer that checks whether important website signals appear to be implemented correctly
 
 ## SEO Page Types To Build
 
@@ -181,18 +151,3 @@ Adjacent-content wave later:
 - Osano review
 - articles about how Olite can act as a verification layer alongside these products
 
-## Positioning Guidance
-
-When writing competitor and comparison pages:
-
-- stay factual and avoid cheap takedown language
-- explain who the competitor is probably best for
-- explain where Olite is intentionally narrower or earlier-stage
-- use the free tools as the primary call to action
-- avoid pretending Olite already has every enterprise feature the comparison target has
-
-When writing about adjacent products:
-
-- explain the benefit of the adjacent product honestly
-- do not force a fake head-to-head comparison when the core job is different
-- position Olite as the verification layer that can sit alongside policy or consent-management tools

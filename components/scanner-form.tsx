@@ -167,13 +167,24 @@ export function ScannerForm({ tool }: { tool: ToolType }) {
       const payload = await response.json();
 
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Free checks used for today. Try again tomorrow or download the desktop app.");
+        }
+
         throw new Error(payload.error ?? "The scan could not be completed.");
       }
 
       setResult(payload);
     } catch (scanError) {
       setResult(null);
-      setError(scanError instanceof Error ? scanError.message : "The scan could not be completed.");
+      const message =
+        scanError instanceof Error
+          ? scanError.message === "Failed to fetch" || scanError.message === "fetch failed"
+            ? "The scan could not be completed. If you already used today's free checks, try again tomorrow or download the desktop app."
+            : scanError.message
+          : "The scan could not be completed.";
+
+      setError(message);
     } finally {
       setPending(false);
     }
