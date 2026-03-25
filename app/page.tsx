@@ -22,8 +22,8 @@ export default function HomePage() {
       <section className="hero">
         <div className="container hero-grid">
           <div>
-            <p className="eyebrow">Verification scans for accessibility and privacy</p>
-            <h1 className="display">Check whether your website is missing obvious accessibility and privacy essentials.</h1>
+            <p className="eyebrow">Olite</p>
+            <h1 className="display">Verification scans for accessibility and privacy.</h1>
             <p className="lede">
               Olite helps teams verify whether public pages appear to implement core accessibility and
               privacy signals correctly. Start with a free scan, find the visible gaps, and decide what to
@@ -33,22 +33,8 @@ export default function HomePage() {
               <Link className="button" href="/tools/accessibility">
                 Try accessibility scanner
               </Link>
-              <Link className="button-secondary" href="/pricing">
-                View pricing
-              </Link>
-            </div>
-          </div>
-          <div className="hero-card">
-            <p className="kicker">Start Here</p>
-            <h2>Run a fast first-pass check before you spend time on the wrong problem.</h2>
-            <ul className="bullet-list">
-              <li>Scan one public URL for visible accessibility warnings</li>
-              <li>Check a page for privacy links, cookie wording, tracking, and header signals</li>
-              <li>Use the result to prioritize what needs a deeper manual review</li>
-            </ul>
-            <div className="hero-actions compact">
               <Link className="button-secondary" href="/tools/privacy">
-                Open free privacy checker
+                Try privacy scanner
               </Link>
             </div>
           </div>

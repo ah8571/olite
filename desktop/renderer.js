@@ -8,9 +8,8 @@ const recentScansPanel = document.getElementById("recent-scans");
 const urlInput = document.getElementById("url");
 const maxPagesInput = document.getElementById("maxPages");
 
-const RECENT_SCANS_KEY = "olite.recent-scans";
-
 let lastResult = null;
+let scanHistory = [];
 
 function escapeHtml(value) {
   return String(value)
@@ -21,31 +20,20 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function readRecentScans() {
+function formatRanAt(value) {
   try {
-    const value = window.localStorage.getItem(RECENT_SCANS_KEY);
-    return value ? JSON.parse(value) : [];
+    return new Date(value).toLocaleString();
   } catch {
-    return [];
+    return value;
   }
 }
 
-function writeRecentScans(items) {
-  window.localStorage.setItem(RECENT_SCANS_KEY, JSON.stringify(items));
-}
-
-function persistRecentScan(scan) {
-  const recent = readRecentScans().filter((item) => item.url !== scan.url || item.maxPages !== scan.maxPages);
-  recent.unshift(scan);
-  writeRecentScans(recent.slice(0, 6));
-}
-
 function renderRecentScans() {
-  const recent = readRecentScans();
+  const recent = scanHistory;
 
   if (recent.length === 0) {
     recentScansPanel.className = "recent-list empty-list";
-    recentScansPanel.innerHTML = '<p class="form-note">Your recent desktop scans will appear here for quick reruns.</p>';
+    recentScansPanel.innerHTML = '<p class="form-note">Your saved desktop reports will appear here after you complete a scan.</p>';
     return;
   }
 
@@ -57,16 +45,55 @@ function renderRecentScans() {
           <div>
             <strong>${escapeHtml(item.host)}</strong>
             <p class="muted-text">${escapeHtml(item.url)}</p>
+            <p class="muted-text">Saved ${escapeHtml(formatRanAt(item.ranAt))}</p>
           </div>
           <div class="recent-meta">
             <span class="stat-pill">Score: ${escapeHtml(item.score)}</span>
             <span class="stat-pill">Pages: ${escapeHtml(item.maxPages)}</span>
           </div>
-          <button class="recent-button" type="button" data-recent-index="${index}">Run again</button>
+          <div class="recent-actions">
+            <button class="recent-button" type="button" data-history-view="${index}">Open report</button>
+            <button class="recent-button" type="button" data-history-run="${index}">Run again</button>
+          </div>
         </article>
       `
     )
     .join("");
+}
+
+function loadResultIntoPanels(result, maxPages) {
+  lastResult = result;
+  urlInput.value = result.normalizedUrl;
+  maxPagesInput.value = String(maxPages);
+  renderSummary(result);
+  renderLayers(result);
+  renderPages(result);
+}
+
+async function storeCompletedScan(result, maxPages) {
+  const nextHistory = await window.oliteDesktop.storeScanResult({
+    url: result.normalizedUrl,
+    host: new URL(result.normalizedUrl).hostname,
+    maxPages,
+    score: result.score,
+    summary: result.summary,
+    ranAt: new Date().toISOString(),
+    result
+  });
+
+  scanHistory = Array.isArray(nextHistory) ? nextHistory : [];
+  renderRecentScans();
+}
+
+async function initializeScanHistory() {
+  try {
+    const history = await window.oliteDesktop.getScanHistory();
+    scanHistory = Array.isArray(history) ? history : [];
+  } catch {
+    scanHistory = [];
+  }
+
+  renderRecentScans();
 }
 
 async function exportReport() {
@@ -217,18 +244,8 @@ form.addEventListener("submit", async (event) => {
 
   try {
     const result = await window.oliteDesktop.scanSite({ url, maxPages });
-    lastResult = result;
-    renderSummary(result);
-    renderLayers(result);
-    renderPages(result);
-    persistRecentScan({
-      url: result.normalizedUrl,
-      host: new URL(result.normalizedUrl).hostname,
-      maxPages,
-      score: result.score,
-      ranAt: new Date().toISOString()
-    });
-    renderRecentScans();
+    loadResultIntoPanels(result, maxPages);
+    await storeCompletedScan(result, maxPages);
     status.textContent = "Scan complete.";
   } catch (error) {
     const message = error instanceof Error ? error.message : "The scan could not be completed.";
@@ -245,15 +262,19 @@ recentScansPanel.addEventListener("click", (event) => {
     return;
   }
 
-  const index = target.getAttribute("data-recent-index");
+  const viewIndex = target.getAttribute("data-history-view");
+  const runIndex = target.getAttribute("data-history-run");
 
-  if (index === null) {
+  const index = viewIndex ?? runIndex;
+  const item = index === null ? null : scanHistory[Number(index)];
+
+  if (!item) {
     return;
   }
 
-  const item = readRecentScans()[Number(index)];
-
-  if (!item) {
+  if (viewIndex !== null) {
+    loadResultIntoPanels(item.result, item.maxPages);
+    status.textContent = `Loaded saved report for ${item.url}.`;
     return;
   }
 
@@ -262,4 +283,4 @@ recentScansPanel.addEventListener("click", (event) => {
   status.textContent = `Loaded ${item.url}. Run the scan to refresh the result.`;
 });
 
-renderRecentScans();
+void initializeScanHistory();

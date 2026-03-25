@@ -8,7 +8,7 @@ Current scope:
 - bounded same-domain page discovery
 - grouped findings across accessibility, privacy, consent, and security
 - export of scan results to JSON
-- recent-scan recall inside the desktop shell
+- saved local scan history inside the desktop shell, including reopening past reports
 
 To run it from the repository root:
 
