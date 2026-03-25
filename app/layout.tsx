@@ -6,6 +6,11 @@ import { SiteHeader } from "@/components/site-header";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://olite.dev"),
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg"
+  },
   title: {
     default: "Accessibility and Privacy Website Scanner | Olite",
     template: "%s | Olite"

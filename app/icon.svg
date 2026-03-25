@@ -6,15 +6,14 @@
     </linearGradient>
   </defs>
   <circle cx="32" cy="32" r="30" fill="url(#oliteGradient)" />
-  <text
-    x="32"
-    y="33"
-    text-anchor="middle"
-    dominant-baseline="middle"
-    font-family="Georgia, 'Times New Roman', serif"
-    font-size="31"
-    font-weight="700"
-    fill="#ffffff"
-  >O</text>
-  <rect x="31" y="21" width="2" height="22" rx="1" fill="#ffffff" />
+  <ellipse
+    cx="32"
+    cy="32"
+    rx="14.75"
+    ry="17.75"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="4"
+  />
+  <rect x="30.1" y="11.3" width="3.8" height="41.4" rx="1.9" fill="#ffffff" />
 </svg>
