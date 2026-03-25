@@ -22,7 +22,6 @@ export default function HomePage() {
       <section className="hero">
         <div className="container hero-grid">
           <div>
-            <p className="eyebrow">Olite</p>
             <h1 className="display">Verification scans for accessibility and privacy.</h1>
             <p className="lede">
               Olite helps teams verify whether public pages appear to implement core accessibility and

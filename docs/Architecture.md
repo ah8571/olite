@@ -1,5 +1,16 @@
 # Olite Architecture Notes
 
+## Table Of Contents
+
+- [Architecture Goal](#architecture-goal)
+- [High-Level Shape](#high-level-shape)
+- [Shared Engine Product Structure](#shared-engine-product-structure)
+- [Recommended Execution Model](#recommended-execution-model)
+- [Download And Distribution Model](#download-and-distribution-model)
+- [Suggested Data Flow](#suggested-data-flow)
+- [Scan Modes](#scan-modes)
+- [Access Levels](#access-levels)
+
 ## Architecture Goal
 
 Design Olite so the core scan engine can power:
@@ -72,25 +83,17 @@ Later rule groups:
 - authenticated-flow rules
 - AI compliance readiness checks
 
-## Recommended Accessibility Verification Stack
+Accessibility-specific rule execution should be organized into an automation-first stack:
 
-For accessibility verification, the strongest practical automation stack for Olite is:
+- automated semantic checks
+- automated interaction checks
+- axe-style rules layered into the same reporting model
+
+In practical terms, the strongest first implementation stack is:
 
 - static and DOM checks
 - Playwright keyboard-flow checks
 - axe-style rules
-
-This should be expressed internally as three layers:
-
-- automated semantic checks
-- automated interaction checks
-- future enterprise or service-led assistive-technology verification if the product expands beyond lightweight automation
-
-Important architectural note:
-
-- the first desktop app should stay automation oriented
-- manual assistive-technology validation should not be a core dependency for the first installable product
-- if later offered, it should be treated as a higher-touch layer on top of the automated scan engine rather than part of the baseline MVP
 
 ### 4. Reporting Layer
 
@@ -181,6 +184,29 @@ Responsible for:
 - storing projects locally
 - showing findings, history, diffs, and exports
 - guiding non-technical users through scan setup and interpretation
+
+The desktop app should also become the main surface for staged accessibility automation.
+
+The first concrete desktop accessibility automation plan should be:
+
+1. run automated semantic checks against the rendered page
+2. run axe-style rules against the same page state
+3. run Playwright-backed keyboard-flow checks for the most important interaction patterns
+4. report all findings in one normalized issue model instead of splitting them by tool internals
+
+The first Playwright-backed interaction checks should focus on:
+
+- whether a page can be tabbed through sensibly
+- whether focus is visible and moves in a sensible order
+- whether dialogs, menus, and popovers trap and return focus correctly
+- whether important controls are reachable and operable without a mouse
+- whether validation states and dynamic updates appear after interaction in ways the DOM exposes cleanly
+
+Important scope note:
+
+- the first desktop MVP should stay automation oriented
+- manual assistive-technology verification should not be a dependency for the first installable product
+- if Olite later offers higher-touch enterprise services, those should sit on top of the automated scan engine rather than inside the baseline desktop workflow
 
 ## Recommended Execution Model
 
@@ -292,6 +318,8 @@ For accessibility-specific runtime checks, this is also the natural place to sta
 - focus behavior checks
 - modal and menu interaction checks
 - dynamic content behavior checks
+
+This is the layer where the desktop app can move beyond shallow page inspection and into repeatable staged automation across real user flows.
 
 This is the right mode when the product needs to understand what a user or browser actually experiences.
 

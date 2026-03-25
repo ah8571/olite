@@ -1,5 +1,20 @@
 # Olite Development Roadmap
 
+## Table Of Contents
+
+- [Current Direction](#current-direction)
+- [Core Recommendation](#core-recommendation)
+- [Version 0.1 Goal](#version-01-goal)
+- [Core Product Promise](#core-product-promise)
+- [Why This Direction](#why-this-direction)
+- [Transparency And User Communication](#transparency-and-user-communication)
+- [Pre-Scan Qualification](#pre-scan-qualification)
+- [Version 0.1 Scope](#version-01-scope)
+- [Scan Modes](#scan-modes)
+- [Authenticated Sessions](#authenticated-sessions)
+- [Technical Direction](#technical-direction)
+- [Implementation Strategy](#implementation-strategy)
+
 ## Current Direction
 
 Olite starts as a lightweight compliance scanner for publicly crawlable websites.
@@ -38,26 +53,19 @@ Deeper analysis may be possible later when:
 
 Olite should communicate clearly when a result is limited by access, rendering constraints, or incomplete scan coverage.
 
-## Accessibility Automation Position
+For accessibility specifically, the first app versions should stay automation oriented.
 
-Olite should remain automation oriented in the first app versions.
-
-The near-term product stack should be:
+The working product stack should be:
 
 - automated semantic checks
 - automated interaction checks
+- axe-style rules integrated into the same result model
 
-In practical technical terms, the preferred stack is:
+In practical technical terms, that means:
 
 - static and DOM checks
 - Playwright keyboard-flow checks
 - axe-style rules
-
-Important scope note:
-
-- targeted manual assistive-technology verification may become relevant later for enterprise or higher-touch services
-- it should not be treated as part of the first lightweight desktop MVP
-- the app itself should stay focused on automation and repeatable local checks
 
 ## Why This Direction
 
@@ -126,6 +134,14 @@ It can start as a simple guided intake that helps Olite explain likely limitatio
 - color contrast issues where supported by the scan engine
 - obvious WCAG-related issues from established tooling
 - keyboard and focus issues where they can be verified from automated browser-driven checks
+
+The first concrete Playwright-backed interaction checks should target:
+
+- page-level tab order sanity
+- visible focus and focus progression
+- menu, modal, and popover focus behavior
+- reachability of interactive controls without a mouse
+- form validation and post-interaction focus recovery
 
 #### Privacy and Cookie Consent
 
@@ -218,6 +234,15 @@ For accessibility, the medium-term goal should be to move beyond markup-only che
 - modal and popover behavior
 - dynamic form validation and focus recovery
 
+That staged automation should be treated as the concrete desktop accessibility automation plan for the next product phase.
+
+The intended sequence is:
+
+1. keep the current semantic checks
+2. add axe-style rules into the desktop scan pipeline
+3. add Playwright-backed keyboard-flow checks for important patterns
+4. widen from single-page checks into staged multi-step flows where the site structure justifies it
+
 This should still be kept lightweight by:
 
 - limiting crawl depth
@@ -258,6 +283,7 @@ Best for:
 - cookie banner detection
 - accessibility checks
 - privacy and consent signals
+- the first desktop accessibility automation workflows
 - local CLI delivery
 - future desktop reuse
 
