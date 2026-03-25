@@ -72,6 +72,26 @@ Later rule groups:
 - authenticated-flow rules
 - AI compliance readiness checks
 
+## Recommended Accessibility Verification Stack
+
+For accessibility verification, the strongest practical automation stack for Olite is:
+
+- static and DOM checks
+- Playwright keyboard-flow checks
+- axe-style rules
+
+This should be expressed internally as three layers:
+
+- automated semantic checks
+- automated interaction checks
+- future enterprise or service-led assistive-technology verification if the product expands beyond lightweight automation
+
+Important architectural note:
+
+- the first desktop app should stay automation oriented
+- manual assistive-technology validation should not be a core dependency for the first installable product
+- if later offered, it should be treated as a higher-touch layer on top of the automated scan engine rather than part of the baseline MVP
+
 ### 4. Reporting Layer
 
 Responsible for:
@@ -265,6 +285,13 @@ Typical implementation layers:
 - HTTP fetch for raw responses
 - HTML parsing for lightweight signal extraction
 - Playwright for rendered pages and browser-driven checks
+
+For accessibility-specific runtime checks, this is also the natural place to stage:
+
+- keyboard navigation checks
+- focus behavior checks
+- modal and menu interaction checks
+- dynamic content behavior checks
 
 This is the right mode when the product needs to understand what a user or browser actually experiences.
 

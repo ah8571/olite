@@ -32,6 +32,75 @@ For the first versions of Olite, the strongest posture is:
 
 That gives the product one clean baseline for engineering while still leaving room for region-specific messaging later.
 
+## Automation Scope And Limits
+
+Olite should be framed as an automation-oriented verification product.
+
+That means the product can automate more than a shallow website lint pass, but it should still avoid claiming
+that automated checks fully replace broader accessibility, privacy, or legal review.
+
+The practical posture is:
+
+- focus the app on lightweight automation first
+- automate high-confidence semantic, interaction, and browser-observable checks
+- avoid claiming that a passing result means a site is fully compliant
+- treat deeper manual verification as outside the first product scope, even if it may become an enterprise service later
+
+### What Can Be Automated Well
+
+#### 1. DOM And Semantics Checks
+
+High-value automated checks include:
+
+- missing labels
+- missing alt text
+- missing headings
+- weak or missing landmark structure
+- missing page titles
+- inaccessible names on links and buttons
+
+#### 2. Keyboard Interaction Checks
+
+High-value automated checks include:
+
+- whether a page can be tabbed through sensibly
+- whether focus is visible
+- whether focus order is sensible
+- whether dialogs, menus, and popovers trap and return focus correctly
+- whether important controls are reachable without a mouse
+
+#### 3. Browser-Driven Flow Checks
+
+High-value automated checks include:
+
+- multi-page or staged flows executed with Playwright or an equivalent browser harness
+- opening a modal, submitting a form, or triggering validation and then inspecting focus movement
+- checking whether dynamic content updates appear in ways assistive technologies can consume
+
+#### 4. Rules-Engine Checks
+
+High-value automated checks include:
+
+- axe-core style checks
+- custom rules layered on top for Olite-specific behavior and messaging
+
+### Assistive Technology Reference Targets
+
+Olite should keep a practical list of assistive technology reference targets in mind, even if the first product
+does not automate those tools directly.
+
+Important reference platforms:
+
+- NVDA
+- JAWS
+- VoiceOver
+- TalkBack
+
+Practical note:
+
+- first product versions should primarily model support indirectly through semantic checks, keyboard-flow checks, and browser-driven staged checks
+- direct orchestration of assistive technologies themselves should be treated as later research work rather than an MVP dependency
+
 ## Accessibility Foundation
 
 ### Primary Standards To Anchor To

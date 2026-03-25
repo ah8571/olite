@@ -84,6 +84,11 @@ export default function HomePage() {
             Use the hosted tools for a quick first pass. You get 2 free scans per day here. If you need
             more coverage, broader crawls, or repeatable scans, move into the desktop app.
           </p>
+          <p className="section-copy">
+            These are lightweight automated checks for obvious issues, not a complete audit. Olite can
+            automate many strong semantic and interaction signals, but important journeys may still need
+            deeper manual accessibility, legal, or compliance review.
+          </p>
           <div className="cards-grid two-up">
             {toolOrder.map((tool) => (
               <article className="tool-card" key={tool}>
@@ -114,7 +119,7 @@ export default function HomePage() {
             <ul className="bullet-list">
               <li>Missing alt text on images</li>
               <li>Unlabeled form controls and weak page language signals</li>
-              <li>Fast public-page checks before a proper manual audit</li>
+              <li>Fast public-page checks for obvious issues before a fuller audit</li>
             </ul>
           </div>
           <div className="section-panel">

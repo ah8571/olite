@@ -38,6 +38,27 @@ Deeper analysis may be possible later when:
 
 Olite should communicate clearly when a result is limited by access, rendering constraints, or incomplete scan coverage.
 
+## Accessibility Automation Position
+
+Olite should remain automation oriented in the first app versions.
+
+The near-term product stack should be:
+
+- automated semantic checks
+- automated interaction checks
+
+In practical technical terms, the preferred stack is:
+
+- static and DOM checks
+- Playwright keyboard-flow checks
+- axe-style rules
+
+Important scope note:
+
+- targeted manual assistive-technology verification may become relevant later for enterprise or higher-touch services
+- it should not be treated as part of the first lightweight desktop MVP
+- the app itself should stay focused on automation and repeatable local checks
+
 ## Why This Direction
 
 This approach makes the product usable for:
@@ -104,6 +125,7 @@ It can start as a simple guided intake that helps Olite explain likely limitatio
 - obvious heading structure issues
 - color contrast issues where supported by the scan engine
 - obvious WCAG-related issues from established tooling
+- keyboard and focus issues where they can be verified from automated browser-driven checks
 
 #### Privacy and Cookie Consent
 
@@ -188,6 +210,13 @@ Why browser-based is important:
 - many modern sites rely on JavaScript rendering
 - cookie banners often appear after scripts load
 - some accessibility and consent issues are only visible in rendered UI
+
+For accessibility, the medium-term goal should be to move beyond markup-only checks into staged automation that can verify:
+
+- keyboard traversal
+- focus visibility and order
+- modal and popover behavior
+- dynamic form validation and focus recovery
 
 This should still be kept lightweight by:
 
