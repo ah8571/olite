@@ -77,6 +77,18 @@
               <input id="url" name="url" class="input" type="url" inputmode="url" placeholder="https://example.com" required />
             </label>
 
+            <label class="label" for="sitemapUrl">
+              Sitemap URL (optional)
+              <input
+                id="sitemapUrl"
+                name="sitemapUrl"
+                class="input"
+                type="url"
+                inputmode="url"
+                placeholder="https://example.com/sitemap.xml"
+              />
+            </label>
+
             <label class="label" for="maxPages">
               Max pages to scan
               <select id="maxPages" name="maxPages" class="select">
@@ -86,7 +98,7 @@
               </select>
             </label>
 
-            <p id="status" class="form-note">The scan stays on the same domain and is best suited to simpler public websites in this first version.</p>
+            <p id="status" class="form-note">The scan stays on the same domain. Add a sitemap if you want to seed a broader sitewide crawl in this first version.</p>
 
             <div class="actions">
               <button id="submit-button" class="button" type="submit">Run local site scan</button>
@@ -103,6 +115,7 @@
         </section>
 
         <section id="layer-panel" class="panel result-panel hidden"></section>
+        <section id="issue-rows-panel" class="panel result-panel hidden"></section>
         <section id="pages-panel" class="panel result-panel hidden"></section>
       </main>
     </div>

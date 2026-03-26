@@ -3,10 +3,12 @@ const status = document.getElementById("status");
 const submitButton = document.getElementById("submit-button");
 const summaryPanel = document.getElementById("summary-panel");
 const layerPanel = document.getElementById("layer-panel");
+const issueRowsPanel = document.getElementById("issue-rows-panel");
 const pagesPanel = document.getElementById("pages-panel");
 const recentScansPanel = document.getElementById("recent-scans");
 const savedTargetsPanel = document.getElementById("saved-targets");
 const urlInput = document.getElementById("url");
+const sitemapUrlInput = document.getElementById("sitemapUrl");
 const maxPagesInput = document.getElementById("maxPages");
 const saveTargetButton = document.getElementById("save-target-button");
 const clearResultsButton = document.getElementById("clear-results-button");
@@ -80,6 +82,7 @@ function renderSavedTargets() {
           <div>
             <strong>${escapeHtml(item.host)}</strong>
             <p class="muted-text">${escapeHtml(item.url)}</p>
+            ${item.sitemapUrl ? `<p class="muted-text">Sitemap ${escapeHtml(item.sitemapUrl)}</p>` : ""}
             <p class="muted-text">Default page limit ${escapeHtml(item.maxPages)}</p>
           </div>
           <div class="recent-actions">
@@ -103,18 +106,20 @@ function resetResults() {
   `;
   layerPanel.className = "panel result-panel hidden";
   layerPanel.innerHTML = "";
+  issueRowsPanel.className = "panel result-panel hidden";
+  issueRowsPanel.innerHTML = "";
   pagesPanel.className = "panel result-panel hidden";
   pagesPanel.innerHTML = "";
 }
 
-async function runScan(url, maxPages) {
+async function runScan(url, maxPages, sitemapUrl = "") {
   status.textContent = "Scanning...";
   submitButton.disabled = true;
 
   try {
-    const result = await window.oliteDesktop.scanSite({ url, maxPages });
+    const result = await window.oliteDesktop.scanSite({ url, maxPages, sitemapUrl: sitemapUrl || undefined });
     loadResultIntoPanels(result, maxPages);
-    await storeCompletedScan(result, maxPages);
+    await storeCompletedScan(result, maxPages, sitemapUrl || undefined);
     status.textContent = "Scan complete.";
   } catch (error) {
     const message = error instanceof Error ? error.message : "The scan could not be completed.";
@@ -127,17 +132,21 @@ async function runScan(url, maxPages) {
 function saveCurrentTarget() {
   try {
     const normalizedUrl = normalizeUrlValue(urlInput.value);
+    const normalizedSitemapUrl = sitemapUrlInput.value.trim() ? normalizeUrlValue(sitemapUrlInput.value) : "";
     const maxPages = Number(maxPagesInput.value || 10);
     const host = new URL(normalizedUrl).hostname;
 
     savedTargets = [
-      { url: normalizedUrl, host, maxPages },
-      ...savedTargets.filter((item) => item.url !== normalizedUrl)
+      { url: normalizedUrl, host, maxPages, sitemapUrl: normalizedSitemapUrl },
+      ...savedTargets.filter(
+        (item) => item.url !== normalizedUrl || (item.sitemapUrl || "") !== normalizedSitemapUrl
+      )
     ].slice(0, 12);
 
     persistSavedTargets();
     renderSavedTargets();
     urlInput.value = normalizedUrl;
+    sitemapUrlInput.value = normalizedSitemapUrl;
     status.textContent = `Saved ${normalizedUrl} as a reusable test target.`;
   } catch (error) {
     const message = error instanceof Error ? error.message : "The target could not be saved.";
@@ -181,17 +190,20 @@ function renderRecentScans() {
 function loadResultIntoPanels(result, maxPages) {
   lastResult = result;
   urlInput.value = result.normalizedUrl;
+  sitemapUrlInput.value = result.sitemapUrl ?? "";
   maxPagesInput.value = String(maxPages);
   renderSummary(result);
   renderLayers(result);
+  renderIssueRows(result);
   renderPages(result);
 }
 
-async function storeCompletedScan(result, maxPages) {
+async function storeCompletedScan(result, maxPages, sitemapUrl) {
   const nextHistory = await window.oliteDesktop.storeScanResult({
     url: result.normalizedUrl,
     host: new URL(result.normalizedUrl).hostname,
     maxPages,
+    sitemapUrl,
     score: result.score,
     summary: result.summary,
     ranAt: new Date().toISOString(),
@@ -239,6 +251,7 @@ function escapeCsv(value) {
 }
 
 function buildIssueCsv(result) {
+  const rowsData = flattenIssueRows(result);
   const rows = [
     [
       "page_url",
@@ -254,28 +267,43 @@ function buildIssueCsv(result) {
     ]
   ];
 
-  for (const page of result.pages) {
-    for (const issue of page.issues) {
-      const evidence = Array.isArray(issue.evidence) && issue.evidence.length > 0 ? issue.evidence : [null];
-
-      for (const item of evidence) {
-        rows.push([
-          page.normalizedUrl,
-          page.title,
-          issue.layer,
-          issue.severity,
-          issue.title,
-          issue.detail,
-          issue.locationSummary ?? "",
-          item?.selector ?? "",
-          item?.snippet ?? "",
-          item?.note ?? ""
-        ]);
-      }
-    }
+  for (const row of rowsData) {
+    rows.push([
+      row.pageUrl,
+      row.pageTitle,
+      row.layer,
+      row.severity,
+      row.issueTitle,
+      row.issueDetail,
+      row.locationSummary,
+      row.selector,
+      row.snippet,
+      row.note
+    ]);
   }
 
   return rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
+}
+
+function flattenIssueRows(result) {
+  return result.pages.flatMap((page) =>
+    page.issues.flatMap((issue) => {
+      const evidence = Array.isArray(issue.evidence) && issue.evidence.length > 0 ? issue.evidence : [null];
+
+      return evidence.map((item) => ({
+        pageUrl: page.normalizedUrl,
+        pageTitle: page.title,
+        layer: issue.layer,
+        severity: issue.severity,
+        issueTitle: issue.title,
+        issueDetail: issue.detail,
+        locationSummary: issue.locationSummary ?? "",
+        selector: item?.selector ?? "",
+        snippet: item?.snippet ?? "",
+        note: item?.note ?? ""
+      }));
+    })
+  );
 }
 
 async function exportIssueCsv() {
@@ -303,6 +331,8 @@ function severityLabel(severity) {
 }
 
 function renderSummary(result) {
+  const scannedUrls = result.pages.map((page) => page.normalizedUrl);
+
   summaryPanel.classList.remove("empty-state");
   summaryPanel.innerHTML = `
     <div class="summary-head">
@@ -317,6 +347,21 @@ function renderSummary(result) {
       <span class="stat-pill">Scanned pages: ${escapeHtml(result.scannedPages)}</span>
       <span class="stat-pill">Discovered pages: ${escapeHtml(result.discoveredPages)}</span>
       <span class="stat-pill">Page limit: ${escapeHtml(result.pageLimit)}</span>
+      ${result.sitemapUrl ? `<span class="stat-pill">Sitemap used</span>` : ""}
+    </div>
+    <div class="summary-section">
+      <h3>Scanned URLs</h3>
+      <div class="summary-url-list">
+        ${scannedUrls
+          .map(
+            (pageUrl) => `
+              <div class="summary-url-item">
+                <span>${escapeHtml(pageUrl)}</span>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
     </div>
     <div class="actions">
       <button id="export-json-button" class="button secondary-button" type="button">Export JSON report</button>
@@ -329,6 +374,62 @@ function renderSummary(result) {
 
   document.getElementById("export-json-button")?.addEventListener("click", exportReport);
   document.getElementById("export-csv-button")?.addEventListener("click", exportIssueCsv);
+}
+
+function renderIssueRows(result) {
+  const rows = flattenIssueRows(result);
+
+  issueRowsPanel.classList.remove("hidden");
+  issueRowsPanel.innerHTML = `
+    <p class="kicker">Issue Rows</p>
+    <h2>Table view of the exportable issue list</h2>
+    <p class="form-note">This mirrors the CSV structure so teams can review findings in-app before exporting.</p>
+    ${
+      rows.length === 0
+        ? '<div class="issue-card"><p class="issue-copy">No issue rows to display for this scan.</p></div>'
+        : `
+          <div class="table-wrap">
+            <table class="issue-table">
+              <thead>
+                <tr>
+                  <th>Page</th>
+                  <th>Layer</th>
+                  <th>Severity</th>
+                  <th>Issue</th>
+                  <th>Location</th>
+                  <th>Selector</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows
+                  .map(
+                    (row) => `
+                      <tr>
+                        <td>
+                          <strong>${escapeHtml(row.pageTitle)}</strong>
+                          <div class="table-subtext">${escapeHtml(row.pageUrl)}</div>
+                        </td>
+                        <td>${escapeHtml(row.layer)}</td>
+                        <td><span class="severity-badge severity-${escapeHtml(row.severity)}">${escapeHtml(severityLabel(row.severity))}</span></td>
+                        <td>
+                          <strong>${escapeHtml(row.issueTitle)}</strong>
+                          <div class="table-subtext">${escapeHtml(row.issueDetail)}</div>
+                        </td>
+                        <td>
+                          <div>${escapeHtml(row.locationSummary || "-")}</div>
+                          ${row.note ? `<div class="table-subtext">${escapeHtml(row.note)}</div>` : ""}
+                        </td>
+                        <td><div class="table-mono">${escapeHtml(row.selector || "-")}</div></td>
+                      </tr>
+                    `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        `
+    }
+  `;
 }
 
 function renderLayers(result) {
@@ -441,9 +542,11 @@ form.addEventListener("submit", async (event) => {
 
   const formData = new FormData(form);
   const url = normalizeUrlValue(formData.get("url"));
+  const sitemapUrl = String(formData.get("sitemapUrl") ?? "").trim();
   const maxPages = Number(formData.get("maxPages") ?? 10);
   urlInput.value = url;
-  await runScan(url, maxPages);
+  sitemapUrlInput.value = sitemapUrl ? normalizeUrlValue(sitemapUrl) : "";
+  await runScan(url, maxPages, sitemapUrlInput.value);
 });
 
 saveTargetButton.addEventListener("click", saveCurrentTarget);
@@ -454,6 +557,7 @@ clearResultsButton.addEventListener("click", () => {
 });
 
 recentScansPanel.addEventListener("click", (event) => {
+  sitemapUrlInput.value = item.result.sitemapUrl ?? item.sitemapUrl ?? "";
   const target = event.target;
 
   if (!(target instanceof HTMLElement)) {
@@ -508,6 +612,7 @@ savedTargetsPanel.addEventListener("click", async (event) => {
   }
 
   urlInput.value = item.url;
+  sitemapUrlInput.value = item.sitemapUrl ?? "";
   maxPagesInput.value = String(item.maxPages);
 
   if (loadIndex !== null) {
@@ -515,7 +620,7 @@ savedTargetsPanel.addEventListener("click", async (event) => {
     return;
   }
 
-  await runScan(item.url, item.maxPages);
+  await runScan(item.url, item.maxPages, item.sitemapUrl ?? "");
 });
 
 loadSavedTargets();

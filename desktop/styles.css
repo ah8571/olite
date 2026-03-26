@@ -198,6 +198,25 @@ select {
   border: 1px solid rgba(14, 107, 98, 0.14);
 }
 
+.summary-section {
+  margin-top: 18px;
+}
+
+.summary-url-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.summary-url-item {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.56);
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .hidden {
   display: none;
 }
@@ -294,6 +313,53 @@ select {
 
 .evidence-line + .evidence-line {
   margin-top: 6px;
+}
+
+.table-wrap {
+  margin-top: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 252, 247, 0.84);
+}
+
+.issue-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.issue-table th,
+.issue-table td {
+  padding: 14px 16px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(31, 26, 22, 0.08);
+}
+
+.issue-table th {
+  background: rgba(255, 249, 240, 0.92);
+  color: var(--brand-dark);
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.issue-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table-subtext {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.table-mono {
+  font-family: "Courier New", monospace;
+  font-size: 0.92rem;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .severity-badge {

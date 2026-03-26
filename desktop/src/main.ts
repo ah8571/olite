@@ -14,6 +14,7 @@ type StoredScanHistoryItem = {
   url: string;
   host: string;
   maxPages: number;
+  sitemapUrl?: string;
   score: number;
   summary: string;
   ranAt: string;
@@ -65,9 +66,10 @@ function createWindow() {
   }
 }
 
-ipcMain.handle("scanner:run-site-scan", async (_event, payload: { url: string; maxPages: number }) => {
+ipcMain.handle("scanner:run-site-scan", async (_event, payload: { url: string; maxPages: number; sitemapUrl?: string }) => {
   return scanPublicSite({
     startUrl: payload.url,
+    sitemapUrl: payload.sitemapUrl,
     maxPages: payload.maxPages,
     sameOriginOnly: true
   });
@@ -82,7 +84,8 @@ ipcMain.handle("scanner:store-scan-result", async (_event, payload: StoredScanHi
   const deduped = history.filter(
     (item) =>
       item.result.normalizedUrl !== payload.result.normalizedUrl ||
-      item.maxPages !== payload.maxPages
+      item.maxPages !== payload.maxPages ||
+      (item.sitemapUrl ?? "") !== (payload.sitemapUrl ?? "")
   );
 
   const nextHistory = [payload, ...deduped].slice(0, MAX_STORED_SCANS);

@@ -50,6 +50,7 @@ export type PageScanResult = {
 export type SiteScanResult = {
   startUrl: string;
   normalizedUrl: string;
+  sitemapUrl?: string;
   score: number;
   summary: string;
   scannedPages: number;
@@ -66,6 +67,7 @@ type AnalyzedPage = PageScanResult & {
 
 type SiteScanOptions = {
   startUrl: string;
+  sitemapUrl?: string;
   maxPages?: number;
   sameOriginOnly?: boolean;
 };
@@ -270,6 +272,20 @@ function normalizeLink(baseUrl: URL, href: string): string | null {
 }
 
 async function fetchHtmlPage(url: URL) {
+  const { response, body } = await fetchTextResponse(url);
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("text/html")) {
+    throw new Error("The target did not return an HTML page.");
+  }
+
+  return {
+    response,
+    html: body
+  };
+}
+
+async function fetchTextResponse(url: URL) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
 
@@ -312,18 +328,76 @@ async function fetchHtmlPage(url: URL) {
       throw new Error(`The target returned HTTP ${response.status}.`);
     }
 
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("text/html")) {
-      throw new Error("The target did not return an HTML page.");
-    }
-
     return {
       response,
-      html: await response.text()
+      body: await response.text()
     };
   } finally {
     clearTimeout(timeout);
   }
+}
+
+async function fetchSitemapUrls(rawSitemapUrl: string, siteOrigin: string, maxUrls: number): Promise<string[]> {
+  const visited = new Set<string>();
+  const discoveredUrls = new Set<string>();
+
+  async function walkSitemap(url: URL, depth: number) {
+    if (depth > 2 || visited.has(url.toString()) || discoveredUrls.size >= maxUrls) {
+      return;
+    }
+
+    visited.add(url.toString());
+
+    const { response, body } = await fetchTextResponse(url);
+    const contentType = response.headers.get("content-type") ?? "";
+
+    if (!/(xml|text\/plain|application\/octet-stream)/i.test(contentType) && !url.pathname.endsWith(".xml")) {
+      throw new Error("The sitemap URL did not return XML content.");
+    }
+
+    const $ = cheerio.load(body, { xmlMode: true });
+    const nestedSitemaps = $("sitemap > loc")
+      .map((_, element) => normalizeText($(element).text()))
+      .get()
+      .filter(Boolean);
+
+    for (const nested of nestedSitemaps) {
+      try {
+        const nestedUrl = normalizeUrl(nested);
+
+        if (nestedUrl.origin === siteOrigin) {
+          await walkSitemap(nestedUrl, depth + 1);
+        }
+      } catch {
+        continue;
+      }
+    }
+
+    const pageUrls = $("url > loc")
+      .map((_, element) => normalizeText($(element).text()))
+      .get()
+      .filter(Boolean);
+
+    for (const entry of pageUrls) {
+      try {
+        const pageUrl = normalizeUrl(entry);
+
+        if (pageUrl.origin === siteOrigin) {
+          discoveredUrls.add(pageUrl.toString());
+        }
+
+        if (discoveredUrls.size >= maxUrls) {
+          break;
+        }
+      } catch {
+        continue;
+      }
+    }
+  }
+
+  await walkSitemap(normalizeUrl(rawSitemapUrl), 0);
+
+  return Array.from(discoveredUrls);
 }
 
 function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, headers: Headers): AnalyzedPage {
@@ -664,6 +738,7 @@ async function analyzeFetchedPage(rawUrl: string, mode: SinglePageMode): Promise
 
 export async function scanPublicSite(options: SiteScanOptions): Promise<SiteScanResult> {
   const startUrl = normalizeUrl(options.startUrl);
+  const sitemapUrl = options.sitemapUrl ? normalizeUrl(options.sitemapUrl) : null;
   const maxPages = Math.max(1, Math.min(options.maxPages ?? 10, 50));
   const queue = [startUrl.toString()];
   const discovered = new Set(queue);
@@ -673,6 +748,30 @@ export async function scanPublicSite(options: SiteScanOptions): Promise<SiteScan
     `This local crawl stayed on the starting domain and stopped after ${maxPages} page${maxPages === 1 ? "" : "s"} at most.`,
     "Authenticated flows, JavaScript-only interaction states, and source-code-aware checks are not included in this first desktop pass."
   ];
+
+  if (sitemapUrl) {
+    try {
+      const sitemapUrls = await fetchSitemapUrls(sitemapUrl.toString(), startUrl.origin, Math.max(maxPages * 3, 25));
+
+      if (sitemapUrls.length > 0) {
+        for (const sitemapEntry of sitemapUrls) {
+          if (!discovered.has(sitemapEntry)) {
+            discovered.add(sitemapEntry);
+            queue.push(sitemapEntry);
+          }
+        }
+
+        limitations.push(
+          `Used sitemap seeding from ${sitemapUrl.toString()} to add ${sitemapUrls.length} URL${sitemapUrls.length === 1 ? "" : "s"} to the crawl queue.`
+        );
+      } else {
+        limitations.push(`A sitemap was provided at ${sitemapUrl.toString()}, but no same-origin page URLs were parsed from it.`);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown sitemap error.";
+      limitations.push(`Could not use sitemap ${sitemapUrl.toString()}: ${message}`);
+    }
+  }
 
   while (queue.length > 0 && pages.length < maxPages) {
     const current = queue.shift();
@@ -728,6 +827,7 @@ export async function scanPublicSite(options: SiteScanOptions): Promise<SiteScan
   return {
     startUrl: options.startUrl,
     normalizedUrl: startUrl.toString(),
+    sitemapUrl: sitemapUrl?.toString(),
     score,
     summary,
     scannedPages: pages.length,
