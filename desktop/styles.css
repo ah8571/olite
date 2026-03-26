@@ -143,6 +143,9 @@ select {
 }
 
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 48px;
   padding: 0 18px;
   border: 0;
@@ -157,6 +160,12 @@ select {
   background: rgba(255, 252, 247, 0.9);
   color: var(--text);
   border: 1px solid var(--line);
+}
+
+.secondary-button:hover,
+.recent-button:hover,
+.button:hover {
+  transform: translateY(-1px);
 }
 
 .button:disabled {
@@ -246,6 +255,9 @@ select {
 }
 
 .recent-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 40px;
   padding: 0 14px;
   border-radius: 999px;

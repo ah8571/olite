@@ -9,10 +9,18 @@ Current scope:
 - grouped findings across accessibility, privacy, consent, and security
 - export of scan results to JSON
 - saved local scan history inside the desktop shell, including reopening past reports
+- saved local test targets for repeated comparisons while exploring the interface
 
 To run it from the repository root:
 
 - `npm install`
 - `npm run desktop:start`
+
+Useful first-pass workflow:
+
+- add a few public URLs as saved test targets
+- rerun those same sites with different page limits
+- compare issue grouping and page-level findings
+- reopen saved reports from local history without rescanning
 
 This first version is intentionally narrow and aimed at simple public websites.

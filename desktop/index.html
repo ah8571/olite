@@ -37,6 +37,17 @@
         </section>
 
         <section class="panel">
+          <p class="kicker">Saved Test Targets</p>
+          <p class="form-note">
+            Save a few websites here so you can quickly compare results and play around with the
+            interface without retyping URLs each time.
+          </p>
+          <div id="saved-targets" class="recent-list empty-list">
+            <p class="form-note">Saved test targets will appear here after you add one from the scan form.</p>
+          </div>
+        </section>
+
+        <section class="panel">
           <p class="kicker">Saved Scan History</p>
           <p class="form-note">The latest desktop reports stay on this device so you can reopen results without rerunning the crawl.</p>
           <div id="recent-scans" class="recent-list empty-list">
@@ -79,6 +90,8 @@
 
             <div class="actions">
               <button id="submit-button" class="button" type="submit">Run local site scan</button>
+              <button id="save-target-button" class="button secondary-button" type="button">Save test target</button>
+              <button id="clear-results-button" class="button secondary-button" type="button">Clear results</button>
             </div>
           </form>
         </section>

@@ -5,11 +5,17 @@ const summaryPanel = document.getElementById("summary-panel");
 const layerPanel = document.getElementById("layer-panel");
 const pagesPanel = document.getElementById("pages-panel");
 const recentScansPanel = document.getElementById("recent-scans");
+const savedTargetsPanel = document.getElementById("saved-targets");
 const urlInput = document.getElementById("url");
 const maxPagesInput = document.getElementById("maxPages");
+const saveTargetButton = document.getElementById("save-target-button");
+const clearResultsButton = document.getElementById("clear-results-button");
+
+const TARGET_STORAGE_KEY = "olite-desktop-saved-targets";
 
 let lastResult = null;
 let scanHistory = [];
+let savedTargets = [];
 
 function escapeHtml(value) {
   return String(value)
@@ -25,6 +31,117 @@ function formatRanAt(value) {
     return new Date(value).toLocaleString();
   } catch {
     return value;
+  }
+}
+
+function normalizeUrlValue(value) {
+  const trimmed = String(value ?? "").trim();
+
+  if (!trimmed) {
+    throw new Error("Enter a website URL first.");
+  }
+
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  return new URL(withProtocol).toString();
+}
+
+function loadSavedTargets() {
+  try {
+    const raw = window.localStorage.getItem(TARGET_STORAGE_KEY);
+
+    if (!raw) {
+      savedTargets = [];
+      return;
+    }
+
+    const parsed = JSON.parse(raw);
+    savedTargets = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    savedTargets = [];
+  }
+}
+
+function persistSavedTargets() {
+  window.localStorage.setItem(TARGET_STORAGE_KEY, JSON.stringify(savedTargets));
+}
+
+function renderSavedTargets() {
+  if (savedTargets.length === 0) {
+    savedTargetsPanel.className = "recent-list empty-list";
+    savedTargetsPanel.innerHTML = '<p class="form-note">Saved test targets will appear here after you add one from the scan form.</p>';
+    return;
+  }
+
+  savedTargetsPanel.className = "recent-list";
+  savedTargetsPanel.innerHTML = savedTargets
+    .map(
+      (item, index) => `
+        <article class="recent-item">
+          <div>
+            <strong>${escapeHtml(item.host)}</strong>
+            <p class="muted-text">${escapeHtml(item.url)}</p>
+            <p class="muted-text">Default page limit ${escapeHtml(item.maxPages)}</p>
+          </div>
+          <div class="recent-actions">
+            <button class="recent-button" type="button" data-target-load="${index}">Load</button>
+            <button class="recent-button" type="button" data-target-run="${index}">Scan now</button>
+            <button class="recent-button" type="button" data-target-remove="${index}">Remove</button>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+}
+
+function resetResults() {
+  lastResult = null;
+  summaryPanel.className = "panel result-panel empty-state";
+  summaryPanel.innerHTML = `
+    <p class="kicker">Summary</p>
+    <h2>Your scan summary will appear here.</h2>
+    <p class="lede">After the crawl finishes, you will see total pages scanned, grouped issues by layer, and per-page findings.</p>
+  `;
+  layerPanel.className = "panel result-panel hidden";
+  layerPanel.innerHTML = "";
+  pagesPanel.className = "panel result-panel hidden";
+  pagesPanel.innerHTML = "";
+}
+
+async function runScan(url, maxPages) {
+  status.textContent = "Scanning...";
+  submitButton.disabled = true;
+
+  try {
+    const result = await window.oliteDesktop.scanSite({ url, maxPages });
+    loadResultIntoPanels(result, maxPages);
+    await storeCompletedScan(result, maxPages);
+    status.textContent = "Scan complete.";
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "The scan could not be completed.";
+    status.textContent = message;
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
+function saveCurrentTarget() {
+  try {
+    const normalizedUrl = normalizeUrlValue(urlInput.value);
+    const maxPages = Number(maxPagesInput.value || 10);
+    const host = new URL(normalizedUrl).hostname;
+
+    savedTargets = [
+      { url: normalizedUrl, host, maxPages },
+      ...savedTargets.filter((item) => item.url !== normalizedUrl)
+    ].slice(0, 12);
+
+    persistSavedTargets();
+    renderSavedTargets();
+    urlInput.value = normalizedUrl;
+    status.textContent = `Saved ${normalizedUrl} as a reusable test target.`;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "The target could not be saved.";
+    status.textContent = message;
   }
 }
 
@@ -236,23 +353,17 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const formData = new FormData(form);
-  const url = String(formData.get("url") ?? "").trim();
+  const url = normalizeUrlValue(formData.get("url"));
   const maxPages = Number(formData.get("maxPages") ?? 10);
+  urlInput.value = url;
+  await runScan(url, maxPages);
+});
 
-  status.textContent = "Scanning...";
-  submitButton.disabled = true;
+saveTargetButton.addEventListener("click", saveCurrentTarget);
 
-  try {
-    const result = await window.oliteDesktop.scanSite({ url, maxPages });
-    loadResultIntoPanels(result, maxPages);
-    await storeCompletedScan(result, maxPages);
-    status.textContent = "Scan complete.";
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "The scan could not be completed.";
-    status.textContent = message;
-  } finally {
-    submitButton.disabled = false;
-  }
+clearResultsButton.addEventListener("click", () => {
+  resetResults();
+  status.textContent = "Cleared the current results. Load a saved target or run a new scan.";
 });
 
 recentScansPanel.addEventListener("click", (event) => {
@@ -283,4 +394,44 @@ recentScansPanel.addEventListener("click", (event) => {
   status.textContent = `Loaded ${item.url}. Run the scan to refresh the result.`;
 });
 
+savedTargetsPanel.addEventListener("click", async (event) => {
+  const target = event.target;
+
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const loadIndex = target.getAttribute("data-target-load");
+  const runIndex = target.getAttribute("data-target-run");
+  const removeIndex = target.getAttribute("data-target-remove");
+
+  const indexValue = loadIndex ?? runIndex ?? removeIndex;
+  const item = indexValue === null ? null : savedTargets[Number(indexValue)];
+
+  if (!item) {
+    return;
+  }
+
+  if (removeIndex !== null) {
+    savedTargets = savedTargets.filter((_, index) => index !== Number(removeIndex));
+    persistSavedTargets();
+    renderSavedTargets();
+    status.textContent = `Removed ${item.url} from saved test targets.`;
+    return;
+  }
+
+  urlInput.value = item.url;
+  maxPagesInput.value = String(item.maxPages);
+
+  if (loadIndex !== null) {
+    status.textContent = `Loaded ${item.url}. Run the scan when you want a fresh result.`;
+    return;
+  }
+
+  await runScan(item.url, item.maxPages);
+});
+
+loadSavedTargets();
+renderSavedTargets();
+resetResults();
 void initializeScanHistory();
