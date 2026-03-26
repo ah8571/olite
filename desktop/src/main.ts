@@ -94,10 +94,13 @@ ipcMain.handle("scanner:store-scan-result", async (_event, payload: StoredScanHi
 ipcMain.handle(
   "scanner:save-report",
   async (_event, payload: { suggestedName: string; content: string }) => {
+    const isCsv = payload.suggestedName.toLowerCase().endsWith(".csv");
     const { canceled, filePath } = await dialog.showSaveDialog({
       title: "Save Olite scan report",
       defaultPath: payload.suggestedName,
-      filters: [{ name: "JSON report", extensions: ["json"] }]
+      filters: isCsv
+        ? [{ name: "CSV report", extensions: ["csv"] }]
+        : [{ name: "JSON report", extensions: ["json"] }]
     });
 
     if (canceled || !filePath) {

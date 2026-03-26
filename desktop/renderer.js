@@ -233,6 +233,71 @@ async function exportReport() {
   }
 }
 
+function escapeCsv(value) {
+  const normalized = String(value ?? "");
+  return /[",\n]/.test(normalized) ? `"${normalized.replaceAll('"', '""')}"` : normalized;
+}
+
+function buildIssueCsv(result) {
+  const rows = [
+    [
+      "page_url",
+      "page_title",
+      "layer",
+      "severity",
+      "issue_title",
+      "issue_detail",
+      "location_summary",
+      "selector",
+      "snippet",
+      "note"
+    ]
+  ];
+
+  for (const page of result.pages) {
+    for (const issue of page.issues) {
+      const evidence = Array.isArray(issue.evidence) && issue.evidence.length > 0 ? issue.evidence : [null];
+
+      for (const item of evidence) {
+        rows.push([
+          page.normalizedUrl,
+          page.title,
+          issue.layer,
+          issue.severity,
+          issue.title,
+          issue.detail,
+          issue.locationSummary ?? "",
+          item?.selector ?? "",
+          item?.snippet ?? "",
+          item?.note ?? ""
+        ]);
+      }
+    }
+  }
+
+  return rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
+}
+
+async function exportIssueCsv() {
+  if (!lastResult) {
+    return;
+  }
+
+  try {
+    const host = new URL(lastResult.normalizedUrl).hostname.replace(/[^a-z0-9-]+/gi, "-");
+    const datePart = new Date().toISOString().slice(0, 10);
+    const response = await window.oliteDesktop.saveReport({
+      suggestedName: `olite-issues-${host}-${datePart}.csv`,
+      content: buildIssueCsv(lastResult)
+    });
+
+    status.textContent = response.saved ? `Issue CSV saved to ${response.filePath}` : "Save cancelled.";
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not save the issue CSV.";
+    status.textContent = message;
+  }
+}
+
 function severityLabel(severity) {
   return severity.charAt(0).toUpperCase() + severity.slice(1);
 }
@@ -254,14 +319,16 @@ function renderSummary(result) {
       <span class="stat-pill">Page limit: ${escapeHtml(result.pageLimit)}</span>
     </div>
     <div class="actions">
-      <button id="export-button" class="button secondary-button" type="button">Export JSON report</button>
+      <button id="export-json-button" class="button secondary-button" type="button">Export JSON report</button>
+      <button id="export-csv-button" class="button secondary-button" type="button">Export CSV issue list</button>
     </div>
     <div class="issue-list">
       ${result.limitationNotes.map((note) => `<div class="issue-card"><p class="issue-copy">${escapeHtml(note)}</p></div>`).join("")}
     </div>
   `;
 
-  document.getElementById("export-button")?.addEventListener("click", exportReport);
+  document.getElementById("export-json-button")?.addEventListener("click", exportReport);
+  document.getElementById("export-csv-button")?.addEventListener("click", exportIssueCsv);
 }
 
 function renderLayers(result) {
@@ -335,6 +402,26 @@ function renderPages(result) {
                                 <span class="severity-badge severity-${escapeHtml(issue.severity)}">${escapeHtml(severityLabel(issue.severity))}</span>
                               </div>
                               <p class="issue-copy">${escapeHtml(issue.detail)}</p>
+                              ${issue.locationSummary ? `<p class="issue-location"><strong>Location summary:</strong> ${escapeHtml(issue.locationSummary)}</p>` : ""}
+                              ${
+                                Array.isArray(issue.evidence) && issue.evidence.length > 0
+                                  ? `
+                                    <div class="evidence-list">
+                                      ${issue.evidence
+                                        .map(
+                                          (item) => `
+                                            <div class="evidence-card">
+                                              <p class="evidence-line"><strong>Selector:</strong> ${escapeHtml(item.selector)}</p>
+                                              <p class="evidence-line"><strong>Snippet:</strong> ${escapeHtml(item.snippet)}</p>
+                                              ${item.note ? `<p class="evidence-line"><strong>Note:</strong> ${escapeHtml(item.note)}</p>` : ""}
+                                            </div>
+                                          `
+                                        )
+                                        .join("")}
+                                    </div>
+                                  `
+                                  : ""
+                              }
                             </div>
                           `
                         )

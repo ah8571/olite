@@ -7,12 +7,20 @@ import type { ToolType } from "./scanner-config";
 export type ScanSeverity = "low" | "medium" | "high";
 export type ComplianceLayer = "accessibility" | "privacy" | "consent" | "security";
 
+export type ScanIssueEvidence = {
+  selector: string;
+  snippet: string;
+  note?: string;
+};
+
 export type ScanIssue = {
   layer: ComplianceLayer;
   pageUrl: string;
   title: string;
   detail: string;
   severity: ScanSeverity;
+  locationSummary?: string;
+  evidence?: ScanIssueEvidence[];
 };
 
 export type PageScanMetadata = {
@@ -107,6 +115,74 @@ const TOOL_ISSUE_TITLES: Record<ToolType, string[]> = {
 
 function normalizeText(value: string | null | undefined): string {
   return (value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function truncateText(value: string, maxLength = 180): string {
+  return value.length > maxLength ? `${value.slice(0, maxLength - 1).trimEnd()}...` : value;
+}
+
+function escapeSelectorValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+function isTagNode(node: AnyNode | null): node is AnyNode & { tagName: string } {
+  return Boolean(node && "tagName" in node && typeof node.tagName === "string");
+}
+
+function getNodeSelector($: cheerio.CheerioAPI, element: AnyNode): string {
+  const path: string[] = [];
+  let current: AnyNode | null = element;
+
+  while (current && current.type !== "root") {
+    if (!isTagNode(current)) {
+      current = current.parent ?? null;
+      continue;
+    }
+
+    const node = $(current);
+    const tagName = current.tagName.toLowerCase();
+    const id = normalizeText(node.attr("id"));
+
+    if (id) {
+      path.unshift(`${tagName}[id="${escapeSelectorValue(id)}"]`);
+      break;
+    }
+
+    const classNames = normalizeText(node.attr("class"))
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((className) => className.replace(/[^a-zA-Z0-9_-]/g, ""))
+      .filter(Boolean);
+
+    const siblingTags = (current.parent?.children ?? []).filter(
+      (sibling) => isTagNode(sibling) && sibling.tagName === tagName
+    );
+    const siblingIndex = siblingTags.indexOf(current) + 1;
+    const classSuffix = classNames.length > 0 ? `.${classNames.join(".")}` : "";
+    path.unshift(`${tagName}${classSuffix}:nth-of-type(${Math.max(siblingIndex, 1)})`);
+
+    current = current.parent ?? null;
+  }
+
+  return path.join(" > ");
+}
+
+function getElementSnippet($: cheerio.CheerioAPI, element: AnyNode): string {
+  return truncateText(normalizeText($.html(element) ?? ""), 220);
+}
+
+function buildElementEvidence(
+  $: cheerio.CheerioAPI,
+  elements: AnyNode[],
+  noteBuilder?: (element: AnyNode, index: number) => string | undefined,
+  maxItems = 5
+): ScanIssueEvidence[] {
+  return elements.slice(0, maxItems).map((element, index) => ({
+    selector: getNodeSelector($, element),
+    snippet: getElementSnippet($, element),
+    ...(noteBuilder ? { note: noteBuilder(element, index) } : {})
+  }));
 }
 
 function getReferencedText($: cheerio.CheerioAPI, idList: string): string {
@@ -256,11 +332,12 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
   const title = pageTitleText || baseUrl.hostname;
   const htmlLangPresent = Boolean($("html").attr("lang")?.trim());
   const imageCount = $("img").length;
-  const missingAltCount = $("img")
+  const missingAltElements = $("img")
     .filter((_, element) => $(element).attr("alt") === undefined)
-    .length;
+    .get();
+  const missingAltCount = missingAltElements.length;
   const formCount = $("form").length;
-  const unlabeledInputs = $("input, textarea, select")
+  const unlabeledInputElements = $("input, textarea, select")
     .filter((_, element) => {
       const id = $(element).attr("id");
       const ariaLabel = $(element).attr("aria-label");
@@ -270,7 +347,8 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
 
       return !wrappedByLabel && !linkedLabel && !ariaLabel && !ariaLabelledBy;
     })
-    .length;
+    .get();
+  const unlabeledInputs = unlabeledInputElements.length;
   const emailFieldCount = $("input[type='email']").length;
   const checkboxCount = $("input[type='checkbox']").length;
   const policyLinkCount = $("a")
@@ -289,15 +367,21 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     .get();
   const h1Count = headings.filter((level) => level === 1).length;
   const headingLevelSkip = headings.some((level, index) => index > 0 && level - headings[index - 1] > 1);
-  const buttonWithoutNameCount = $("button, input[type='button'], input[type='submit'], input[type='reset'], [role='button']")
+  const buttonWithoutNameElements = $("button, input[type='button'], input[type='submit'], input[type='reset'], [role='button']")
     .filter((_, element) => !getAccessibleName($, element))
-    .length;
-  const linkWithoutNameCount = $("a[href]")
+    .get();
+  const buttonWithoutNameCount = buttonWithoutNameElements.length;
+  const linkWithoutNameElements = $("a[href]")
     .filter((_, element) => !getAccessibleName($, element))
-    .length;
-  const iframeMissingTitleCount = $("iframe")
+    .get();
+  const linkWithoutNameCount = linkWithoutNameElements.length;
+  const iframeMissingTitleElements = $("iframe")
     .filter((_, element) => !normalizeText($(element).attr("title")))
-    .length;
+    .get();
+  const iframeMissingTitleCount = iframeMissingTitleElements.length;
+  const trackingEvidence = $("script[src], script")
+    .filter((_, element) => TRACKING_PATTERNS.some((entry) => entry.match.test($(element).attr("src") ?? $(element).html() ?? "")))
+    .get();
   const internalLinks = $("a[href]")
     .map((_, element) => normalizeLink(new URL(responseUrl), $(element).attr("href") ?? ""))
     .get()
@@ -312,7 +396,15 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "Missing page title",
       detail: "The page does not expose a non-empty title element.",
-      severity: "medium"
+      severity: "medium",
+      locationSummary: "Document head",
+      evidence: [
+        {
+          selector: "head > title:nth-of-type(1)",
+          snippet: "No non-empty <title> element was detected.",
+          note: "Add a descriptive page title in the document head."
+        }
+      ]
     });
   }
 
@@ -322,7 +414,15 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "Missing html lang attribute",
       detail: "The page does not expose a language attribute on the html element.",
-      severity: "medium"
+      severity: "medium",
+      locationSummary: "html element",
+      evidence: [
+        {
+          selector: "html",
+          snippet: truncateText(normalizeText($.html($("html").get(0) ?? "") || "<html>"), 120),
+          note: "Add a lang attribute such as lang=\"en\" to the root html element."
+        }
+      ]
     });
   }
 
@@ -332,7 +432,12 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "Images missing alt text",
       detail: `${missingAltCount} image${missingAltCount === 1 ? "" : "s"} appear to have no alt attribute.`,
-      severity: missingAltCount > 4 ? "high" : "medium"
+      severity: missingAltCount > 4 ? "high" : "medium",
+      locationSummary: `${missingAltCount} image element${missingAltCount === 1 ? "" : "s"} without alt text`,
+      evidence: buildElementEvidence($, missingAltElements, (element) => {
+        const src = normalizeText($(element).attr("src"));
+        return src ? `Image source: ${src}` : "Image element missing alt text.";
+      })
     });
   }
 
@@ -342,7 +447,13 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "Inputs missing visible or programmatic labels",
       detail: `${unlabeledInputs} form control${unlabeledInputs === 1 ? "" : "s"} may be unlabeled.`,
-      severity: unlabeledInputs > 2 ? "high" : "medium"
+      severity: unlabeledInputs > 2 ? "high" : "medium",
+      locationSummary: `${unlabeledInputs} unlabeled form control${unlabeledInputs === 1 ? "" : "s"}`,
+      evidence: buildElementEvidence($, unlabeledInputElements, (element) => {
+        const type = normalizeText($(element).attr("type")) || (isTagNode(element) ? element.tagName : "control");
+        const name = normalizeText($(element).attr("name"));
+        return name ? `${type} control with name="${name}" has no label signal.` : `${type} control has no label signal.`;
+      })
     });
   }
 
@@ -355,7 +466,8 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
         h1Count === 0
           ? "No h1 heading was detected on the page."
           : "Heading levels appear to skip in a way that may make the structure harder to follow.",
-      severity: "low"
+      severity: "low",
+      locationSummary: h1Count === 0 ? "No h1 element found" : "Heading sequence appears to skip levels"
     });
   }
 
@@ -365,7 +477,12 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "Buttons without accessible names",
       detail: `${buttonWithoutNameCount} button${buttonWithoutNameCount === 1 ? "" : "s"} may not expose a readable accessible name.`,
-      severity: buttonWithoutNameCount > 2 ? "high" : "medium"
+      severity: buttonWithoutNameCount > 2 ? "high" : "medium",
+      locationSummary: `${buttonWithoutNameCount} button-like control${buttonWithoutNameCount === 1 ? "" : "s"} without an accessible name`,
+      evidence: buildElementEvidence($, buttonWithoutNameElements, (element) => {
+        const type = normalizeText($(element).attr("type"));
+        return type ? `Button type: ${type}` : "Button-like control has no readable accessible name.";
+      })
     });
   }
 
@@ -375,7 +492,12 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "Links without accessible names",
       detail: `${linkWithoutNameCount} link${linkWithoutNameCount === 1 ? "" : "s"} may not expose a readable accessible name.`,
-      severity: linkWithoutNameCount > 3 ? "high" : "medium"
+      severity: linkWithoutNameCount > 3 ? "high" : "medium",
+      locationSummary: `${linkWithoutNameCount} link${linkWithoutNameCount === 1 ? "" : "s"} without an accessible name`,
+      evidence: buildElementEvidence($, linkWithoutNameElements, (element) => {
+        const href = normalizeText($(element).attr("href"));
+        return href ? `Link target: ${href}` : "Link has no readable accessible name.";
+      })
     });
   }
 
@@ -385,7 +507,9 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "Iframes missing title attributes",
       detail: `${iframeMissingTitleCount} iframe${iframeMissingTitleCount === 1 ? "" : "s"} appear to be missing a descriptive title attribute.`,
-      severity: "medium"
+      severity: "medium",
+      locationSummary: `${iframeMissingTitleCount} iframe${iframeMissingTitleCount === 1 ? "" : "s"} missing title text`,
+      evidence: buildElementEvidence($, iframeMissingTitleElements)
     });
   }
 
@@ -395,7 +519,12 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "Tracking signals without visible cookie wording",
       detail: `Detected ${trackingSignals.join(", ")} but could not find obvious cookie-banner wording on this page.`,
-      severity: "medium"
+      severity: "medium",
+      locationSummary: "Tracking scripts detected without obvious cookie wording",
+      evidence: buildElementEvidence($, trackingEvidence, (element) => {
+        const src = normalizeText($(element).attr("src"));
+        return src ? `Tracking script source: ${src}` : "Inline script matched a known tracking pattern.";
+      })
     });
   }
 
@@ -405,7 +534,8 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "Cookie banner without obvious reject or manage controls",
       detail: "Cookie wording was detected, but no obvious reject-all or manage-preferences wording was found alongside active tracking signals.",
-      severity: "medium"
+      severity: "medium",
+      locationSummary: "Cookie wording found, but reject or manage wording was not detected"
     });
   }
 
@@ -415,7 +545,8 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "No obvious privacy or cookie policy links detected",
       detail: "This page did not expose a visible privacy, cookie, or terms link in its markup.",
-      severity: "medium"
+      severity: "medium",
+      locationSummary: "No matching privacy, cookie, or data-protection link text found in page links"
     });
   }
 
@@ -425,7 +556,13 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "Email capture without visible privacy cues",
       detail: "An email field was found, but no nearby privacy-policy or clear data-use wording signal was detected on the page.",
-      severity: "medium"
+      severity: "medium",
+      locationSummary: "Email capture detected without visible privacy cues",
+      evidence: buildElementEvidence(
+        $,
+        $("input[type='email']").get(),
+        () => "Review nearby copy for privacy notice, lawful-use explanation, or policy link."
+      )
     });
   }
 
@@ -435,7 +572,13 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "Email capture without visible consent signals",
       detail: "An email field was found, but no checkbox or obvious consent wording was detected on the page.",
-      severity: "medium"
+      severity: "medium",
+      locationSummary: "Email capture detected without visible consent cues",
+      evidence: buildElementEvidence(
+        $,
+        $("input[type='email']").get(),
+        () => "Review nearby copy for consent wording or a meaningful opt-in control."
+      )
     });
   }
 
@@ -445,7 +588,13 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       pageUrl: responseUrl,
       title: "Limited security header coverage",
       detail: `Only ${securityHeadersPresent.length} of ${SECURITY_HEADERS.length} common security headers were detected.`,
-      severity: "low"
+      severity: "low",
+      locationSummary: `Missing ${SECURITY_HEADERS.length - securityHeadersPresent.length} common security header${SECURITY_HEADERS.length - securityHeadersPresent.length === 1 ? "" : "s"}`,
+      evidence: SECURITY_HEADERS.filter((header) => !headers.has(header)).map((header) => ({
+        selector: "response headers",
+        snippet: header,
+        note: "Header was not present in the HTTP response."
+      }))
     });
   }
 
