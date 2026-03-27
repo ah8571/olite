@@ -1,8 +1,8 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("oliteDesktop", {
-  scanSite: (payload: { url: string; maxPages: number; sitemapUrl?: string }) =>
-    ipcRenderer.invoke("scanner:run-site-scan", payload) as Promise<unknown>,
+  runScan: (payload: { url: string; reviewMode: "single" | "focused" | "full"; maxPages?: number; sitemapUrl?: string }) =>
+    ipcRenderer.invoke("scanner:run-scan", payload) as Promise<unknown>,
   saveReport: (payload: { suggestedName: string; content: string }) =>
     ipcRenderer.invoke("scanner:save-report", payload) as Promise<unknown>,
   getScanHistory: () => ipcRenderer.invoke("scanner:get-scan-history") as Promise<unknown>,

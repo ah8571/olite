@@ -2,22 +2,37 @@ const form = document.getElementById("scan-form");
 const status = document.getElementById("status");
 const submitButton = document.getElementById("submit-button");
 const summaryPanel = document.getElementById("summary-panel");
-const layerPanel = document.getElementById("layer-panel");
 const issueRowsPanel = document.getElementById("issue-rows-panel");
 const pagesPanel = document.getElementById("pages-panel");
 const recentScansPanel = document.getElementById("recent-scans");
-const savedTargetsPanel = document.getElementById("saved-targets");
 const urlInput = document.getElementById("url");
-const sitemapUrlInput = document.getElementById("sitemapUrl");
+const reviewScopeInput = document.getElementById("reviewScope");
+const scopeSingleButton = document.getElementById("scope-single-button");
+const scopeSitemapButton = document.getElementById("scope-sitemap-button");
+const sitemapOptions = document.getElementById("sitemap-options");
+const capPagesInput = document.getElementById("capPages");
+const maxPagesField = document.getElementById("max-pages-field");
 const maxPagesInput = document.getElementById("maxPages");
-const saveTargetButton = document.getElementById("save-target-button");
 const clearResultsButton = document.getElementById("clear-results-button");
-
-const TARGET_STORAGE_KEY = "olite-desktop-saved-targets";
+const scannerView = document.getElementById("scanner-view");
+const historyView = document.getElementById("history-view");
+const navScannerButton = document.getElementById("nav-scanner-button");
+const navHistoryButton = document.getElementById("nav-history-button");
 
 let lastResult = null;
 let scanHistory = [];
-let savedTargets = [];
+let activeView = "scanner";
+
+const VIEW_HASHES = {
+  scanner: "#/scanner",
+  history: "#/saved-scans"
+};
+
+const SEVERITY_ORDER = {
+  high: 0,
+  medium: 1,
+  low: 2
+};
 
 function escapeHtml(value) {
   return String(value)
@@ -47,110 +62,146 @@ function normalizeUrlValue(value) {
   return new URL(withProtocol).toString();
 }
 
-function loadSavedTargets() {
-  try {
-    const raw = window.localStorage.getItem(TARGET_STORAGE_KEY);
+function normalizeScope(value) {
+  return value === "sitemap" ? "sitemap" : "single";
+}
 
-    if (!raw) {
-      savedTargets = [];
-      return;
-    }
+function getCurrentScope() {
+  return normalizeScope(reviewScopeInput.value);
+}
 
-    const parsed = JSON.parse(raw);
-    savedTargets = Array.isArray(parsed) ? parsed : [];
-  } catch {
-    savedTargets = [];
+function getRequestedPageCap() {
+  return capPagesInput.checked ? Number(maxPagesInput.value || 25) : 100;
+}
+
+function applyScopeUI(scope) {
+  const normalizedScope = normalizeScope(scope);
+  const isSitemapScope = normalizedScope === "sitemap";
+
+  reviewScopeInput.value = normalizedScope;
+  scopeSingleButton.classList.toggle("is-active", !isSitemapScope);
+  scopeSingleButton.setAttribute("aria-pressed", String(!isSitemapScope));
+  scopeSitemapButton.classList.toggle("is-active", isSitemapScope);
+  scopeSitemapButton.setAttribute("aria-pressed", String(isSitemapScope));
+  sitemapOptions.classList.toggle("hidden", !isSitemapScope);
+  maxPagesField.classList.toggle("hidden", !isSitemapScope || !capPagesInput.checked);
+  urlInput.placeholder = isSitemapScope ? "https://example.com/sitemap.xml" : "https://example.com";
+  status.textContent = isSitemapScope
+    ? "Paste a sitemap for a broader site review. Add a page cap if you want to limit the first pass."
+    : "Enter one page URL when you only want to review that page.";
+}
+
+function reviewModeLabel(scope, maxPages, isCapped = true) {
+  if (normalizeScope(scope) === "sitemap") {
+    return isCapped ? `Full site review capped at ${maxPages} page${maxPages === 1 ? "" : "s"}` : "Full site review";
+  }
+
+  return "Single URL check";
+}
+
+function summaryModeLabel(result) {
+  if (result.sitemapUrl) {
+    return reviewModeLabel("sitemap", result.pageLimit, result.pageLimit < 100);
+  }
+
+  return reviewModeLabel("single", 1, true);
+}
+
+function buildScanRequest(inputUrl, scope, maxPages) {
+  const normalizedInput = normalizeUrlValue(inputUrl);
+
+  if (normalizeScope(scope) === "sitemap") {
+    const sitemapUrl = new URL(normalizedInput);
+
+    return {
+      normalizedInput,
+      reviewMode: "full",
+      startUrl: `${sitemapUrl.origin}/`,
+      sitemapUrl: normalizedInput,
+      maxPages
+    };
+  }
+
+  return {
+    normalizedInput,
+    reviewMode: "single",
+    startUrl: normalizedInput,
+    sitemapUrl: "",
+    maxPages: 1
+  };
+}
+
+function normalizeViewFromHash(hash) {
+  return hash === VIEW_HASHES.history ? "history" : "scanner";
+}
+
+function setActiveView(view) {
+  activeView = view === "history" ? "history" : "scanner";
+
+  const showingHistory = activeView === "history";
+
+  scannerView.classList.toggle("hidden", showingHistory);
+  historyView.classList.toggle("hidden", !showingHistory);
+  navScannerButton.classList.toggle("is-active", !showingHistory);
+  if (showingHistory) {
+    navScannerButton.removeAttribute("aria-current");
+  } else {
+    navScannerButton.setAttribute("aria-current", "page");
+  }
+  navHistoryButton.classList.toggle("is-active", showingHistory);
+  if (showingHistory) {
+    navHistoryButton.setAttribute("aria-current", "page");
+  } else {
+    navHistoryButton.removeAttribute("aria-current");
   }
 }
 
-function persistSavedTargets() {
-  window.localStorage.setItem(TARGET_STORAGE_KEY, JSON.stringify(savedTargets));
-}
+function navigateToView(view) {
+  const targetHash = view === "history" ? VIEW_HASHES.history : VIEW_HASHES.scanner;
 
-function renderSavedTargets() {
-  if (savedTargets.length === 0) {
-    savedTargetsPanel.className = "recent-list empty-list";
-    savedTargetsPanel.innerHTML = '<p class="form-note">Saved test targets will appear here after you add one from the scan form.</p>';
+  if (window.location.hash !== targetHash) {
+    window.location.hash = targetHash;
     return;
   }
 
-  savedTargetsPanel.className = "recent-list";
-  savedTargetsPanel.innerHTML = savedTargets
-    .map(
-      (item, index) => `
-        <article class="recent-item">
-          <div>
-            <strong>${escapeHtml(item.host)}</strong>
-            <p class="muted-text">${escapeHtml(item.url)}</p>
-            ${item.sitemapUrl ? `<p class="muted-text">Sitemap ${escapeHtml(item.sitemapUrl)}</p>` : ""}
-            <p class="muted-text">Default page limit ${escapeHtml(item.maxPages)}</p>
-          </div>
-          <div class="recent-actions">
-            <button class="recent-button" type="button" data-target-load="${index}">Load</button>
-            <button class="recent-button" type="button" data-target-run="${index}">Scan now</button>
-            <button class="recent-button" type="button" data-target-remove="${index}">Remove</button>
-          </div>
-        </article>
-      `
-    )
-    .join("");
+  setActiveView(view);
 }
 
 function resetResults() {
   lastResult = null;
   summaryPanel.className = "panel result-panel empty-state";
   summaryPanel.innerHTML = `
-    <p class="kicker">Summary</p>
-    <h2>Your scan summary will appear here.</h2>
-    <p class="lede">After the crawl finishes, you will see total pages scanned, grouped issues by layer, and per-page findings.</p>
+    <p class="kicker">Crawl Overview</p>
+    <h2>Your scan overview will appear here.</h2>
+    <p class="lede">After the crawl finishes, the issue table will show which pages have problems, how severe they are, and where they were found.</p>
   `;
-  layerPanel.className = "panel result-panel hidden";
-  layerPanel.innerHTML = "";
   issueRowsPanel.className = "panel result-panel hidden";
   issueRowsPanel.innerHTML = "";
   pagesPanel.className = "panel result-panel hidden";
   pagesPanel.innerHTML = "";
 }
 
-async function runScan(url, maxPages, sitemapUrl = "") {
+async function runScan(inputUrl, scope, maxPages) {
   status.textContent = "Scanning...";
   submitButton.disabled = true;
+  navigateToView("scanner");
 
   try {
-    const result = await window.oliteDesktop.scanSite({ url, maxPages, sitemapUrl: sitemapUrl || undefined });
-    loadResultIntoPanels(result, maxPages);
-    await storeCompletedScan(result, maxPages, sitemapUrl || undefined);
+    const request = buildScanRequest(inputUrl, scope, maxPages);
+    const result = await window.oliteDesktop.runScan({
+      url: request.startUrl,
+      reviewMode: request.reviewMode,
+      sitemapUrl: request.sitemapUrl || undefined,
+      maxPages: request.maxPages
+    });
+    loadResultIntoPanels(result, request.maxPages);
+    await storeCompletedScan(result, request.normalizedInput, normalizeScope(scope), request.maxPages, normalizeScope(scope) !== "sitemap" || capPagesInput.checked);
     status.textContent = "Scan complete.";
   } catch (error) {
     const message = error instanceof Error ? error.message : "The scan could not be completed.";
     status.textContent = message;
   } finally {
     submitButton.disabled = false;
-  }
-}
-
-function saveCurrentTarget() {
-  try {
-    const normalizedUrl = normalizeUrlValue(urlInput.value);
-    const normalizedSitemapUrl = sitemapUrlInput.value.trim() ? normalizeUrlValue(sitemapUrlInput.value) : "";
-    const maxPages = Number(maxPagesInput.value || 10);
-    const host = new URL(normalizedUrl).hostname;
-
-    savedTargets = [
-      { url: normalizedUrl, host, maxPages, sitemapUrl: normalizedSitemapUrl },
-      ...savedTargets.filter(
-        (item) => item.url !== normalizedUrl || (item.sitemapUrl || "") !== normalizedSitemapUrl
-      )
-    ].slice(0, 12);
-
-    persistSavedTargets();
-    renderSavedTargets();
-    urlInput.value = normalizedUrl;
-    sitemapUrlInput.value = normalizedSitemapUrl;
-    status.textContent = `Saved ${normalizedUrl} as a reusable test target.`;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "The target could not be saved.";
-    status.textContent = message;
   }
 }
 
@@ -167,15 +218,17 @@ function renderRecentScans() {
   recentScansPanel.innerHTML = recent
     .map(
       (item, index) => `
-        <article class="recent-item">
-          <div>
+        <article class="recent-item recent-item-compact">
+          <div class="recent-main">
             <strong>${escapeHtml(item.host)}</strong>
-            <p class="muted-text">${escapeHtml(item.url)}</p>
-            <p class="muted-text">Saved ${escapeHtml(formatRanAt(item.ranAt))}</p>
+            <span class="recent-divider">•</span>
+            <span class="muted-text">${escapeHtml(item.url)}</span>
+            <span class="recent-divider">•</span>
+            <span class="muted-text">Saved ${escapeHtml(formatRanAt(item.ranAt))}</span>
           </div>
-          <div class="recent-meta">
+          <div class="recent-meta recent-meta-compact">
             <span class="stat-pill">Score: ${escapeHtml(item.score)}</span>
-            <span class="stat-pill">Pages: ${escapeHtml(item.maxPages)}</span>
+            <span class="stat-pill">${escapeHtml(reviewModeLabel(item.reviewScope ?? (item.result?.sitemapUrl ? "sitemap" : "single"), item.maxPages, item.isCapped !== false))}</span>
           </div>
           <div class="recent-actions">
             <button class="recent-button" type="button" data-history-view="${index}">Open report</button>
@@ -189,21 +242,20 @@ function renderRecentScans() {
 
 function loadResultIntoPanels(result, maxPages) {
   lastResult = result;
-  urlInput.value = result.normalizedUrl;
-  sitemapUrlInput.value = result.sitemapUrl ?? "";
-  maxPagesInput.value = String(maxPages);
+  urlInput.value = result.sitemapUrl ?? result.normalizedUrl;
+  maxPagesInput.value = String(Math.min(Math.max(maxPages, 10), 100));
   renderSummary(result);
-  renderLayers(result);
   renderIssueRows(result);
   renderPages(result);
 }
 
-async function storeCompletedScan(result, maxPages, sitemapUrl) {
+async function storeCompletedScan(result, originalInput, reviewScope, maxPages, isCapped) {
   const nextHistory = await window.oliteDesktop.storeScanResult({
-    url: result.normalizedUrl,
-    host: new URL(result.normalizedUrl).hostname,
+    url: originalInput,
+    host: new URL(originalInput).hostname,
+    reviewScope,
     maxPages,
-    sitemapUrl,
+    isCapped,
     score: result.score,
     summary: result.summary,
     ranAt: new Date().toISOString(),
@@ -306,6 +358,96 @@ function flattenIssueRows(result) {
   );
 }
 
+function buildIssueTableRows(result) {
+  return result.pages.flatMap((page) =>
+    page.issues.map((issue) => ({
+      pageUrl: page.normalizedUrl,
+      pageTitle: page.title,
+      layer: issue.layer,
+      severity: issue.severity,
+      issueTitle: issue.title,
+      issueDetail: issue.detail,
+      locationSummary: issue.locationSummary ?? "",
+      evidence: Array.isArray(issue.evidence) ? issue.evidence : []
+    }))
+  );
+}
+
+function sortIssueRows(rows) {
+  return [...rows].sort((left, right) => {
+    const severityDelta = (SEVERITY_ORDER[left.severity] ?? 99) - (SEVERITY_ORDER[right.severity] ?? 99);
+
+    if (severityDelta !== 0) {
+      return severityDelta;
+    }
+
+    const pageDelta = left.pageUrl.localeCompare(right.pageUrl);
+
+    if (pageDelta !== 0) {
+      return pageDelta;
+    }
+
+    return left.issueTitle.localeCompare(right.issueTitle);
+  });
+}
+
+function buildIssueSummary(rows) {
+  const counts = rows.reduce(
+    (accumulator, row) => {
+      accumulator[row.severity] += 1;
+      return accumulator;
+    },
+    { high: 0, medium: 0, low: 0 }
+  );
+
+  return [
+    `<span class="stat-pill severity-pill high">High: ${escapeHtml(counts.high)}</span>`,
+    `<span class="stat-pill severity-pill medium">Medium: ${escapeHtml(counts.medium)}</span>`,
+    `<span class="stat-pill severity-pill low">Low: ${escapeHtml(counts.low)}</span>`
+  ].join("");
+}
+
+function renderEvidenceColumn(evidence) {
+  if (!Array.isArray(evidence) || evidence.length === 0) {
+    return '<div class="table-mono">-</div>';
+  }
+
+  const preview = evidence[0];
+  const previewLines = [
+    preview?.selector ? `<div><strong>Selector:</strong> ${escapeHtml(preview.selector)}</div>` : "",
+    preview?.snippet ? `<div><strong>Snippet:</strong> ${escapeHtml(preview.snippet)}</div>` : "",
+    preview?.note ? `<div><strong>Note:</strong> ${escapeHtml(preview.note)}</div>` : ""
+  ]
+    .filter(Boolean)
+    .join("");
+
+  return `
+    <div class="table-evidence-preview">${previewLines || "<div>-</div>"}</div>
+    ${
+      evidence.length > 1 || (preview?.snippet && preview.snippet.length > 120) || preview?.note
+        ? `
+          <details class="table-evidence-details">
+            <summary class="table-evidence-summary">More evidence (${escapeHtml(evidence.length)})</summary>
+            <div class="table-evidence-list">
+              ${evidence
+                .map(
+                  (item) => `
+                    <div class="table-evidence-card">
+                      ${item.selector ? `<div class="table-evidence-line"><strong>Selector:</strong> ${escapeHtml(item.selector)}</div>` : ""}
+                      ${item.snippet ? `<div class="table-evidence-line"><strong>Snippet:</strong> ${escapeHtml(item.snippet)}</div>` : ""}
+                      ${item.note ? `<div class="table-evidence-line"><strong>Note:</strong> ${escapeHtml(item.note)}</div>` : ""}
+                    </div>
+                  `
+                )
+                .join("")}
+            </div>
+          </details>
+        `
+        : ""
+    }
+  `;
+}
+
 async function exportIssueCsv() {
   if (!lastResult) {
     return;
@@ -332,12 +474,17 @@ function severityLabel(severity) {
 
 function renderSummary(result) {
   const scannedUrls = result.pages.map((page) => page.normalizedUrl);
+  const rows = sortIssueRows(flattenIssueRows(result));
+  const layerCounts = Object.entries(result.issuesByLayer)
+    .filter(([, issues]) => Array.isArray(issues) && issues.length > 0)
+    .map(([layer, issues]) => `<span class="stat-pill layer-pill">${escapeHtml(layer)}: ${escapeHtml(issues.length)}</span>`)
+    .join("");
 
   summaryPanel.classList.remove("empty-state");
   summaryPanel.innerHTML = `
     <div class="summary-head">
       <div>
-        <p class="kicker">Summary</p>
+        <p class="kicker">Crawl Overview</p>
         <h2>${escapeHtml(result.summary)}</h2>
         <p class="lede">Start URL: ${escapeHtml(result.normalizedUrl)}</p>
       </div>
@@ -346,8 +493,10 @@ function renderSummary(result) {
     <div class="summary-stats">
       <span class="stat-pill">Scanned pages: ${escapeHtml(result.scannedPages)}</span>
       <span class="stat-pill">Discovered pages: ${escapeHtml(result.discoveredPages)}</span>
-      <span class="stat-pill">Page limit: ${escapeHtml(result.pageLimit)}</span>
-      ${result.sitemapUrl ? `<span class="stat-pill">Sitemap used</span>` : ""}
+      <span class="stat-pill">Review: ${escapeHtml(summaryModeLabel(result))}</span>
+      ${result.sitemapUrl ? `<span class="stat-pill">Sitemap seeded</span>` : ""}
+      ${rows.length > 0 ? buildIssueSummary(rows) : '<span class="stat-pill">No issues surfaced</span>'}
+      ${layerCounts}
     </div>
     <div class="summary-section">
       <h3>Scanned URLs</h3>
@@ -367,9 +516,6 @@ function renderSummary(result) {
       <button id="export-json-button" class="button secondary-button" type="button">Export JSON report</button>
       <button id="export-csv-button" class="button secondary-button" type="button">Export CSV issue list</button>
     </div>
-    <div class="issue-list">
-      ${result.limitationNotes.map((note) => `<div class="issue-card"><p class="issue-copy">${escapeHtml(note)}</p></div>`).join("")}
-    </div>
   `;
 
   document.getElementById("export-json-button")?.addEventListener("click", exportReport);
@@ -377,13 +523,13 @@ function renderSummary(result) {
 }
 
 function renderIssueRows(result) {
-  const rows = flattenIssueRows(result);
+  const rows = sortIssueRows(buildIssueTableRows(result));
 
   issueRowsPanel.classList.remove("hidden");
   issueRowsPanel.innerHTML = `
-    <p class="kicker">Issue Rows</p>
-    <h2>Table view of the exportable issue list</h2>
-    <p class="form-note">This mirrors the CSV structure so teams can review findings in-app before exporting.</p>
+    <p class="kicker">Issues Found</p>
+    <h2>Issue list</h2>
+    <p class="form-note">This is the main crawler-style view: what the problem is, where it appears, and the supporting selector, snippet, and note details.</p>
     ${
       rows.length === 0
         ? '<div class="issue-card"><p class="issue-copy">No issue rows to display for this scan.</p></div>'
@@ -392,11 +538,11 @@ function renderIssueRows(result) {
             <table class="issue-table">
               <thead>
                 <tr>
+                  <th>Severity</th>
+                  <th>Problem</th>
+                  <th>Where</th>
                   <th>Page</th>
                   <th>Layer</th>
-                  <th>Severity</th>
-                  <th>Issue</th>
-                  <th>Location</th>
                   <th>Selector</th>
                 </tr>
               </thead>
@@ -405,21 +551,20 @@ function renderIssueRows(result) {
                   .map(
                     (row) => `
                       <tr>
+                        <td><span class="severity-badge severity-${escapeHtml(row.severity)}">${escapeHtml(severityLabel(row.severity))}</span></td>
+                        <td>
+                          <strong class="table-problem">${escapeHtml(row.issueTitle)}</strong>
+                          <div class="table-subtext">${escapeHtml(row.issueDetail)}</div>
+                        </td>
+                        <td>
+                          <div class="table-location">${escapeHtml(row.locationSummary || "-")}</div>
+                        </td>
                         <td>
                           <strong>${escapeHtml(row.pageTitle)}</strong>
                           <div class="table-subtext">${escapeHtml(row.pageUrl)}</div>
                         </td>
-                        <td>${escapeHtml(row.layer)}</td>
-                        <td><span class="severity-badge severity-${escapeHtml(row.severity)}">${escapeHtml(severityLabel(row.severity))}</span></td>
-                        <td>
-                          <strong>${escapeHtml(row.issueTitle)}</strong>
-                          <div class="table-subtext">${escapeHtml(row.issueDetail)}</div>
-                        </td>
-                        <td>
-                          <div>${escapeHtml(row.locationSummary || "-")}</div>
-                          ${row.note ? `<div class="table-subtext">${escapeHtml(row.note)}</div>` : ""}
-                        </td>
-                        <td><div class="table-mono">${escapeHtml(row.selector || "-")}</div></td>
+                        <td><span class="table-layer">${escapeHtml(row.layer)}</span></td>
+                        <td>${renderEvidenceColumn(row.evidence)}</td>
                       </tr>
                     `
                   )
@@ -432,45 +577,11 @@ function renderIssueRows(result) {
   `;
 }
 
-function renderLayers(result) {
-  const layers = [
-    ["accessibility", "Accessibility"],
-    ["privacy", "Privacy"],
-    ["consent", "Consent"],
-    ["security", "Security"]
-  ];
-
-  layerPanel.classList.remove("hidden");
-  layerPanel.innerHTML = `
-    <p class="kicker">Compliance Layers</p>
-    <h2>Grouped findings by layer</h2>
-    <div class="layer-grid">
-      ${layers
-        .map(([key, label]) => {
-          const issues = result.issuesByLayer[key] ?? [];
-
-          return `
-            <article class="layer-card">
-              <div class="summary-head">
-                <div>
-                  <h3>${escapeHtml(label)}</h3>
-                  <p class="layer-note">${escapeHtml(issues.length === 0 ? "No obvious issues surfaced in this layer." : `${issues.length} issue${issues.length === 1 ? "" : "s"} surfaced.`)}</p>
-                </div>
-                <div class="layer-score">${escapeHtml(issues.length)} issue${issues.length === 1 ? "" : "s"}</div>
-              </div>
-            </article>
-          `;
-        })
-        .join("")}
-    </div>
-  `;
-}
-
 function renderPages(result) {
   pagesPanel.classList.remove("hidden");
   pagesPanel.innerHTML = `
-    <p class="kicker">Page Findings</p>
-    <h2>What the crawl found page by page</h2>
+    <p class="kicker">Page Detail</p>
+    <h2>Expanded findings by page</h2>
     <div class="page-grid">
       ${result.pages
         .map(
@@ -542,14 +653,14 @@ form.addEventListener("submit", async (event) => {
 
   const formData = new FormData(form);
   const url = normalizeUrlValue(formData.get("url"));
-  const sitemapUrl = String(formData.get("sitemapUrl") ?? "").trim();
-  const maxPages = Number(formData.get("maxPages") ?? 10);
+  const reviewScope = String(formData.get("reviewScope") ?? "single");
+  const maxPages = normalizeScope(reviewScope) === "sitemap" ? getRequestedPageCap() : 1;
   urlInput.value = url;
-  sitemapUrlInput.value = sitemapUrl ? normalizeUrlValue(sitemapUrl) : "";
-  await runScan(url, maxPages, sitemapUrlInput.value);
+  if (normalizeScope(reviewScope) === "sitemap") {
+    maxPagesInput.value = String(maxPages);
+  }
+  await runScan(url, reviewScope, maxPages);
 });
-
-saveTargetButton.addEventListener("click", saveCurrentTarget);
 
 clearResultsButton.addEventListener("click", () => {
   resetResults();
@@ -557,7 +668,6 @@ clearResultsButton.addEventListener("click", () => {
 });
 
 recentScansPanel.addEventListener("click", (event) => {
-  sitemapUrlInput.value = item.result.sitemapUrl ?? item.sitemapUrl ?? "";
   const target = event.target;
 
   if (!(target instanceof HTMLElement)) {
@@ -576,54 +686,41 @@ recentScansPanel.addEventListener("click", (event) => {
 
   if (viewIndex !== null) {
     loadResultIntoPanels(item.result, item.maxPages);
+    navigateToView("scanner");
     status.textContent = `Loaded saved report for ${item.url}.`;
     return;
   }
 
   urlInput.value = item.url;
-  maxPagesInput.value = String(item.maxPages);
+  capPagesInput.checked = item.isCapped !== false;
+  maxPagesInput.value = String(item.maxPages || 25);
+  applyScopeUI(item.reviewScope ?? (item.result?.sitemapUrl ? "sitemap" : "single"));
+  navigateToView("scanner");
   status.textContent = `Loaded ${item.url}. Run the scan to refresh the result.`;
 });
 
-savedTargetsPanel.addEventListener("click", async (event) => {
-  const target = event.target;
-
-  if (!(target instanceof HTMLElement)) {
-    return;
-  }
-
-  const loadIndex = target.getAttribute("data-target-load");
-  const runIndex = target.getAttribute("data-target-run");
-  const removeIndex = target.getAttribute("data-target-remove");
-
-  const indexValue = loadIndex ?? runIndex ?? removeIndex;
-  const item = indexValue === null ? null : savedTargets[Number(indexValue)];
-
-  if (!item) {
-    return;
-  }
-
-  if (removeIndex !== null) {
-    savedTargets = savedTargets.filter((_, index) => index !== Number(removeIndex));
-    persistSavedTargets();
-    renderSavedTargets();
-    status.textContent = `Removed ${item.url} from saved test targets.`;
-    return;
-  }
-
-  urlInput.value = item.url;
-  sitemapUrlInput.value = item.sitemapUrl ?? "";
-  maxPagesInput.value = String(item.maxPages);
-
-  if (loadIndex !== null) {
-    status.textContent = `Loaded ${item.url}. Run the scan when you want a fresh result.`;
-    return;
-  }
-
-  await runScan(item.url, item.maxPages, item.sitemapUrl ?? "");
+window.addEventListener("hashchange", () => {
+  setActiveView(normalizeViewFromHash(window.location.hash));
 });
 
-loadSavedTargets();
-renderSavedTargets();
+scopeSingleButton.addEventListener("click", () => {
+  applyScopeUI("single");
+});
+
+scopeSitemapButton.addEventListener("click", () => {
+  applyScopeUI("sitemap");
+});
+
+capPagesInput.addEventListener("change", () => {
+  applyScopeUI(getCurrentScope());
+});
+
 resetResults();
+applyScopeUI("single");
+setActiveView(normalizeViewFromHash(window.location.hash || VIEW_HASHES.scanner));
+
+if (!window.location.hash) {
+  window.location.hash = VIEW_HASHES.scanner;
+}
+
 void initializeScanHistory();

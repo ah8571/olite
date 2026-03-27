@@ -3,23 +3,48 @@ import { writeFile } from "node:fs/promises";
 
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 
-import { scanPublicSite } from "../../lib/scanner-core";
+import { scanPublicSite, scanSinglePage } from "../../lib/scanner-core";
 import type { SiteScanResult } from "../../lib/scanner-core";
 
 const HISTORY_FILE_NAME = "scan-history.json";
 const MAX_STORED_SCANS = 12;
 const isDevelopment = !app.isPackaged;
 
+type ReviewMode = "single" | "focused" | "full";
+
 type StoredScanHistoryItem = {
   url: string;
   host: string;
   maxPages: number;
+  reviewMode?: ReviewMode;
   sitemapUrl?: string;
   score: number;
   summary: string;
   ranAt: string;
   result: SiteScanResult;
 };
+
+function buildSiteResultFromSinglePage(page: Awaited<ReturnType<typeof scanSinglePage>>, startUrl: string): SiteScanResult {
+  const issuesByLayer = {
+    accessibility: page.issues.filter((issue) => issue.layer === "accessibility"),
+    privacy: page.issues.filter((issue) => issue.layer === "privacy"),
+    consent: page.issues.filter((issue) => issue.layer === "consent"),
+    security: page.issues.filter((issue) => issue.layer === "security")
+  };
+
+  return {
+    startUrl,
+    normalizedUrl: page.normalizedUrl,
+    score: page.score,
+    summary: page.summary,
+    scannedPages: 1,
+    discoveredPages: 1,
+    pageLimit: 1,
+    pages: [page],
+    issuesByLayer,
+    limitationNotes: page.limitationNotes
+  };
+}
 
 function getHistoryFilePath() {
   return path.join(app.getPath("userData"), HISTORY_FILE_NAME);
@@ -66,14 +91,24 @@ function createWindow() {
   }
 }
 
-ipcMain.handle("scanner:run-site-scan", async (_event, payload: { url: string; maxPages: number; sitemapUrl?: string }) => {
-  return scanPublicSite({
-    startUrl: payload.url,
-    sitemapUrl: payload.sitemapUrl,
-    maxPages: payload.maxPages,
-    sameOriginOnly: true
-  });
-});
+ipcMain.handle(
+  "scanner:run-scan",
+  async (_event, payload: { url: string; reviewMode: ReviewMode; maxPages?: number; sitemapUrl?: string }) => {
+    if (payload.reviewMode === "single") {
+      const page = await scanSinglePage(payload.url, "local");
+      return buildSiteResultFromSinglePage(page, payload.url);
+    }
+
+    const maxPages = Math.max(1, Math.min(payload.maxPages ?? (payload.reviewMode === "full" ? 25 : 10), 100));
+
+    return scanPublicSite({
+      startUrl: payload.url,
+      sitemapUrl: payload.sitemapUrl,
+      maxPages,
+      sameOriginOnly: true
+    });
+  }
+);
 
 ipcMain.handle("scanner:get-scan-history", async () => {
   return readStoredScanHistory();

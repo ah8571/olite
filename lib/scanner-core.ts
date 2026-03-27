@@ -739,7 +739,7 @@ async function analyzeFetchedPage(rawUrl: string, mode: SinglePageMode): Promise
 export async function scanPublicSite(options: SiteScanOptions): Promise<SiteScanResult> {
   const startUrl = normalizeUrl(options.startUrl);
   const sitemapUrl = options.sitemapUrl ? normalizeUrl(options.sitemapUrl) : null;
-  const maxPages = Math.max(1, Math.min(options.maxPages ?? 10, 50));
+  const maxPages = Math.max(1, Math.min(options.maxPages ?? 10, 100));
   const queue = [startUrl.toString()];
   const discovered = new Set(queue);
   const visited = new Set<string>();
