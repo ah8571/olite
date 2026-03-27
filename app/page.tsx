@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { getCommerceConfig } from "@/lib/commerce";
 import { blogPages } from "@/lib/blog-pages";
 import { toolConfig, toolOrder } from "@/lib/scanner-config";
 
@@ -17,6 +18,18 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
+  const commerce = getCommerceConfig();
+  const downloadTitle = commerce.hasDesktopDownload
+    ? "Desktop beta downloads are live."
+    : commerce.hasCheckout
+      ? "Checkout is ready. Desktop delivery can start from the release flow."
+      : "Use the free scans first. The desktop app is not available yet.";
+  const downloadCopy = commerce.hasDesktopDownload
+    ? "The first local desktop build can now be offered as a beta download while the deeper workflow keeps evolving."
+    : commerce.hasCheckout
+      ? "The hosted tools still make the product easy to try first, and the paid desktop path can now be routed through checkout while downloads stay tied to releases."
+      : "The hosted tools are for quick testing and are capped at 2 free scans per day. The desktop app is still in development and there is not a public download available yet.";
+
   return (
     <>
       <section className="hero">
@@ -153,8 +166,11 @@ export default function HomePage() {
               <li>Desktop app path for broader local scans and repeatable workflows</li>
             </ul>
             <div className="hero-actions compact">
-              <Link className="button" href="https://github.com/ah8571/olite/releases">
-                Open release page
+              <Link className="button" href={commerce.monthlyCheckoutUrl ?? commerce.desktopDownloadUrl}>
+                {commerce.monthlyCheckoutUrl ? "Start desktop beta" : "Open release page"}
+              </Link>
+              <Link className="button-secondary" href={commerce.desktopDownloadUrl}>
+                {commerce.hasDesktopDownload ? "Download latest desktop build" : "Open release page"}
               </Link>
             </div>
           </div>
@@ -165,39 +181,35 @@ export default function HomePage() {
         <div className="container split-grid">
           <div>
             <p className="kicker">Download</p>
-            <h2 className="section-title">Use the free scans first. The desktop app is not available yet.</h2>
-            <p className="section-copy">
-              The hosted tools are for quick testing and are capped at 2 free scans per day. The desktop app
-              is still in development and there is not a public download available yet.
-            </p>
+            <h2 className="section-title">{downloadTitle}</h2>
+            <p className="section-copy">{downloadCopy}</p>
             <div className="hero-actions">
-              <Link
-                className="button"
-                href="https://github.com/ah8571/olite/releases"
-              >
-                Open release page
+              <Link className="button" href={commerce.desktopDownloadUrl}>
+                {commerce.hasDesktopDownload ? "Download latest desktop build" : "Open release page"}
               </Link>
-              <Link
-                className="button-secondary"
-                href="mailto:hello@olite.dev?subject=Olite%20desktop%20beta%20interest"
-              >
-                Join desktop beta list
+              <Link className="button-secondary" href={commerce.monthlyCheckoutUrl ?? commerce.desktopWaitlistUrl}>
+                {commerce.monthlyCheckoutUrl ? "Buy monthly access" : "Join desktop beta list"}
               </Link>
+              {commerce.yearlyCheckoutUrl ? (
+                <Link className="button-secondary" href={commerce.yearlyCheckoutUrl}>
+                  Buy annual access
+                </Link>
+              ) : null}
             </div>
           </div>
           <div className="section-panel">
             <p className="kicker">Current Status</p>
             <h2>What to expect from the first desktop MVP</h2>
             <ul className="bullet-list">
-              <li>Desktop app currently unavailable while the first MVP is still being built</li>
+              <li>{commerce.hasDesktopDownload ? "Desktop beta can be shared as a downloadable build" : "Desktop app remains in active MVP development"}</li>
               <li>Step beyond the 2 free hosted scans per day</li>
               <li>Local crawl of a simple public website starting from one URL</li>
               <li>Grouped findings for accessibility, privacy, consent, and basic security signals</li>
               <li>Exportable results for early remediation and client review workflows</li>
             </ul>
             <p className="section-copy">
-              Start with the hosted scanners to test the site today. The desktop app will come later once the
-              first installable version is ready.
+              Start with the hosted scanners to test the site today. Then move into the local workflow when
+              you need repeatable scans, exportable reports, and a broader crawl.
             </p>
           </div>
         </div>

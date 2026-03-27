@@ -9,3 +9,5 @@ pnpm-debug.log*
 .env*
 !.env.example
 desktop/dist/
+cli/dist/
+tmp/

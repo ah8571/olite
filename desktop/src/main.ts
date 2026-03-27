@@ -47,10 +47,10 @@ async function writeStoredScanHistory(items: StoredScanHistoryItem[]) {
 
 function createWindow() {
   const window = new BrowserWindow({
-    width: 1260,
-    height: 860,
-    minWidth: 1100,
-    minHeight: 760,
+    width: 1180,
+    height: 820,
+    minWidth: 820,
+    minHeight: 620,
     backgroundColor: "#f7f2e8",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 
+import { getCommerceConfig } from "@/lib/commerce";
+
 export const metadata: Metadata = {
   title: "Pricing",
   description:
@@ -18,39 +20,54 @@ type PricingPlan = {
   featured?: boolean;
 };
 
-const plans: PricingPlan[] = [
-  {
-    name: "Free",
-    label: "Live now",
-    price: "$0",
-    note: "Best for quick first-pass checks",
-    features: [
-      "Free accessibility scanner for one public page at a time",
-      "Free privacy checker for one public page at a time",
-      "Instant, lightweight results for obvious public-page signals",
-      "No setup required"
-    ],
-    href: "/tools/accessibility",
-    cta: "Start free"
-  },
-  {
-    name: "Pro",
-    label: "Planned",
-    price: "$10",
-    note: "Per user per month, likely for solo developers and small teams",
-    features: [
-      "Local-first scans for broader coverage",
-      "Repeatable reports and project history",
-      "More pages, more depth, less hosted limitation",
-      "CLI-oriented workflow for technical users"
-    ],
-    href: "/",
-    cta: "See product shape",
-    featured: true
-  }
-];
-
 export default function PricingPage() {
+  const commerce = getCommerceConfig();
+  const plans: PricingPlan[] = [
+    {
+      name: "Free",
+      label: "Live now",
+      price: "$0",
+      note: "Best for quick first-pass checks",
+      features: [
+        "Free accessibility scanner for one public page at a time",
+        "Free privacy checker for one public page at a time",
+        "Instant, lightweight results for obvious public-page signals",
+        "No setup required"
+      ],
+      href: "/tools/accessibility",
+      cta: "Start free"
+    },
+    {
+      name: "Pro Monthly",
+      label: commerce.monthlyCheckoutUrl ? "Checkout live" : "Planned",
+      price: "$10",
+      note: "Per user per month for the local-first desktop and CLI workflow",
+      features: [
+        "Local-first scans for broader coverage",
+        "Repeatable reports and local project history",
+        "Desktop shell on top of a shared scan engine",
+        "CLI-oriented workflow for technical users"
+      ],
+      href: commerce.monthlyCheckoutUrl ?? commerce.earlyAccessUrl,
+      cta: commerce.monthlyCheckoutUrl ? "Buy monthly access" : "Join early access",
+      featured: true
+    },
+    {
+      name: "Pro Annual",
+      label: commerce.yearlyCheckoutUrl ? "Checkout live" : "Planned",
+      price: "$50",
+      note: "Yearly license-style option for individuals and small teams",
+      features: [
+        "Cheaper annual path for a lightweight utility software model",
+        "Same local scan workflow without cloud-heavy pricing",
+        "Good fit for consultants, agencies, and repeat audits",
+        "Keeps billing on the website instead of inside the app"
+      ],
+      href: commerce.yearlyCheckoutUrl ?? commerce.earlyAccessUrl,
+      cta: commerce.yearlyCheckoutUrl ? "Buy annual access" : "Request annual option"
+    }
+  ];
+
   return (
     <>
       <section className="pricing-hero">
@@ -70,11 +87,8 @@ export default function PricingPage() {
               <Link className="button-secondary" href="/tools/privacy">
                 Try privacy checker
               </Link>
-              <Link
-                className="button-secondary"
-                href="mailto:hello@olite.dev?subject=Olite%20early%20access%20waitlist"
-              >
-                Join early access waitlist
+              <Link className="button-secondary" href={commerce.monthlyCheckoutUrl ?? commerce.earlyAccessUrl}>
+                {commerce.monthlyCheckoutUrl ? "Buy monthly access" : "Join early access waitlist"}
               </Link>
             </div>
           </div>
@@ -117,12 +131,19 @@ export default function PricingPage() {
               you need.
             </p>
             <div className="hero-actions compact">
-              <Link
-                className="button"
-                href="mailto:hello@olite.dev?subject=Olite%20CLI%20or%20desktop%20early%20access"
-              >
+              <Link className="button" href={commerce.earlyAccessUrl}>
                 Email for early access
               </Link>
+              {commerce.monthlyCheckoutUrl ? (
+                <Link className="button-secondary" href={commerce.monthlyCheckoutUrl}>
+                  Open monthly checkout
+                </Link>
+              ) : null}
+              {commerce.yearlyCheckoutUrl ? (
+                <Link className="button-secondary" href={commerce.yearlyCheckoutUrl}>
+                  Open annual checkout
+                </Link>
+              ) : null}
             </div>
           </div>
           <div className="section-panel">
@@ -140,7 +161,7 @@ export default function PricingPage() {
             <ul className="bullet-list">
               <li>Broader crawls across multiple pages and templates</li>
               <li>Repeatable scanning history and project organization</li>
-              <li>Local-first or CLI-based workflows for technical teams</li>
+              <li>Local-first desktop and CLI-based workflows for technical teams</li>
             </ul>
           </div>
         </div>

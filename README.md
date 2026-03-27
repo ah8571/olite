@@ -102,6 +102,31 @@ Olite is in the early concept and planning stage.
 
 This repository currently serves as the project home while the product scope, MVP, and implementation approach are being defined.
 
+The current local prototype now includes:
+
+- a shared scan engine in [lib/scanner-core.ts](lib/scanner-core.ts)
+- an Electron desktop shell in [desktop/src/main.ts](desktop/src/main.ts)
+- a new CLI entry point in [cli/src/main.ts](cli/src/main.ts)
+
+That gives the project a clean base where the desktop app and CLI can both wrap the same underlying scan logic.
+
+## Local Development
+
+- `npm install`
+- `npm run desktop:start` to launch the desktop prototype
+- `npm run cli:start -- --url https://example.com --max-pages 5 --output ./tmp/example-report.json` to run the new CLI wrapper
+
+## Billing And Download Wiring
+
+The website pricing and download calls-to-action can now be driven by environment variables in [.env.example](.env.example).
+
+Useful values:
+
+- `NEXT_PUBLIC_OLITE_LS_MONTHLY_URL` for a Lemon Squeezy monthly checkout link
+- `NEXT_PUBLIC_OLITE_LS_YEARLY_URL` for a Lemon Squeezy annual checkout link
+- `NEXT_PUBLIC_OLITE_DESKTOP_DOWNLOAD_URL` for the current desktop beta download URL
+- `NEXT_PUBLIC_OLITE_RELEASES_URL` for the public releases page fallback
+
 ## Repository Docs
 
 - [docs/Concept.md](docs/Concept.md) contains the current structured concept and MVP framing.

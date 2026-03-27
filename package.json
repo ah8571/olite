@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "cli:build": "tsc -p cli/tsconfig.json",
+    "cli:start": "npm run cli:build && node cli/dist/cli/src/main.js",
+    "cli:typecheck": "tsc -p cli/tsconfig.json --noEmit",
     "desktop:build": "tsc -p desktop/tsconfig.json",
     "desktop:start": "npm run desktop:build && electron desktop/dist/desktop/src/main.js",
     "desktop:typecheck": "tsc -p desktop/tsconfig.json --noEmit"

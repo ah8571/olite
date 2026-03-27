@@ -384,6 +384,21 @@ select {
   color: #5d1f0a;
 }
 
+@media (max-width: 1280px) {
+  .desktop-shell {
+    grid-template-columns: 320px minmax(0, 1fr);
+  }
+
+  .desktop-sidebar,
+  .desktop-main {
+    padding: 22px;
+  }
+
+  .panel {
+    padding: 20px;
+  }
+}
+
 @media (max-width: 1000px) {
   .desktop-shell {
     grid-template-columns: 1fr;
@@ -397,5 +412,47 @@ select {
   .layer-grid,
   .page-grid {
     grid-template-columns: 1fr;
+  }
+
+  .issue-table {
+    min-width: 760px;
+  }
+}
+
+@media (max-width: 720px) {
+  .desktop-sidebar,
+  .desktop-main {
+    padding: 16px;
+  }
+
+  .panel {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .actions,
+  .recent-actions,
+  .recent-meta,
+  .summary-stats,
+  .badge-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .button,
+  .recent-button,
+  .secondary-button {
+    width: 100%;
+  }
+
+  .summary-score,
+  .layer-score,
+  .stat-pill,
+  .badge {
+    justify-content: flex-start;
+  }
+
+  .issue-table {
+    min-width: 640px;
   }
 }
