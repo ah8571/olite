@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { PricingSection } from "@/app/components/pricing-section";
 import { getCommerceConfig } from "@/lib/commerce";
 import { toolConfig, toolOrder } from "@/lib/scanner-config";
 
@@ -189,36 +190,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="page-section">
-        <div className="container split-grid">
-          <div>
-            <p className="kicker">Pricing</p>
-            <h2 className="section-title">Start with 2 free scans per day.</h2>
-            <p className="section-copy">
-              The hosted scanners are meant to make the product easy to try. Once you need more than 2 free
-              scans per day, broader local scans, or repeatable workflows, the desktop app is the path
-              forward.
-            </p>
-          </div>
-          <div className="section-panel">
-            <p className="kicker">Current Offer</p>
-            <h2>Test the site here, then move into the app for more.</h2>
-            <ul className="bullet-list">
-              <li>2 free hosted scans per day across the accessibility and privacy tools</li>
-              <li>Fast public-page checks to see whether the site is worth a deeper pass</li>
-              <li>Desktop app path for broader local scans and repeatable workflows</li>
-            </ul>
-            <div className="hero-actions compact">
-              <Link className="button" href={commerce.monthlyCheckoutUrl ?? commerce.desktopDownloadUrl}>
-                {commerce.monthlyCheckoutUrl ? "Start desktop beta" : "Open release page"}
-              </Link>
-              <Link className="button-secondary" href={commerce.desktopDownloadUrl}>
-                {commerce.hasDesktopDownload ? "Download latest desktop build" : "Open release page"}
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PricingSection commerce={commerce} />
 
       <section className="page-section" id="download">
         <div className="container split-grid">

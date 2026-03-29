@@ -10,7 +10,7 @@ export default function PrivacyPolicyPage() {
     <section className="page-section">
       <div className="container section-panel">
         <p className="kicker">Privacy Policy</p>
-        <h1 className="section-title">Privacy Policy for Nudadequa LLC DBA Olite</h1>
+        <h1 className="section-title">Privacy Policy for Olite</h1>
         <p className="section-copy">Effective date: March 29, 2026</p>
         <p className="section-copy">
           Nudadequa LLC, doing business as Olite, provides hosted website scanning tools, a local-first desktop

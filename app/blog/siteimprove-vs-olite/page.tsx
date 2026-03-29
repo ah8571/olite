@@ -61,7 +61,7 @@ export default function SiteimproveVsOlitePage() {
               <p className="section-copy">
                 Teams comparing Siteimprove and Olite are usually not making a like-for-like choice. One tool
                 appears better suited to broader governance, oversight, and reporting. The other is being
-                positioned as a lighter way to get real accessibility and privacy signals quickly.
+                positioned as a lighter way to get real accessibility and privacy signals quickly (<a href="https://www.siteimprove.com/" target="_blank" rel="noreferrer">Siteimprove</a>).
               </p>
             </section>
 

@@ -36,7 +36,7 @@ export default function BestPrivacyComplianceToolsPage() {
               <p className="section-copy">
                 The useful starting question is not which privacy product is most famous. It is whether the
                 team needs cookie-consent tooling, policy generation, broader governance, or a quick website
-                standards check to identify visible issues first.
+                standards check to identify visible issues first (<a href="https://www.cookiebot.com/en/cmp/" target="_blank" rel="noreferrer">Cookiebot</a>, <a href="https://www.onetrust.com/products/cookie-consent/" target="_blank" rel="noreferrer">OneTrust</a>, <a href="https://termly.io/products/consent-management-platform/" target="_blank" rel="noreferrer">Termly</a>).
               </p>
             </section>
 
@@ -45,14 +45,14 @@ export default function BestPrivacyComplianceToolsPage() {
               <div className="cards-grid two-up">
                 {[
                   ["Olite", "Lightweight privacy standards checks paired with accessibility scanning and a local-first roadmap."],
-                  ["Cookiebot", "Cookie-consent and privacy-focused workflow tooling."],
-                  ["OneTrust", "Well-known privacy and governance platform with broader enterprise positioning."],
-                  ["Termly", "Privacy-policy and consent-oriented product for simpler website compliance tasks."],
-                  ["iubenda", "Privacy-policy and consent product with a recognizable category position."]
+                  ["Cookiebot", "Cookie-consent and privacy-focused workflow tooling (<a href=\"https://www.cookiebot.com/en/cmp/\" target=\"_blank\" rel=\"noreferrer\">Cookiebot</a>)."],
+                  ["OneTrust", "Well-known privacy and governance platform with broader enterprise positioning (<a href=\"https://www.onetrust.com/products/cookie-consent/\" target=\"_blank\" rel=\"noreferrer\">OneTrust</a>)."],
+                  ["Termly", "Privacy-policy and consent-oriented product for simpler website compliance tasks (<a href=\"https://termly.io/products/consent-management-platform/\" target=\"_blank\" rel=\"noreferrer\">Termly</a>)."],
+                  ["iubenda", "Privacy-policy and consent product with a recognizable category position (<a href=\"https://www.iubenda.com/en/help/7440-cookie-solution-dashboard\" target=\"_blank\" rel=\"noreferrer\">iubenda</a>)."]
                 ].map(([name, summary]) => (
                   <article className="feature-card" key={name}>
                     <h3>{name}</h3>
-                    <p className="muted">{summary}</p>
+                    <p className="muted" dangerouslySetInnerHTML={{ __html: summary }} />
                   </article>
                 ))}
               </div>

@@ -771,6 +771,15 @@ select {
   gap: 24px;
 }
 
+.pricing-section-head {
+  max-width: 760px;
+  margin-bottom: 24px;
+}
+
+.pricing-section-copy {
+  margin-bottom: 0;
+}
+
 .pricing-card {
   position: relative;
   padding: 28px;
@@ -783,6 +792,10 @@ select {
 .pricing-card.featured {
   border-color: rgba(198, 92, 44, 0.28);
   transform: translateY(-6px);
+}
+
+.pricing-card-actions {
+  margin-top: 18px;
 }
 
 .plan-label {

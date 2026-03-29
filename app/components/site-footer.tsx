@@ -28,7 +28,7 @@ export function SiteFooter() {
         <div className="footer-column">
           <h3 className="footer-heading">Product</h3>
           <div className="footer-link-list">
-            <Link className="footer-link" href="/pricing">
+            <Link className="footer-link" href="/#pricing">
               Pricing
             </Link>
             <Link className="footer-link" href="/tools/accessibility">

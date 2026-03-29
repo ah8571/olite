@@ -38,16 +38,16 @@ export default function ReviewOfCookiebotPage() {
               <p className="section-copy">
                 Cookiebot appears strongest when a team already knows cookie consent and related privacy
                 controls are the immediate priority. Olite is being shaped more as an early scanner for visible
-                privacy standards signals rather than as a dedicated consent-management platform.
+                privacy standards signals rather than as a dedicated consent-management platform (<a href="https://www.cookiebot.com/en/cmp/" target="_blank" rel="noreferrer">Cookiebot</a>).
               </p>
             </section>
 
             <section className="section-panel" id="where-it-looks-strong">
               <p className="kicker">Where It Looks Strong</p>
               <ul className="bullet-list">
-                <li>Clear category fit around cookie consent and privacy controls</li>
-                <li>More specialized than a general website signal checker</li>
-                <li>Good match when the central need is consent implementation</li>
+                <li>Clear category fit around cookie consent and privacy controls (<a href="https://www.cookiebot.com/en/cmp/" target="_blank" rel="noreferrer">Cookiebot</a>)</li>
+                <li>More specialized than a general website signal checker (<a href="https://www.cookiebot.com/en/cmp/" target="_blank" rel="noreferrer">Cookiebot</a>)</li>
+                <li>Good match when the central need is consent implementation (<a href="https://www.cookiebot.com/en/cmp/" target="_blank" rel="noreferrer">Cookiebot</a>)</li>
               </ul>
             </section>
 

@@ -10,7 +10,7 @@ export default function TermsPage() {
     <section className="page-section">
       <div className="container section-panel">
         <p className="kicker">Terms and Conditions</p>
-        <h1 className="section-title">Terms and Conditions for Nudadequa LLC DBA Olite</h1>
+        <h1 className="section-title">Terms and Conditions for Olite</h1>
         <p className="section-copy">Effective date: March 29, 2026</p>
         <p className="section-copy">
           These terms govern use of the Olite website, hosted tools, desktop application, documentation, and related

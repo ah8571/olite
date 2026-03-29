@@ -39,16 +39,16 @@ export default function ReviewOfSiteimprovePage() {
                 Siteimprove makes the most sense for organizations that want structured reporting,
                 cross-functional oversight, and a more established platform around website quality and
                 accessibility. That can be a strong fit, but it is a different entry point from Olite's
-                lighter accessibility and privacy standards scanner.
+                lighter accessibility and privacy standards scanner (<a href="https://www.siteimprove.com/" target="_blank" rel="noreferrer">Siteimprove</a>).
               </p>
             </section>
 
             <section className="section-panel" id="where-it-looks-strong">
               <p className="kicker">Where It Looks Strong</p>
               <ul className="bullet-list">
-                <li>Broader website-governance posture than a simple scanner</li>
-                <li>Likely stronger fit for larger organizations with ongoing reporting needs</li>
-                <li>Recognizable product category for accessibility oversight and governance</li>
+                <li>Broader website-governance posture than a simple scanner (<a href="https://www.siteimprove.com/" target="_blank" rel="noreferrer">Siteimprove</a>)</li>
+                <li>Likely stronger fit for larger organizations with ongoing reporting needs (<a href="https://www.siteimprove.com/" target="_blank" rel="noreferrer">Siteimprove</a>)</li>
+                <li>Recognizable product category for accessibility oversight and governance (<a href="https://www.siteimprove.com/platform/accessibility/" target="_blank" rel="noreferrer">Siteimprove Accessibility</a>)</li>
               </ul>
             </section>
 

@@ -61,7 +61,7 @@ export default function CookiebotVsOlitePage() {
               <p className="section-copy">
                 The key difference is that Cookiebot is closer to a privacy-specific consent workflow,
                 whereas Olite is being positioned as a lighter scanner that starts with public accessibility
-                and privacy standards signals together.
+                and privacy standards signals together (<a href="https://www.cookiebot.com/en/cmp/" target="_blank" rel="noreferrer">Cookiebot</a>).
               </p>
             </section>
 

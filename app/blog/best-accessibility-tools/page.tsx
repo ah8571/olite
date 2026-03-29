@@ -36,7 +36,7 @@ export default function BestAccessibilityToolsPage() {
               <p className="section-copy">
                 Accessibility tooling spans several categories. Some tools are better for quick page-level
                 checks. Some fit engineering workflows. Others are broader governance platforms. Buyers usually
-                make better choices when they identify that category first.
+                make better choices when they identify that category first (<a href="https://wave.webaim.org/" target="_blank" rel="noreferrer">WAVE</a>, <a href="https://www.deque.com/axe/devtools/" target="_blank" rel="noreferrer">axe DevTools</a>, <a href="https://www.siteimprove.com/" target="_blank" rel="noreferrer">Siteimprove</a>).
               </p>
             </section>
 
@@ -45,14 +45,14 @@ export default function BestAccessibilityToolsPage() {
               <div className="cards-grid two-up">
                 {[
                   ["Olite", "Lightweight public-page accessibility and privacy signal scanning with a local-first product direction."],
-                  ["axe DevTools", "Developer-oriented accessibility tooling with strong recognition in engineering workflows."],
-                  ["WAVE", "Well-known accessibility evaluation tooling for page-level inspection and education."],
-                  ["Siteimprove", "Broader website-governance and accessibility platform posture."],
-                  ["AudioEye", "Accessibility-focused platform with monitoring and remediation-oriented positioning."]
+                  ["axe DevTools", "Developer-oriented accessibility tooling with strong recognition in engineering workflows (<a href=\"https://www.deque.com/axe/devtools/\" target=\"_blank\" rel=\"noreferrer\">Deque</a>)."],
+                  ["WAVE", "Well-known accessibility evaluation tooling for page-level inspection and education (<a href=\"https://wave.webaim.org/\" target=\"_blank\" rel=\"noreferrer\">WebAIM</a>)."],
+                  ["Siteimprove", "Broader website-governance and accessibility platform posture (<a href=\"https://www.siteimprove.com/\" target=\"_blank\" rel=\"noreferrer\">Siteimprove</a>)."],
+                  ["AudioEye", "Accessibility-focused platform with monitoring and remediation-oriented positioning (<a href=\"https://www.audioeye.com/\" target=\"_blank\" rel=\"noreferrer\">AudioEye</a>)."]
                 ].map(([name, summary]) => (
                   <article className="feature-card" key={name}>
                     <h3>{name}</h3>
-                    <p className="muted">{summary}</p>
+                    <p className="muted" dangerouslySetInnerHTML={{ __html: summary }} />
                   </article>
                 ))}
               </div>
