@@ -15,6 +15,7 @@
 - [Technical Direction](#technical-direction)
 - [Implementation Strategy](#implementation-strategy)
 - [Pattern Library And Rule Design](#pattern-library-and-rule-design)
+- [Longer-Term Product Expansion](#longer-term-product-expansion)
 
 # To do's
 ## Unshared login credentials
@@ -318,6 +319,85 @@ Main limitation:
 - not the ideal long-term engine if Olite later becomes heavily codebase-analysis-driven at very large scale
 
 #### Profile 2: Optimized TypeScript Engine
+
+## Longer-Term Product Expansion
+
+Olite should stay disciplined about product expansion.
+
+The scanner, reporting flow, and entitlement path should stay primary until they are clearly useful and stable.
+
+That said, there is a plausible longer-term path where Olite expands from a lightweight verification scanner into a broader website-compliance toolkit.
+
+### Cookie Widget Or Consent Layer
+
+This is explicitly not a version 0.1 goal and should not be treated as tonight's work.
+
+Possible later direction:
+
+- a lightweight hosted cookie or consent widget that customers can install on their public sites
+- simple policy and consent configuration managed from Olite
+- a small script served from Olite infrastructure
+- a preference center or privacy choices surface later if the product proves useful
+
+Why this is attractive:
+
+- it could move Olite closer to a one-stop shop for practical compliance needs
+- it creates a clearer remediation path after a scan surfaces privacy or consent issues
+- it may make the product more valuable to small businesses that want both detection and a basic fix path
+
+Why this should be treated carefully:
+
+- the hard part is not raw hosting cost
+- the hard part is implementation correctness, maintenance burden, and legal or reputational risk if the widget behaves incorrectly
+- consent products create more ongoing compatibility and support responsibility than a read-only scanner
+
+Practical product caution:
+
+- a lightweight widget may be feasible at Olite's current pricing if the hosted surface stays narrow
+- a full CMP-style product is substantially more complex and should not be treated as a small feature addition
+
+### Likely Cost Shape
+
+For a narrow widget MVP, infrastructure cost should usually be manageable if the product is designed well.
+
+The likely hosted needs are:
+
+- a small JavaScript asset delivered from a CDN
+- lightweight per-site configuration storage
+- limited API reads for configuration and consent-state logic
+- optional write endpoints if consent choices or versioning need to be stored
+
+At that level, a low-priced subscription can likely support hosting.
+
+The bigger costs are more likely to be:
+
+- engineering maintenance
+- customer support
+- legal review pressure
+- compatibility work across many site setups
+- confidence and trust costs if the widget breaks or behaves incorrectly
+
+### Recommended Sequence
+
+If Olite explores this area later, the safer sequence is:
+
+1. keep the scanner and reporting workflow as the main product
+2. strengthen remediation content and issue explainers
+3. test demand for a small privacy or consent installable product
+4. only then decide whether to build a narrow widget or a broader CMP-style system
+
+### Expansion Principle
+
+Olite should prefer connected products that reinforce the scanner instead of distracting from it.
+
+The strongest expansion ideas are likely:
+
+- issue explainers and remediation guidance
+- templates and installable fixes for common public-web compliance gaps
+- lightweight privacy and consent helpers
+- team workflows later
+
+A cookie widget can fit that direction, but only if it stays intentionally narrow at first.
 
 This is the likely next step before any language rewrite.
 
