@@ -3,7 +3,7 @@ import { writeFile } from "node:fs/promises";
 
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 
-import { scanPublicSite, scanSinglePage } from "../../lib/scanner-core";
+import { scanSinglePage } from "../../lib/scanner-core";
 import type { PrivacyRegion, SiteScanResult } from "../../lib/scanner-core";
 import { augmentSiteResultWithRenderedAccessibility } from "./rendered-accessibility";
 
@@ -11,13 +11,14 @@ const HISTORY_FILE_NAME = "scan-history.json";
 const MAX_STORED_SCANS = 12;
 const isDevelopment = !app.isPackaged;
 
-type ReviewMode = "single" | "focused" | "full";
+type ReviewMode = "single";
+type StoredReviewMode = "single" | "focused" | "full";
 
 type StoredScanHistoryItem = {
   url: string;
   host: string;
   maxPages: number;
-  reviewMode?: ReviewMode;
+  reviewMode?: StoredReviewMode;
   privacyRegion?: PrivacyRegion;
   sitemapUrl?: string;
   score: number;
@@ -99,22 +100,12 @@ ipcMain.handle(
     _event,
     payload: { url: string; reviewMode: ReviewMode; maxPages?: number; sitemapUrl?: string; privacyRegion?: PrivacyRegion }
   ) => {
-    if (payload.reviewMode === "single") {
-      const page = await scanSinglePage(payload.url, "local", payload.privacyRegion);
-      return augmentSiteResultWithRenderedAccessibility(buildSiteResultFromSinglePage(page, payload.url));
+    if (payload.reviewMode !== "single") {
+      throw new Error("Broader crawl depth requires paid activation and is not available in this build.");
     }
 
-    const maxPages = Math.max(1, Math.min(payload.maxPages ?? (payload.reviewMode === "full" ? 25 : 10), 100));
-
-    const staticResult = await scanPublicSite({
-      startUrl: payload.url,
-      sitemapUrl: payload.sitemapUrl,
-      maxPages,
-      sameOriginOnly: true,
-      privacyRegion: payload.privacyRegion
-    });
-
-    return augmentSiteResultWithRenderedAccessibility(staticResult);
+    const page = await scanSinglePage(payload.url, "local", payload.privacyRegion);
+    return augmentSiteResultWithRenderedAccessibility(buildSiteResultFromSinglePage(page, payload.url));
   }
 );
 

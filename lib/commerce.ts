@@ -1,3 +1,5 @@
+import { getManagedCheckoutPath } from "./paddle";
+
 const DEFAULT_RELEASES_URL = "https://github.com/ah8571/olite/releases";
 const DEFAULT_WAITLIST_EMAIL = "mailto:hello@olite.dev?subject=Olite%20desktop%20beta%20interest";
 const DEFAULT_EARLY_ACCESS_EMAIL = "mailto:hello@olite.dev?subject=Olite%20CLI%20or%20desktop%20early%20access";
@@ -32,8 +34,8 @@ export function getCommerceConfig(): CommerceConfig {
   const desktopDownloadUrl = normalizeUrl(process.env.NEXT_PUBLIC_OLITE_DESKTOP_DOWNLOAD_URL, releasesUrl);
   const desktopWaitlistUrl = normalizeUrl(process.env.NEXT_PUBLIC_OLITE_DESKTOP_WAITLIST_URL, DEFAULT_WAITLIST_EMAIL);
   const earlyAccessUrl = normalizeUrl(process.env.NEXT_PUBLIC_OLITE_EARLY_ACCESS_URL, DEFAULT_EARLY_ACCESS_EMAIL);
-  const monthlyCheckoutUrl = normalizeUrl(process.env.NEXT_PUBLIC_OLITE_LS_MONTHLY_URL) || undefined;
-  const yearlyCheckoutUrl = normalizeUrl(process.env.NEXT_PUBLIC_OLITE_LS_YEARLY_URL) || undefined;
+  const monthlyCheckoutUrl = normalizeUrl(process.env.NEXT_PUBLIC_OLITE_LS_MONTHLY_URL) || getManagedCheckoutPath("monthly");
+  const yearlyCheckoutUrl = normalizeUrl(process.env.NEXT_PUBLIC_OLITE_LS_YEARLY_URL) || getManagedCheckoutPath("annual");
 
   return {
     releasesUrl,

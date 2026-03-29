@@ -7,12 +7,6 @@ const pagesPanel = document.getElementById("pages-panel");
 const recentScansPanel = document.getElementById("recent-scans");
 const urlInput = document.getElementById("url");
 const reviewScopeInput = document.getElementById("reviewScope");
-const scopeSingleButton = document.getElementById("scope-single-button");
-const scopeSitemapButton = document.getElementById("scope-sitemap-button");
-const sitemapOptions = document.getElementById("sitemap-options");
-const capPagesInput = document.getElementById("capPages");
-const maxPagesField = document.getElementById("max-pages-field");
-const maxPagesInput = document.getElementById("maxPages");
 const privacyRegionInput = document.getElementById("privacyRegion");
 const clearResultsButton = document.getElementById("clear-results-button");
 const scannerView = document.getElementById("scanner-view");
@@ -64,44 +58,25 @@ function normalizeUrlValue(value) {
 }
 
 function normalizeScope(value) {
-  return value === "sitemap" ? "sitemap" : "single";
-}
-
-function getCurrentScope() {
-  return normalizeScope(reviewScopeInput.value);
-}
-
-function getRequestedPageCap() {
-  return capPagesInput.checked ? Number(maxPagesInput.value || 25) : 100;
+  return value === "single" ? "single" : "single";
 }
 
 function applyScopeUI(scope) {
-  const normalizedScope = normalizeScope(scope);
-  const isSitemapScope = normalizedScope === "sitemap";
-
-  reviewScopeInput.value = normalizedScope;
-  scopeSingleButton.classList.toggle("is-active", !isSitemapScope);
-  scopeSingleButton.setAttribute("aria-pressed", String(!isSitemapScope));
-  scopeSitemapButton.classList.toggle("is-active", isSitemapScope);
-  scopeSitemapButton.setAttribute("aria-pressed", String(isSitemapScope));
-  sitemapOptions.classList.toggle("hidden", !isSitemapScope);
-  maxPagesField.classList.toggle("hidden", !isSitemapScope || !capPagesInput.checked);
-  urlInput.placeholder = isSitemapScope ? "https://example.com/sitemap.xml" : "https://example.com";
-  status.textContent = isSitemapScope
-    ? "Paste a sitemap for a broader site review. Add a page cap if you want to limit the first pass."
-    : "Enter one page URL when you only want to review that page.";
+  reviewScopeInput.value = normalizeScope(scope);
+  urlInput.placeholder = "https://example.com";
+  status.textContent = "Enter one page URL to run the free desktop review. Broader crawl depth will return with paid activation.";
 }
 
 function reviewModeLabel(scope, maxPages, isCapped = true) {
-  if (normalizeScope(scope) === "sitemap") {
-    return isCapped ? `Full site review capped at ${maxPages} page${maxPages === 1 ? "" : "s"}` : "Full site review";
+  if (scope === "sitemap" || maxPages > 1) {
+    return isCapped ? `Legacy full site review capped at ${maxPages} page${maxPages === 1 ? "" : "s"}` : "Legacy full site review";
   }
 
   return "Single URL check";
 }
 
 function summaryModeLabel(result) {
-  if (result.sitemapUrl) {
+  if (result.sitemapUrl || result.pageLimit > 1 || result.scannedPages > 1) {
     return reviewModeLabel("sitemap", result.pageLimit, result.pageLimit < 100);
   }
 
@@ -114,18 +89,6 @@ function privacyRegionLabel(value) {
 
 function buildScanRequest(inputUrl, scope, maxPages) {
   const normalizedInput = normalizeUrlValue(inputUrl);
-
-  if (normalizeScope(scope) === "sitemap") {
-    const sitemapUrl = new URL(normalizedInput);
-
-    return {
-      normalizedInput,
-      reviewMode: "full",
-      startUrl: `${sitemapUrl.origin}/`,
-      sitemapUrl: normalizedInput,
-      maxPages
-    };
-  }
 
   return {
     normalizedInput,
@@ -257,7 +220,6 @@ function renderRecentScans() {
 function loadResultIntoPanels(result, maxPages) {
   lastResult = result;
   urlInput.value = result.sitemapUrl ?? result.normalizedUrl;
-  maxPagesInput.value = String(Math.min(Math.max(maxPages, 10), 100));
   renderSummary(result);
   renderIssueRows(result);
   pagesPanel.className = "panel result-panel hidden";
@@ -511,7 +473,7 @@ function renderSummary(result) {
       <span class="stat-pill">Discovered pages: ${escapeHtml(result.discoveredPages)}</span>
       <span class="stat-pill">Review: ${escapeHtml(summaryModeLabel(result))}</span>
       <span class="stat-pill">Privacy expectations: ${escapeHtml(privacyRegionLabel(result.pages?.[0]?.metadata?.privacyRegion))}</span>
-      ${result.sitemapUrl ? `<span class="stat-pill">Sitemap seeded</span>` : ""}
+      ${result.sitemapUrl ? `<span class="stat-pill">Legacy sitemap-seeded result</span>` : ""}
       ${rows.length > 0 ? buildIssueSummary(rows) : '<span class="stat-pill">No issues surfaced</span>'}
       ${layerCounts}
     </div>
@@ -672,11 +634,8 @@ form.addEventListener("submit", async (event) => {
   const url = normalizeUrlValue(formData.get("url"));
   const reviewScope = String(formData.get("reviewScope") ?? "single");
   const privacyRegion = String(formData.get("privacyRegion") ?? "eu");
-  const maxPages = normalizeScope(reviewScope) === "sitemap" ? getRequestedPageCap() : 1;
+  const maxPages = 1;
   urlInput.value = url;
-  if (normalizeScope(reviewScope) === "sitemap") {
-    maxPagesInput.value = String(maxPages);
-  }
   await runScan(url, reviewScope, maxPages, privacyRegion === "us" ? "us" : "eu");
 });
 
@@ -710,28 +669,14 @@ recentScansPanel.addEventListener("click", (event) => {
   }
 
   urlInput.value = item.url;
-  capPagesInput.checked = item.isCapped !== false;
-  maxPagesInput.value = String(item.maxPages || 25);
   privacyRegionInput.value = item.privacyRegion === "us" ? "us" : "eu";
-  applyScopeUI(item.reviewScope ?? (item.result?.sitemapUrl ? "sitemap" : "single"));
+  applyScopeUI("single");
   navigateToView("scanner");
-  status.textContent = `Loaded ${item.url}. Run the scan to refresh the result.`;
+  status.textContent = `Loaded ${item.url}. Run the scan to refresh this target as a single-page review.`;
 });
 
 window.addEventListener("hashchange", () => {
   setActiveView(normalizeViewFromHash(window.location.hash));
-});
-
-scopeSingleButton.addEventListener("click", () => {
-  applyScopeUI("single");
-});
-
-scopeSitemapButton.addEventListener("click", () => {
-  applyScopeUI("sitemap");
-});
-
-capPagesInput.addEventListener("change", () => {
-  applyScopeUI(getCurrentScope());
 });
 
 resetResults();

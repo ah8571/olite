@@ -771,6 +771,50 @@ select {
   gap: 24px;
 }
 
+.scanner-home-head {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.scanner-mode-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.scanner-mode-button {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 252, 247, 0.8);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+}
+
+.scanner-mode-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(198, 92, 44, 0.24);
+}
+
+.scanner-mode-button.is-active {
+  border-color: rgba(198, 92, 44, 0.34);
+  background: rgba(255, 249, 240, 0.94);
+}
+
+.scanner-mode-label {
+  color: var(--brand-dark);
+  font-weight: 700;
+}
+
+.scanner-mode-copy {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
 .pricing-section-head {
   max-width: 760px;
   margin-bottom: 24px;
@@ -905,6 +949,10 @@ select {
   .cards-grid.two-up,
   .pricing-grid,
   .footer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .scanner-mode-row {
     grid-template-columns: 1fr;
   }
 

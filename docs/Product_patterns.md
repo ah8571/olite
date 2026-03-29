@@ -8,6 +8,7 @@
 - [Terraform](#terraform)
 - [PostHog](#posthog)
 - [Resend](#resend)
+- [Lighthouse](#lighthouse)
 - [Shared Patterns](#shared-patterns)
 
 ## Purpose
@@ -129,6 +130,29 @@ The goal is to keep a concise reference for:
 - a generous free tier works best when usage thresholds are simple to understand
 - polished developer experience can be part of the product moat
 - the product can stay narrow and still be compelling if the workflow is clear
+
+## Lighthouse
+
+### Product Profile
+
+- open-source auditing tool for web-page quality
+- strong multi-surface workflow through Chrome DevTools, CLI, Node usage, and CI
+- opinionated report model across performance, accessibility, SEO, and best practices
+- useful as both a learning tool and an automation building block
+
+### Languages Used
+
+- JavaScript and Node.js for the core toolchain
+- Chrome and DevTools integration for the browser workflow
+- JSON output and config-driven automation around CI usage
+
+### Relevant Takeaways For Olite
+
+- one analysis engine can support browser, CLI, and CI-style entry points
+- good reports teach users why a finding matters, not just that it failed
+- extension and DevTools-style accessibility can help with learning and onboarding
+- CI and regression workflows become more compelling after the core scanner is stable
+- category-based audits can coexist with extensibility through plugins and stack-aware advice
 
 ## Shared Patterns
 

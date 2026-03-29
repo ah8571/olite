@@ -4,8 +4,7 @@ This is the first desktop prototype for Olite.
 
 Current scope:
 
-- local crawl of a simple public website
-- optional sitemap seeding for broader sitewide crawl coverage
+- single-page local review of a public website
 - bounded same-domain page discovery
 - grouped findings across accessibility, privacy, consent, and security
 - export of scan results to JSON
@@ -21,8 +20,7 @@ To run it from the repository root:
 Useful first-pass workflow:
 
 - add a few public URLs as saved test targets
-- add a sitemap when you want to seed a broader sitewide crawl
-- rerun those same sites with different page limits
+- rerun those same sites as you remediate issues
 - compare issue grouping and page-level findings
 - review the issue-rows table before exporting CSV
 - reopen saved reports from local history without rescanning

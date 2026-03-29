@@ -43,6 +43,14 @@ export default function TermsPage() {
           time. We may also apply rate limits, access limits, or other controls to protect the service.
         </p>
 
+        <h2>Refunds and Cancellations</h2>
+        <p className="section-copy">
+          Paid subscriptions or other paid access to Olite may be billed through Paddle or another authorized payment
+          provider. Unless otherwise required by law, fees are non-refundable after the applicable billing period begins.
+          You may cancel a recurring subscription to prevent future renewals, and any approved exception or refund request
+          may be submitted to hello@olite.dev for review.
+        </p>
+
         <h2>Acceptable Use</h2>
         <p className="section-copy">
           You agree not to misuse the service, interfere with its operation, attempt unauthorized access, or use it in a

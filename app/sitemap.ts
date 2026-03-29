@@ -8,6 +8,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     "",
     "/blog",
+    "/compliance-foundations",
+    "/what-olite-checks",
     "/tools/accessibility",
     "/tools/privacy",
     ...blogPages.map((page) => page.href)

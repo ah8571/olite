@@ -25,8 +25,8 @@ function getPricingPlans(commerce: CommerceConfig): PricingPlan[] {
         "Useful for quick triage before a deeper pass",
         "Best for trying the workflow before downloading the app"
       ],
-      href: "/tools/accessibility",
-      cta: "Start free"
+      href: "/#scanner",
+      cta: "Use free scans"
     },
     {
       name: "Pro Monthly",
@@ -66,7 +66,7 @@ export function PricingSection({ commerce }: { commerce: CommerceConfig }) {
       <div className="container">
         <div className="pricing-section-head">
           <p className="kicker">Pricing</p>
-          <h2 className="section-title">Start free. Pay only when the local workflow is worth it.</h2>
+          <h2 className="section-title">Start free. Pay only when the workflow is worth it.</h2>
           <p className="section-copy pricing-section-copy">
             The hosted scanners are the fast way to test fit. The paid path only starts when you need more
             than 2 free scans per day, broader local scans, or repeatable desktop workflows.

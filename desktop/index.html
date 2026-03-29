@@ -26,27 +26,18 @@
             <div class="form-header">
               <div>
                 <p class="kicker">Start A Crawl</p>
-                <h2>Search a specific URL or paste a sitemap</h2>
+                <h2>Search a specific URL</h2>
                 <p class="form-note form-intro">
-                  This scanner targets accessibility, privacy, consent, and basic security signals. Basic security coverage is still in beta.
+                  This scanner targets accessibility, privacy, consent, and basic security signals on one public page at a time. Basic security coverage is still in beta.
                 </p>
               </div>
             </div>
 
             <form id="scan-form" class="scan-form">
-              <div class="scope-toggle" role="tablist" aria-label="Review scope">
-                <button id="scope-single-button" class="scope-button is-active" type="button" data-scope="single" aria-pressed="true">
-                  Single page search
-                </button>
-                <button id="scope-sitemap-button" class="scope-button" type="button" data-scope="sitemap" aria-pressed="false">
-                  Sitemap
-                </button>
-              </div>
-
               <input id="reviewScope" name="reviewScope" type="hidden" value="single" />
 
               <label class="label input-field" for="url">
-                Search one URL or sitemap
+                Search one URL
                 <input id="url" name="url" class="input" type="url" inputmode="url" placeholder="https://example.com" required />
               </label>
 
@@ -58,24 +49,7 @@
                 </select>
               </label>
 
-              <div id="sitemap-options" class="conditional-panel hidden" aria-live="polite">
-                <label class="inline-toggle" for="capPages">
-                  <input id="capPages" name="capPages" type="checkbox" checked />
-                  Cap full site review
-                </label>
-
-                <label id="max-pages-field" class="label conditional-field" for="maxPages">
-                  Amount of pages to review
-                  <select id="maxPages" name="maxPages" class="select">
-                    <option value="10">10 pages</option>
-                    <option value="25" selected>25 pages</option>
-                    <option value="50">50 pages</option>
-                    <option value="100">100 pages</option>
-                  </select>
-                </label>
-              </div>
-
-              <p id="status" class="form-note">Enter one page URL when you only want to review that page.</p>
+              <p id="status" class="form-note">Enter one page URL to run the free desktop review. Broader crawl depth will return with paid activation.</p>
 
               <div class="actions">
                 <button id="submit-button" class="button" type="submit">Start review</button>
@@ -114,7 +88,7 @@
         <div class="footer-copy-row">
           <p class="kicker footer-kicker">Disclosure</p>
           <p class="footer-title">Automation-oriented verification for public websites.</p>
-          <p class="form-note footer-note">Starts from one public URL and can discover same-domain pages automatically. Current checks focus on markup, public-page signals, and lightweight crawl evidence. Authenticated flows, richer JavaScript interaction automation, network-level consent verification, and source-aware rules are not fully covered in this first pass.</p>
+          <p class="form-note footer-note">Starts from one public URL. Current checks focus on markup, public-page signals, and lightweight page evidence. Authenticated flows, broader multi-page crawl depth, richer JavaScript interaction automation, network-level consent verification, and source-aware rules are not fully covered in this first pass.</p>
         </div>
         <div class="footer-links-row">
           <a class="footer-link" href="https://github.com/ah8571/olite#readme">Docs</a>

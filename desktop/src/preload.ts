@@ -3,7 +3,7 @@ import { contextBridge, ipcRenderer } from "electron";
 contextBridge.exposeInMainWorld("oliteDesktop", {
   runScan: (payload: {
     url: string;
-    reviewMode: "single" | "focused" | "full";
+    reviewMode: "single";
     maxPages?: number;
     sitemapUrl?: string;
     privacyRegion?: "us" | "eu";

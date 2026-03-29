@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { HomeScannerSection } from "@/app/components/home-scanner-section";
 import { PricingSection } from "@/app/components/pricing-section";
 import { getCommerceConfig } from "@/lib/commerce";
-import { toolConfig, toolOrder } from "@/lib/scanner-config";
 
 export const metadata: Metadata = {
   title: "Accessibility and Privacy Website Scanner",
@@ -43,11 +43,11 @@ export default function HomePage() {
               scan, inspect the findings, and then move into deeper local verification when needed.
             </p>
             <div className="hero-actions">
-              <Link className="button" href="/tools/accessibility">
-                Try accessibility scanner
+              <Link className="button" href="/#scanner">
+                Try homepage scanner
               </Link>
-              <Link className="button-secondary" href="/tools/privacy">
-                Try privacy scanner
+              <Link className="button-secondary" href="/#pricing">
+                View pricing
               </Link>
               <Link className="button-secondary" href="https://github.com/ah8571/olite">
                 View on GitHub
@@ -65,6 +65,8 @@ export default function HomePage() {
           </aside>
         </div>
       </section>
+
+      <HomeScannerSection />
 
       <section className="page-section" id="product-shape">
         <div className="container split-grid">
@@ -107,36 +109,27 @@ export default function HomePage() {
       </section>
 
       <section className="page-section">
-        <div className="container">
-          <p className="kicker">Free Tools</p>
-          <h2 className="section-title">Two free scanners to test site. Then download the app.</h2>
-          <p className="section-copy">
-            Use the hosted tools for a quick first pass. You get 2 free scans per day here. If you need
-            more coverage, broader crawls, or repeatable scans, move into the desktop app.
-          </p>
-          <p className="section-copy">
-            These are lightweight automated checks for obvious issues, not a complete audit. Olite can
-            automate many strong semantic and interaction signals, but important journeys may still need
-            deeper manual accessibility, legal, or compliance review.
-          </p>
-          <div className="cards-grid two-up">
-            {toolOrder.map((tool) => (
-              <article className="tool-card" key={tool}>
-                <p className="kicker">Free Tool</p>
-                <h3>{toolConfig[tool].title}</h3>
-                <p className="muted">{toolConfig[tool].description}</p>
-                <ul className="mini-list spaced-list">
-                  {toolConfig[tool].sampleChecks.slice(0, 3).map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-                <div className="tool-actions">
-                  <Link className="button-secondary" href={`/tools/${toolConfig[tool].slug}`}>
-                    Open tool
-                  </Link>
-                </div>
-              </article>
-            ))}
+        <div className="container split-grid">
+          <div>
+            <p className="kicker">Two Free Scans Per Day</p>
+            <h2 className="section-title">Use the homepage scanner first. Go deeper only when it is justified.</h2>
+            <p className="section-copy">
+              The hosted scanner is the fast first pass. If you need broader local crawls, repeatable
+              workflows, or richer exports, move into the desktop app after the free scans prove useful.
+            </p>
+          </div>
+          <div className="section-panel">
+            <p className="kicker">What This Means</p>
+            <ul className="bullet-list">
+              <li>Use the homepage scanner for quick accessibility or privacy review</li>
+              <li>Keep the dedicated tool pages as landing pages for search and category clarity</li>
+              <li>Use Compliance Foundations to see the broader running checklist behind the product</li>
+            </ul>
+            <div className="hero-actions compact">
+              <Link className="button-secondary" href="/compliance-foundations">
+                Open Compliance Foundations
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -151,6 +144,11 @@ export default function HomePage() {
               <li>Unlabeled form controls and weak page language signals</li>
               <li>Fast public-page checks for obvious issues before a fuller audit</li>
             </ul>
+            <div className="hero-actions compact">
+              <Link className="button-secondary" href="/compliance-foundations">
+                View accessibility foundations
+              </Link>
+            </div>
           </div>
           <div className="section-panel">
             <p className="kicker">Privacy Coverage</p>
@@ -160,6 +158,11 @@ export default function HomePage() {
               <li>Cookie wording for EU-inclusive reviews and softer rights-based signals for US-only reviews</li>
               <li>Tracking signals, opt-out cues, and baseline header presence before deeper review</li>
             </ul>
+            <div className="hero-actions compact">
+              <Link className="button-secondary" href="/compliance-foundations">
+                View privacy foundations
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -220,6 +223,7 @@ export default function HomePage() {
               <li>Step beyond the 2 free hosted scans per day</li>
               <li>Local crawl of a simple public website starting from one URL</li>
               <li>Grouped findings for accessibility, privacy, consent, and basic security signals</li>
+              <li>Website checkout plus app activation is the intended paid path</li>
               <li>Open source foundation with auditable scanner logic</li>
               <li>Exportable results for early remediation and client review workflows</li>
             </ul>

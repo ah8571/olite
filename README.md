@@ -140,8 +140,9 @@ Useful values:
 - [docs/Development_roadmap.md](docs/Development_roadmap.md) captures the URL-crawling-first roadmap and later scanning phases.
 - [docs/Architecture.md](docs/Architecture.md) sketches the shared local scan engine, crawler, rule system, interfaces, and lightweight cloud model.
 - [docs/Compliance_foundations.md](docs/Compliance_foundations.md) defines the accessibility and privacy standards that should anchor rule design across the free tools, desktop app, and CLI.
-- [docs/Product_patterns.md](docs/Product_patterns.md) captures concise case study profiles for Semgrep, Sentry, and Terraform.
+- [docs/Product_patterns.md](docs/Product_patterns.md) captures concise case study profiles for Semgrep, Sentry, Terraform, Lighthouse, and other relevant product patterns.
 - [docs/Pricing.md](docs/Pricing.md) captures early pricing model thoughts and tradeoffs.
+- [docs/Billing_and_entitlements.md](docs/Billing_and_entitlements.md) captures the recommended billing and entitlement model for a downloadable desktop app.
 
 ## License
 

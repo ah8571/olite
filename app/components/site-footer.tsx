@@ -48,6 +48,12 @@ export function SiteFooter() {
             <Link className="footer-link" href="/blog">
               Blog
             </Link>
+            <Link className="footer-link" href="/compliance-foundations">
+              Compliance Foundations
+            </Link>
+            <Link className="footer-link" href="/what-olite-checks">
+              What Olite Checks
+            </Link>
             {blogPages.map((page) => (
               <Link className="footer-link" href={page.href} key={page.href}>
                 {page.shortTitle}
