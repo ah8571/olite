@@ -16,6 +16,11 @@
 - [Implementation Strategy](#implementation-strategy)
 - [Pattern Library And Rule Design](#pattern-library-and-rule-design)
 
+# To do's
+## Unshared login credentials
+- connect billing 
+- develop system that two people can share the same login
+
 ## Current Direction
 
 Olite starts as a lightweight compliance scanner for publicly crawlable websites.
@@ -144,6 +149,12 @@ The first concrete Playwright-backed interaction checks should target:
 - reachability of interactive controls without a mouse
 - form validation and post-interaction focus recovery
 
+Important nuance:
+
+- a missing skip link should usually be treated as an advisory accessibility consideration rather than a default hard failure
+- if a skip link is present, its target and activation behavior should be verified as a stronger runtime check
+- Olite should separate nice-to-have guidance from verified implementation failures in the report model over time
+
 #### Privacy and Cookie Consent
 
 - tracking scripts detected
@@ -243,6 +254,16 @@ The intended sequence is:
 2. add axe-style rules into the desktop scan pipeline
 3. add Playwright-backed keyboard-flow checks for important patterns
 4. widen from single-page checks into staged multi-step flows where the site structure justifies it
+
+The concrete bridge from HTML checks into more real-life automation should be:
+
+1. verify rendered DOM state after hydration
+2. sample first keyboard tab steps and focus progression
+3. verify skip-link targets and activation when skip links exist
+4. verify menu, modal, and disclosure behavior after interaction
+5. verify consent and privacy behavior after runtime state changes
+
+That sequence matters because many important failures do not exist in the raw HTML. They only appear once the page renders, scripts hydrate, and keyboard interaction begins.
 
 This should still be kept lightweight by:
 
@@ -397,6 +418,19 @@ The first pattern-library targets should be:
 - cookie banners and consent panels
 - forms and validation flows
 - accordions and disclosure widgets
+
+For each pattern, Olite should track four buckets clearly:
+
+- static checks that are safe from markup or response inspection alone
+- runtime checks that require rendered interaction automation
+- advisory considerations that may help users but should not be treated as default failures
+- manual review boundaries where automated confidence stays limited
+
+Examples:
+
+- skip links may be advisory unless present and broken
+- GPC handling is much stronger as a runtime behavior check than as a text-only page check
+- privacy-policy detection should distinguish between visible text, actionable controls, reachable destinations, and meaningful destination content
 
 That pattern library should inform:
 

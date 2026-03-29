@@ -1,78 +1,48 @@
 import * as cheerio from "cheerio";
-import type { AnyNode } from "domhandler";
 import { Agent } from "undici";
 
 import type { ToolType } from "./scanner-config";
+import {
+  buildElementEvidence,
+  getAccessibleName,
+  hasLabelSignal,
+  isDoNotSellCandidate,
+  isPolicyLinkCandidate,
+  isPrivacyRightsCandidate,
+  isTagNode,
+  normalizeLink,
+  normalizeText,
+  normalizeUrl,
+  scoreFromIssues,
+  truncateText
+} from "./scan/helpers";
+import type {
+  AnalyzedPage,
+  ComplianceLayer,
+  HostedToolScanResult,
+  PageScanMetadata,
+  PageScanResult,
+  PrivacyRegion,
+  ScanIssue,
+  ScanSeverity,
+  SiteScanOptions,
+  SiteScanResult,
+  SinglePageMode
+} from "./scan/types";
 
-export type ScanSeverity = "low" | "medium" | "high";
-export type ComplianceLayer = "accessibility" | "privacy" | "consent" | "security";
-
-export type ScanIssueEvidence = {
-  selector: string;
-  snippet: string;
-  note?: string;
-};
-
-export type ScanIssue = {
-  layer: ComplianceLayer;
-  pageUrl: string;
-  title: string;
-  detail: string;
-  severity: ScanSeverity;
-  locationSummary?: string;
-  evidence?: ScanIssueEvidence[];
-};
-
-export type PageScanMetadata = {
-  htmlLangPresent: boolean;
-  imageCount: number;
-  formCount: number;
-  emailFieldCount: number;
-  checkboxCount: number;
-  policyLinkCount: number;
-  trackingSignals: string[];
-  securityHeadersPresent: string[];
-  h1Count: number;
-  headingCount: number;
-};
-
-export type PageScanResult = {
-  url: string;
-  normalizedUrl: string;
-  title: string;
-  score: number;
-  summary: string;
-  issues: ScanIssue[];
-  limitationNotes: string[];
-  metadata: PageScanMetadata;
-};
-
-export type SiteScanResult = {
-  startUrl: string;
-  normalizedUrl: string;
-  sitemapUrl?: string;
-  score: number;
-  summary: string;
-  scannedPages: number;
-  discoveredPages: number;
-  pageLimit: number;
-  pages: PageScanResult[];
-  issuesByLayer: Record<ComplianceLayer, ScanIssue[]>;
-  limitationNotes: string[];
-};
-
-type AnalyzedPage = PageScanResult & {
-  internalLinks: string[];
-};
-
-type SiteScanOptions = {
-  startUrl: string;
-  sitemapUrl?: string;
-  maxPages?: number;
-  sameOriginOnly?: boolean;
-};
-
-type SinglePageMode = "hosted" | "local";
+export type {
+  ComplianceLayer,
+  HostedToolScanResult,
+  PageScanMetadata,
+  PageScanResult,
+  PrivacyRegion,
+  ScanIssue,
+  ScanIssueEvidence,
+  ScanSeverity,
+  SiteScanOptions,
+  SiteScanResult,
+  SinglePageMode
+} from "./scan/types";
 
 const TRACKING_PATTERNS = [
   { label: "Google Analytics", match: /(google-analytics|gtag\(|googletagmanager)/i },
@@ -99,176 +69,33 @@ const TOOL_ISSUE_TITLES: Record<ToolType, string[]> = {
   accessibility: [
     "Missing page title",
     "Missing html lang attribute",
+    "Missing main landmark",
+    "Multiple h1 headings detected",
     "Images missing alt text",
     "Inputs missing visible or programmatic labels",
+    "Placeholder-only form fields",
     "Weak heading structure signals",
     "Buttons without accessible names",
     "Links without accessible names",
-    "Iframes missing title attributes"
+    "Iframes missing title attributes",
+    "Potential focus order override from positive tabindex"
   ],
   privacy: [
     "Tracking signals without visible cookie wording",
     "No obvious privacy or cookie policy links detected",
+    "Privacy policy link could not be verified",
     "Cookie banner without obvious reject or manage controls",
+    "No obvious privacy rights request path detected",
+    "No obvious sale or sharing opt-out path detected",
+    "Limited visible US privacy rights cues",
+    "No visible Global Privacy Control cue detected",
     "Email capture without visible privacy cues",
     "Limited security header coverage"
   ]
 };
 
-function normalizeText(value: string | null | undefined): string {
-  return (value ?? "").replace(/\s+/g, " ").trim();
-}
-
-function truncateText(value: string, maxLength = 180): string {
-  return value.length > maxLength ? `${value.slice(0, maxLength - 1).trimEnd()}...` : value;
-}
-
-function escapeSelectorValue(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
-
-function isTagNode(node: AnyNode | null): node is AnyNode & { tagName: string } {
-  return Boolean(node && "tagName" in node && typeof node.tagName === "string");
-}
-
-function getNodeSelector($: cheerio.CheerioAPI, element: AnyNode): string {
-  const path: string[] = [];
-  let current: AnyNode | null = element;
-
-  while (current && current.type !== "root") {
-    if (!isTagNode(current)) {
-      current = current.parent ?? null;
-      continue;
-    }
-
-    const node = $(current);
-    const tagName = current.tagName.toLowerCase();
-    const id = normalizeText(node.attr("id"));
-
-    if (id) {
-      path.unshift(`${tagName}[id="${escapeSelectorValue(id)}"]`);
-      break;
-    }
-
-    const classNames = normalizeText(node.attr("class"))
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((className) => className.replace(/[^a-zA-Z0-9_-]/g, ""))
-      .filter(Boolean);
-
-    const siblingTags = (current.parent?.children ?? []).filter(
-      (sibling) => isTagNode(sibling) && sibling.tagName === tagName
-    );
-    const siblingIndex = siblingTags.indexOf(current) + 1;
-    const classSuffix = classNames.length > 0 ? `.${classNames.join(".")}` : "";
-    path.unshift(`${tagName}${classSuffix}:nth-of-type(${Math.max(siblingIndex, 1)})`);
-
-    current = current.parent ?? null;
-  }
-
-  return path.join(" > ");
-}
-
-function getElementSnippet($: cheerio.CheerioAPI, element: AnyNode): string {
-  return truncateText(normalizeText($.html(element) ?? ""), 220);
-}
-
-function buildElementEvidence(
-  $: cheerio.CheerioAPI,
-  elements: AnyNode[],
-  noteBuilder?: (element: AnyNode, index: number) => string | undefined,
-  maxItems = 5
-): ScanIssueEvidence[] {
-  return elements.slice(0, maxItems).map((element, index) => ({
-    selector: getNodeSelector($, element),
-    snippet: getElementSnippet($, element),
-    ...(noteBuilder ? { note: noteBuilder(element, index) } : {})
-  }));
-}
-
-function getReferencedText($: cheerio.CheerioAPI, idList: string): string {
-  const ids = idList.split(/\s+/).filter(Boolean);
-
-  return normalizeText(
-    ids
-      .map((id) => {
-        const safeId = id.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-        return normalizeText($(`[id="${safeId}"]`).first().text());
-      })
-      .filter(Boolean)
-      .join(" ")
-  );
-}
-
-function getAccessibleName($: cheerio.CheerioAPI, element: AnyNode): string {
-  const node = $(element);
-  const ariaLabel = normalizeText(node.attr("aria-label"));
-  const ariaLabelledBy = normalizeText(node.attr("aria-labelledby"));
-  const titleAttr = normalizeText(node.attr("title"));
-  const textContent = normalizeText(node.text());
-  const inputValue = normalizeText(node.attr("value"));
-  const imageAlt = normalizeText(
-    node
-      .find("img[alt]")
-      .map((_, image) => normalizeText($(image).attr("alt")))
-      .get()
-      .filter(Boolean)
-      .join(" ")
-  );
-
-  return (
-    ariaLabel ||
-    (ariaLabelledBy ? getReferencedText($, ariaLabelledBy) : "") ||
-    titleAttr ||
-    inputValue ||
-    textContent ||
-    imageAlt
-  );
-}
-
-function normalizeUrl(rawUrl: string): URL {
-  const value = rawUrl.trim();
-  const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
-  const url = new URL(withProtocol);
-
-  if (!["http:", "https:"].includes(url.protocol)) {
-    throw new Error("Only http and https URLs are supported.");
-  }
-
-  return url;
-}
-
-function clampScore(score: number): number {
-  return Math.max(1, Math.min(100, Math.round(score)));
-}
-
-function scoreFromIssues(issues: Array<{ severity: ScanSeverity }>): number {
-  let score = 100;
-
-  for (const issue of issues) {
-    score -= issue.severity === "high" ? 16 : issue.severity === "medium" ? 10 : 5;
-  }
-
-  return clampScore(score);
-}
-
-function normalizeLink(baseUrl: URL, href: string): string | null {
-  if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) {
-    return null;
-  }
-
-  if (href.startsWith("javascript:")) {
-    return null;
-  }
-
-  try {
-    const resolved = new URL(href, baseUrl);
-    resolved.hash = "";
-    return resolved.toString();
-  } catch {
-    return null;
-  }
+function normalizePrivacyRegion(region: PrivacyRegion | undefined): PrivacyRegion {
+  return region === "us" ? "us" : "eu";
 }
 
 async function fetchHtmlPage(url: URL) {
@@ -400,8 +227,76 @@ async function fetchSitemapUrls(rawSitemapUrl: string, siteOrigin: string, maxUr
   return Array.from(discoveredUrls);
 }
 
-function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, headers: Headers): AnalyzedPage {
+async function verifyPolicyLinkDestinations(responseUrl: string, html: string): Promise<ScanIssue[]> {
   const $ = cheerio.load(html);
+  const baseUrl = new URL(responseUrl);
+  const candidates = $("a[href]")
+    .filter((_, element) => isPolicyLinkCandidate($, baseUrl, element))
+    .get()
+    .slice(0, 3);
+
+  const issues: ScanIssue[] = [];
+
+  for (const element of candidates) {
+    const href = normalizeText($(element).attr("href"));
+    const normalizedHref = href ? normalizeLink(baseUrl, href) : null;
+
+    if (!normalizedHref) {
+      issues.push({
+        layer: "privacy",
+        pageUrl: responseUrl,
+        title: "Privacy policy link could not be verified",
+        detail: "A privacy-related link was detected, but its destination could not be resolved into a valid URL.",
+        severity: "medium",
+        locationSummary: "Privacy-related link has an invalid or unsupported destination",
+        evidence: buildElementEvidence($, [element], () => "Review whether this privacy control points to a real reachable destination.")
+      });
+      continue;
+    }
+
+    try {
+      const policyUrl = new URL(normalizedHref);
+      const { response, body } = await fetchTextResponse(policyUrl);
+      const contentType = response.headers.get("content-type") ?? "";
+      const policyText = normalizeText(body.replace(/<[^>]+>/g, " "));
+
+      if (!/text\/html|application\/xhtml\+xml/i.test(contentType) || policyText.length < 140) {
+        issues.push({
+          layer: "privacy",
+          pageUrl: responseUrl,
+          title: "Privacy policy link could not be verified",
+          detail: "A privacy-related destination resolved, but it did not appear to return a meaningful HTML privacy notice.",
+          severity: "low",
+          locationSummary: `Resolved policy destination: ${policyUrl.toString()}`,
+          evidence: buildElementEvidence($, [element], () => `Resolved destination: ${policyUrl.toString()}`)
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown fetch error.";
+      issues.push({
+        layer: "privacy",
+        pageUrl: responseUrl,
+        title: "Privacy policy link could not be verified",
+        detail: "A privacy-related link was detected, but the destination could not be reached successfully.",
+        severity: "medium",
+        locationSummary: `Policy destination fetch failed: ${message}`,
+        evidence: buildElementEvidence($, [element], () => "Review whether this privacy control points to a live policy page.")
+      });
+    }
+  }
+
+  return issues;
+}
+
+function analyzeHtmlPage(
+  baseUrl: URL,
+  responseUrl: string,
+  html: string,
+  headers: Headers,
+  privacyRegionInput?: PrivacyRegion
+): AnalyzedPage {
+  const $ = cheerio.load(html);
+  const privacyRegion = normalizePrivacyRegion(privacyRegionInput);
   const pageTitleText = normalizeText($("title").first().text());
   const title = pageTitleText || baseUrl.hostname;
   const htmlLangPresent = Boolean($("html").attr("lang")?.trim());
@@ -413,26 +308,52 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
   const formCount = $("form").length;
   const unlabeledInputElements = $("input, textarea, select")
     .filter((_, element) => {
-      const id = $(element).attr("id");
-      const ariaLabel = $(element).attr("aria-label");
-      const ariaLabelledBy = $(element).attr("aria-labelledby");
-      const wrappedByLabel = $(element).closest("label").length > 0;
-      const linkedLabel = id ? $(`label[for="${id}"]`).length > 0 : false;
-
-      return !wrappedByLabel && !linkedLabel && !ariaLabel && !ariaLabelledBy;
+      return !hasLabelSignal($, element);
     })
     .get();
   const unlabeledInputs = unlabeledInputElements.length;
+  const placeholderOnlyFieldElements = $("input, textarea")
+    .filter((_, element) => {
+      const node = $(element);
+      const type = normalizeText(node.attr("type")).toLowerCase();
+
+      if (["hidden", "submit", "reset", "button", "checkbox", "radio", "file", "image"].includes(type)) {
+        return false;
+      }
+
+      return Boolean(normalizeText(node.attr("placeholder")) && !hasLabelSignal($, element));
+    })
+    .get();
+  const placeholderOnlyFieldCount = placeholderOnlyFieldElements.length;
   const emailFieldCount = $("input[type='email']").length;
   const checkboxCount = $("input[type='checkbox']").length;
-  const policyLinkCount = $("a")
-    .filter((_, element) => /(privacy|cookie|data protection)/i.test($(element).text()))
-    .length;
+  const mainLandmarkCount = $("main, [role='main']").length;
+  const policyLinkElements = $("a[href], button, [role='button']")
+    .filter((_, element) => isPolicyLinkCandidate($, new URL(responseUrl), element))
+    .get();
+  const policyLinkCount = policyLinkElements.length;
+  const privacyRightsElements = $("a[href], button, [role='button']")
+    .filter((_, element) => isPrivacyRightsCandidate($, new URL(responseUrl), element))
+    .get();
+  const privacyRightsLinkCount = privacyRightsElements.length;
+  const doNotSellElements = $("a[href], button, [role='button']")
+    .filter((_, element) => isDoNotSellCandidate($, new URL(responseUrl), element))
+    .get();
+  const doNotSellLinkCount = doNotSellElements.length;
   const cookieBannerSignal = /(cookie consent|accept cookies|cookie settings|privacy preferences)/i.test($.text());
   const cookieControlSignal =
     /(reject all|reject cookies|decline|manage preferences|manage cookies|customi[sz]e|privacy preferences|cookie settings)/i.test(
       $.text()
     );
+  const accessRequestSignalPresent =
+    /(access request|request access|right to know|access your data|know what personal information)/i.test($.text());
+  const correctionRequestSignalPresent =
+    /(correction request|correct your information|right to correct|update your information|correct inaccurate information)/i.test(
+      $.text()
+    );
+  const deletionRequestSignalPresent =
+    /(delete my data|deletion request|request deletion|right to delete|delete your personal information)/i.test($.text());
+  const gpcSignalPresent = /(global privacy control|\bgpc\b|browser opt-?out preference signal)/i.test($.text());
   const consentSignal = /(subscribe|opt in|marketing consent|agree to receive|email updates)/i.test($.text());
   const trackingSignals = TRACKING_PATTERNS.filter((entry) => entry.match.test(html)).map((entry) => entry.label);
   const securityHeadersPresent = SECURITY_HEADERS.filter((header) => headers.has(header));
@@ -441,6 +362,21 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     .get();
   const h1Count = headings.filter((level) => level === 1).length;
   const headingLevelSkip = headings.some((level, index) => index > 0 && level - headings[index - 1] > 1);
+  const skipLinkElements = $("a[href]")
+    .filter((_, element) => {
+      const href = normalizeText($(element).attr("href"));
+      const accessibleName = getAccessibleName($, element);
+      return /^#/.test(href) && /(skip|skip to content|jump to content|skip navigation)/i.test(accessibleName);
+    })
+    .get();
+  const skipLinkCount = skipLinkElements.length;
+  const positiveTabindexElements = $("[tabindex]")
+    .filter((_, element) => {
+      const value = Number.parseInt(normalizeText($(element).attr("tabindex")), 10);
+      return Number.isFinite(value) && value > 0;
+    })
+    .get();
+  const positiveTabindexCount = positiveTabindexElements.length;
   const buttonWithoutNameElements = $("button, input[type='button'], input[type='submit'], input[type='reset'], [role='button']")
     .filter((_, element) => !getAccessibleName($, element))
     .get();
@@ -456,12 +392,28 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
   const trackingEvidence = $("script[src], script")
     .filter((_, element) => TRACKING_PATTERNS.some((entry) => entry.match.test($(element).attr("src") ?? $(element).html() ?? "")))
     .get();
+  const insecureFormActionElements = $("form[action]")
+    .filter((_, element) => {
+      if (new URL(responseUrl).protocol !== "https:") {
+        return false;
+      }
+
+      const action = normalizeText($(element).attr("action"));
+
+      if (!action) {
+        return false;
+      }
+
+      const normalizedAction = normalizeLink(new URL(responseUrl), action);
+      return normalizedAction ? new URL(normalizedAction).protocol === "http:" : /^http:\/\//i.test(action);
+    })
+    .get();
+  const insecureFormActionCount = insecureFormActionElements.length;
   const internalLinks = $("a[href]")
     .map((_, element) => normalizeLink(new URL(responseUrl), $(element).attr("href") ?? ""))
     .get()
     .filter((value): value is string => Boolean(value))
     .filter((value) => new URL(value).origin === new URL(responseUrl).origin);
-
   const issues: ScanIssue[] = [];
 
   if (!pageTitleText) {
@@ -500,6 +452,29 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     });
   }
 
+  if (mainLandmarkCount === 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Missing main landmark",
+      detail: "The page does not expose a main landmark via a main element or role='main'.",
+      severity: "low",
+      locationSummary: "No main landmark detected"
+    });
+  }
+
+  if (h1Count > 1) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Multiple h1 headings detected",
+      detail: `${h1Count} h1 elements were detected on the page, which may weaken the primary page outline.`,
+      severity: "low",
+      locationSummary: `${h1Count} h1 elements found`,
+      evidence: buildElementEvidence($, $("h1").get(), () => "Review whether only one primary page heading should be exposed.")
+    });
+  }
+
   if (missingAltCount > 0) {
     issues.push({
       layer: "accessibility",
@@ -511,6 +486,21 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
       evidence: buildElementEvidence($, missingAltElements, (element) => {
         const src = normalizeText($(element).attr("src"));
         return src ? `Image source: ${src}` : "Image element missing alt text.";
+      })
+    });
+  }
+
+  if (placeholderOnlyFieldCount > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Placeholder-only form fields",
+      detail: `${placeholderOnlyFieldCount} form field${placeholderOnlyFieldCount === 1 ? " appears" : "s appear"} to rely on placeholder text without a visible or programmatic label.`,
+      severity: placeholderOnlyFieldCount > 2 ? "high" : "medium",
+      locationSummary: `${placeholderOnlyFieldCount} placeholder-only form field${placeholderOnlyFieldCount === 1 ? "" : "s"}`,
+      evidence: buildElementEvidence($, placeholderOnlyFieldElements, (element) => {
+        const placeholder = normalizeText($(element).attr("placeholder"));
+        return placeholder ? `Placeholder text: ${placeholder}` : "Field appears to rely on placeholder text only.";
       })
     });
   }
@@ -575,6 +565,21 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     });
   }
 
+  if (positiveTabindexCount > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Potential focus order override from positive tabindex",
+      detail: `${positiveTabindexCount} element${positiveTabindexCount === 1 ? " uses" : "s use"} a positive tabindex value, which can create a fragile keyboard and assistive-technology navigation order.`,
+      severity: "low",
+      locationSummary: `${positiveTabindexCount} element${positiveTabindexCount === 1 ? "" : "s"} with positive tabindex`,
+      evidence: buildElementEvidence($, positiveTabindexElements, (element) => {
+        const tabindex = normalizeText($(element).attr("tabindex"));
+        return tabindex ? `tabindex=${tabindex}` : undefined;
+      })
+    });
+  }
+
   if (iframeMissingTitleCount > 0) {
     issues.push({
       layer: "accessibility",
@@ -587,7 +592,7 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     });
   }
 
-  if (!cookieBannerSignal && trackingSignals.length > 0) {
+  if (privacyRegion === "eu" && !cookieBannerSignal && trackingSignals.length > 0) {
     issues.push({
       layer: "privacy",
       pageUrl: responseUrl,
@@ -602,7 +607,7 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     });
   }
 
-  if (cookieBannerSignal && trackingSignals.length > 0 && !cookieControlSignal) {
+  if (privacyRegion === "eu" && cookieBannerSignal && trackingSignals.length > 0 && !cookieControlSignal) {
     issues.push({
       layer: "privacy",
       pageUrl: responseUrl,
@@ -613,14 +618,67 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     });
   }
 
+  if (privacyRightsLinkCount === 0) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: responseUrl,
+      title: "No obvious privacy rights request path detected",
+      detail:
+        "This page did not expose an obvious privacy-rights, data-request, deletion, or consumer-choices path in its visible links or buttons.",
+      severity: privacyRegion === "us" ? "medium" : "low",
+      locationSummary: "No visible privacy-rights or data-request path found"
+    });
+  }
+
+  if (trackingSignals.length > 0 && doNotSellLinkCount === 0) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: responseUrl,
+      title: "No obvious sale or sharing opt-out path detected",
+      detail:
+        "Tracking signals were detected, but no obvious 'Do Not Sell or Share' or 'Your Privacy Choices' path was found in visible links or buttons.",
+      severity: "low",
+      locationSummary: "Tracking detected without an obvious sale or sharing opt-out path"
+    });
+  }
+
+  if (privacyRegion === "us" && (!accessRequestSignalPresent || !correctionRequestSignalPresent || !deletionRequestSignalPresent)) {
+    const missingSignals = [
+      accessRequestSignalPresent ? null : "access",
+      correctionRequestSignalPresent ? null : "correction",
+      deletionRequestSignalPresent ? null : "deletion"
+    ].filter(Boolean);
+
+    issues.push({
+      layer: "privacy",
+      pageUrl: responseUrl,
+      title: "Limited visible US privacy rights cues",
+      detail: `Public privacy-rights signals appear incomplete for this page. Missing visible cues: ${missingSignals.join(", ")}.`,
+      severity: privacyRightsLinkCount === 0 ? "medium" : "low",
+      locationSummary: "Access, correction, or deletion wording was not clearly surfaced"
+    });
+  }
+
+  if (privacyRegion === "us" && trackingSignals.length > 0 && !gpcSignalPresent) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: responseUrl,
+      title: "No visible Global Privacy Control cue detected",
+      detail:
+        "Tracking signals were detected, but no visible mention of Global Privacy Control or browser-based opt-out handling was found on the page.",
+      severity: "low",
+      locationSummary: "No visible GPC or browser opt-out cue found"
+    });
+  }
+
   if (policyLinkCount === 0) {
     issues.push({
       layer: "privacy",
       pageUrl: responseUrl,
       title: "No obvious privacy or cookie policy links detected",
-      detail: "This page did not expose a visible privacy, cookie, or terms link in its markup.",
+      detail: "This page did not expose a visible privacy, cookie, or terms link or button in its markup.",
       severity: "medium",
-      locationSummary: "No matching privacy, cookie, or data-protection link text found in page links"
+      locationSummary: "No matching privacy, cookie, or data-protection cues found in page links or buttons"
     });
   }
 
@@ -672,6 +730,32 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     });
   }
 
+  if (new URL(responseUrl).protocol !== "https:") {
+    issues.push({
+      layer: "security",
+      pageUrl: responseUrl,
+      title: "Page is not served over HTTPS",
+      detail: "The scanned page resolved over HTTP rather than HTTPS.",
+      severity: "high",
+      locationSummary: `Resolved protocol: ${new URL(responseUrl).protocol}`
+    });
+  }
+
+  if (insecureFormActionCount > 0) {
+    issues.push({
+      layer: "security",
+      pageUrl: responseUrl,
+      title: "Forms submit to insecure HTTP targets",
+      detail: `${insecureFormActionCount} form${insecureFormActionCount === 1 ? " submits" : "s submit"} to an HTTP action target from an HTTPS page.`,
+      severity: "medium",
+      locationSummary: `${insecureFormActionCount} form action${insecureFormActionCount === 1 ? "" : "s"} resolve to HTTP`,
+      evidence: buildElementEvidence($, insecureFormActionElements, (element) => {
+        const action = normalizeText($(element).attr("action"));
+        return action ? `Form action: ${action}` : "Form action resolves to an insecure HTTP endpoint.";
+      })
+    });
+  }
+
   const score = scoreFromIssues(issues);
   const summary =
     issues.length === 0
@@ -687,25 +771,41 @@ function analyzeHtmlPage(baseUrl: URL, responseUrl: string, html: string, header
     issues,
     limitationNotes: [],
     metadata: {
+      privacyRegion,
       htmlLangPresent,
       imageCount,
       formCount,
       emailFieldCount,
       checkboxCount,
+      placeholderOnlyFieldCount,
       policyLinkCount,
+      privacyRightsLinkCount,
+      doNotSellLinkCount,
+      accessRequestSignalPresent,
+      correctionRequestSignalPresent,
+      deletionRequestSignalPresent,
+      gpcSignalPresent,
       trackingSignals,
       securityHeadersPresent,
       h1Count,
-      headingCount: headings.length
+      headingCount: headings.length,
+      mainLandmarkCount,
+      skipLinkCount,
+      positiveTabindexCount,
+      insecureFormActionCount
     },
     internalLinks: Array.from(new Set(internalLinks))
   };
 }
 
-export async function scanSinglePage(rawUrl: string, mode: SinglePageMode = "local"): Promise<PageScanResult> {
+export async function scanSinglePage(
+  rawUrl: string,
+  mode: SinglePageMode = "local",
+  privacyRegion?: PrivacyRegion
+): Promise<PageScanResult> {
   const url = normalizeUrl(rawUrl);
   const { response, html } = await fetchHtmlPage(url);
-  const page = analyzeHtmlPage(url, response.url, html, response.headers);
+  const page = analyzeHtmlPage(url, response.url, html, response.headers, privacyRegion);
 
   return {
     ...page,
@@ -719,10 +819,24 @@ export async function scanSinglePage(rawUrl: string, mode: SinglePageMode = "loc
   };
 }
 
-async function analyzeFetchedPage(rawUrl: string, mode: SinglePageMode): Promise<AnalyzedPage> {
+async function analyzeFetchedPage(
+  rawUrl: string,
+  mode: SinglePageMode,
+  privacyRegion?: PrivacyRegion
+): Promise<AnalyzedPage> {
   const url = normalizeUrl(rawUrl);
   const { response, html } = await fetchHtmlPage(url);
-  const page = analyzeHtmlPage(url, response.url, html, response.headers);
+  const page = analyzeHtmlPage(url, response.url, html, response.headers, privacyRegion);
+  const policyVerificationIssues = await verifyPolicyLinkDestinations(response.url, html);
+
+  if (policyVerificationIssues.length > 0) {
+    page.issues.push(...policyVerificationIssues);
+    page.score = scoreFromIssues(page.issues);
+    page.summary =
+      page.issues.length === 0
+        ? "No obvious issues were detected on this page in the current local analysis."
+        : `${page.issues.length} issue${page.issues.length === 1 ? "" : "s"} surfaced on this page in the current local analysis.`;
+  }
 
   return {
     ...page,
@@ -783,7 +897,7 @@ export async function scanPublicSite(options: SiteScanOptions): Promise<SiteScan
     visited.add(current);
 
     try {
-      const analyzedPage = await analyzeFetchedPage(current, "local");
+      const analyzedPage = await analyzeFetchedPage(current, "local", options.privacyRegion);
       const { internalLinks, ...page } = analyzedPage;
       pages.push(page);
 
@@ -839,24 +953,12 @@ export async function scanPublicSite(options: SiteScanOptions): Promise<SiteScan
   };
 }
 
-export type HostedToolScanResult = {
-  tool: ToolType;
-  url: string;
-  normalizedUrl: string;
-  title: string;
-  score: number;
-  summary: string;
-  issues: Array<{
-    title: string;
-    detail: string;
-    severity: ScanSeverity;
-  }>;
-  limitationNotes: string[];
-  metadata: PageScanMetadata;
-};
-
-export async function runHostedToolScan(tool: ToolType, rawUrl: string): Promise<HostedToolScanResult> {
-  const page = await analyzeFetchedPage(rawUrl, "hosted");
+export async function runHostedToolScan(
+  tool: ToolType,
+  rawUrl: string,
+  privacyRegion?: PrivacyRegion
+): Promise<HostedToolScanResult> {
+  const page = await analyzeFetchedPage(rawUrl, "hosted", privacyRegion);
   const allowedTitles = new Set(TOOL_ISSUE_TITLES[tool]);
   const filteredIssues = page.issues.filter((issue) => allowedTitles.has(issue.title));
 
@@ -871,9 +973,12 @@ export async function runHostedToolScan(tool: ToolType, rawUrl: string): Promise
         ? "No obvious issues were detected in this lightweight public-page scan, but broader crawling may still reveal additional problems."
         : `${filteredIssues.length} issue${filteredIssues.length === 1 ? "" : "s"} surfaced in this lightweight public-page scan.`,
     issues: filteredIssues.map((issue) => ({
+      layer: issue.layer,
       title: issue.title,
       detail: issue.detail,
-      severity: issue.severity
+      severity: issue.severity,
+      locationSummary: issue.locationSummary,
+      evidence: issue.evidence
     })),
     limitationNotes: page.limitationNotes,
     metadata: page.metadata

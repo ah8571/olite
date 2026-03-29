@@ -4,7 +4,8 @@ import { writeFile } from "node:fs/promises";
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 
 import { scanPublicSite, scanSinglePage } from "../../lib/scanner-core";
-import type { SiteScanResult } from "../../lib/scanner-core";
+import type { PrivacyRegion, SiteScanResult } from "../../lib/scanner-core";
+import { augmentSiteResultWithRenderedAccessibility } from "./rendered-accessibility";
 
 const HISTORY_FILE_NAME = "scan-history.json";
 const MAX_STORED_SCANS = 12;
@@ -17,6 +18,7 @@ type StoredScanHistoryItem = {
   host: string;
   maxPages: number;
   reviewMode?: ReviewMode;
+  privacyRegion?: PrivacyRegion;
   sitemapUrl?: string;
   score: number;
   summary: string;
@@ -93,20 +95,26 @@ function createWindow() {
 
 ipcMain.handle(
   "scanner:run-scan",
-  async (_event, payload: { url: string; reviewMode: ReviewMode; maxPages?: number; sitemapUrl?: string }) => {
+  async (
+    _event,
+    payload: { url: string; reviewMode: ReviewMode; maxPages?: number; sitemapUrl?: string; privacyRegion?: PrivacyRegion }
+  ) => {
     if (payload.reviewMode === "single") {
-      const page = await scanSinglePage(payload.url, "local");
-      return buildSiteResultFromSinglePage(page, payload.url);
+      const page = await scanSinglePage(payload.url, "local", payload.privacyRegion);
+      return augmentSiteResultWithRenderedAccessibility(buildSiteResultFromSinglePage(page, payload.url));
     }
 
     const maxPages = Math.max(1, Math.min(payload.maxPages ?? (payload.reviewMode === "full" ? 25 : 10), 100));
 
-    return scanPublicSite({
+    const staticResult = await scanPublicSite({
       startUrl: payload.url,
       sitemapUrl: payload.sitemapUrl,
       maxPages,
-      sameOriginOnly: true
+      sameOriginOnly: true,
+      privacyRegion: payload.privacyRegion
     });
+
+    return augmentSiteResultWithRenderedAccessibility(staticResult);
   }
 );
 
@@ -120,7 +128,8 @@ ipcMain.handle("scanner:store-scan-result", async (_event, payload: StoredScanHi
     (item) =>
       item.result.normalizedUrl !== payload.result.normalizedUrl ||
       item.maxPages !== payload.maxPages ||
-      (item.sitemapUrl ?? "") !== (payload.sitemapUrl ?? "")
+      (item.sitemapUrl ?? "") !== (payload.sitemapUrl ?? "") ||
+      (item.privacyRegion ?? "eu") !== (payload.privacyRegion ?? "eu")
   );
 
   const nextHistory = [payload, ...deduped].slice(0, MAX_STORED_SCANS);

@@ -149,6 +149,19 @@ The same underlying engine should support multiple interfaces.
 
 The scanner should be built once and then exposed through the CLI and desktop app.
 
+Near-term repository direction:
+
+- keep the current app-router website in `app/`
+- keep desktop-specific shell code in `desktop/`
+- keep CLI-specific shell code in `cli/`
+- continue extracting shared scan logic from `lib/scanner-core.ts` into `lib/scan/*`
+
+Current extraction status:
+
+- shared scan types now live in `lib/scan/types.ts`
+- shared DOM, evidence, URL, and scoring helpers now live in `lib/scan/helpers.ts`
+- `lib/scanner-core.ts` is now starting to act more like an orchestration layer instead of a single all-in-one implementation file
+
 ### Scanner Core
 
 Responsible for:
@@ -164,6 +177,14 @@ This should stay independent from the UI layers so the same scan engine can powe
 - the limited hosted free tools
 - the downloadable CLI
 - the future desktop app
+
+Near-term split inside the shared scan layer:
+
+- `lib/scan/types.ts` for normalized issue, page, site, and report types
+- `lib/scan/helpers.ts` for DOM extraction helpers, evidence builders, URL normalization, and scoring utilities
+- future `lib/scan/site/*` modules for fetch, crawl, sitemap, and public-site rule orchestration
+- future `lib/scan/code/*` modules for repo traversal, framework detection, and static rule execution
+- future `lib/scan/browser/*` modules for runtime interaction checks and browser-driven evidence capture
 
 ### CLI Layer
 
@@ -209,6 +230,43 @@ Important scope note:
 - if Olite later offers higher-touch enterprise services, those should sit on top of the automated scan engine rather than inside the baseline desktop workflow
 
 ## Recommended Execution Model
+
+## Engine Families
+
+Olite should grow into three distinct scan engines that share the same issue schema and reporting layer.
+
+### 1. Public Web Engine
+
+Responsibilities:
+
+- fetch public HTML and response headers
+- crawl same-origin pages
+- optionally seed from sitemap data
+- evaluate public-page and crawl-visible issues
+
+This is the current engine family.
+
+### 2. Codebase Engine
+
+Responsibilities:
+
+- traverse the local filesystem
+- detect framework and project structure
+- inspect config, route, component, and form patterns
+- emit findings into the same normalized report model used by the public web engine
+
+The first codebase-aware target should be Next.js because the current repository already reflects that ecosystem.
+
+### 3. Browser Runtime Engine
+
+Responsibilities:
+
+- launch a real browser session
+- wait for hydration and interactive states
+- click through consent banners, dialogs, menus, and popovers
+- inspect post-interaction DOM and network behavior
+
+This is the right place for JavaScript-driven privacy controls, consent flows, and authenticated or stateful interaction checks.
 
 ### Local First
 

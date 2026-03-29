@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getCommerceConfig } from "@/lib/commerce";
-import { blogPages } from "@/lib/blog-pages";
 import { toolConfig, toolOrder } from "@/lib/scanner-config";
 
 export const metadata: Metadata = {
@@ -35,11 +34,12 @@ export default function HomePage() {
       <section className="hero">
         <div className="container hero-grid">
           <div>
+            <p className="eyebrow">Open source, local-first verification</p>
             <h1 className="display">Verification scans for accessibility and privacy.</h1>
             <p className="lede">
-              Olite helps teams verify whether public pages appear to implement core accessibility and
-              privacy signals correctly. Start with a free scan, find the visible gaps, and decide what to
-              fix next.
+              Olite is an open source scanner for teams that want a practical first pass on whether public
+              pages appear to implement core accessibility and privacy signals correctly. Start with a free
+              scan, inspect the findings, and then move into deeper local verification when needed.
             </p>
             <div className="hero-actions">
               <Link className="button" href="/tools/accessibility">
@@ -48,8 +48,20 @@ export default function HomePage() {
               <Link className="button-secondary" href="/tools/privacy">
                 Try privacy scanner
               </Link>
+              <Link className="button-secondary" href="https://github.com/ah8571/olite">
+                View on GitHub
+              </Link>
             </div>
           </div>
+          <aside className="section-panel hero-aside-panel">
+            <p className="kicker">Why Teams Use It</p>
+            <h2>Open source and inspectable from day one.</h2>
+            <ul className="bullet-list">
+              <li>Free hosted scans for a quick first pass</li>
+              <li>Local-first desktop workflow for broader crawls and exports</li>
+              <li>Open source codebase so the rule set and roadmap stay inspectable</li>
+            </ul>
+          </aside>
         </div>
       </section>
 
@@ -57,10 +69,15 @@ export default function HomePage() {
         <div className="container split-grid">
           <div>
             <p className="kicker">What Olite Is For</p>
-            <h2 className="section-title">A practical verification layer for websites.</h2>
+            <h2 className="section-title">An open source verification layer for websites.</h2>
             <p className="section-copy">
               Olite is built to answer a straightforward question: does this site appear to have the basics in
-              place, or are there obvious accessibility and privacy gaps that need attention?
+              place, or are there obvious accessibility and privacy gaps that need attention? The hosted tools
+              stay lightweight on purpose, while the desktop path stays local-first and inspectable.
+            </p>
+            <p className="section-copy">
+              The open source direction matters because teams can inspect how checks are written, understand the
+              product limits, and adapt the workflow without treating the scanner like a black box.
             </p>
           </div>
           <div className="cards-grid">
@@ -80,9 +97,9 @@ export default function HomePage() {
               <p className="muted">Translate vague compliance concerns into an actual list of things to inspect.</p>
             </article>
             <article className="feature-card">
-              <p className="kicker">Next Step</p>
-              <h3>Move from signal to investigation</h3>
-              <p className="muted">Use the first-pass scan to decide what needs deeper technical or legal review.</p>
+              <p className="kicker">Open Source</p>
+              <h3>Inspect the rules and evolve them</h3>
+              <p className="muted">Keep the scanner auditable and adaptable instead of hiding the rule logic behind a closed product.</p>
             </article>
           </div>
         </div>
@@ -138,10 +155,36 @@ export default function HomePage() {
             <p className="kicker">Privacy Coverage</p>
             <h2>What the free privacy checker looks for</h2>
             <ul className="bullet-list">
-              <li>Privacy or cookie policy link visibility</li>
-              <li>Cookie wording, tracking signals, and baseline header presence</li>
-              <li>Public GDPR-facing signals before a legal or technical review</li>
+              <li>Privacy or cookie policy link visibility and public rights-request cues</li>
+              <li>Cookie wording for EU-inclusive reviews and softer rights-based signals for US-only reviews</li>
+              <li>Tracking signals, opt-out cues, and baseline header presence before deeper review</li>
             </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="page-section">
+        <div className="container split-grid">
+          <div>
+            <p className="kicker">Open Source</p>
+            <h2 className="section-title">Not a black-box compliance product.</h2>
+            <p className="section-copy">
+              Olite is being built in the open so teams can see what the scanner actually checks, where the
+              limits are, and how the product is evolving from markup checks into deeper rendered verification.
+            </p>
+          </div>
+          <div className="section-panel">
+            <p className="kicker">Why It Matters</p>
+            <ul className="bullet-list">
+              <li>Inspectable scanner logic and shared issue model</li>
+              <li>Clearer disclosure about what is automated today versus later</li>
+              <li>Natural path for contributors, agencies, and internal teams to extend the workflow</li>
+            </ul>
+            <div className="hero-actions compact">
+              <Link className="button-secondary" href="https://github.com/ah8571/olite">
+                Browse repository
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -205,38 +248,13 @@ export default function HomePage() {
               <li>Step beyond the 2 free hosted scans per day</li>
               <li>Local crawl of a simple public website starting from one URL</li>
               <li>Grouped findings for accessibility, privacy, consent, and basic security signals</li>
+              <li>Open source foundation with auditable scanner logic</li>
               <li>Exportable results for early remediation and client review workflows</li>
             </ul>
             <p className="section-copy">
               Start with the hosted scanners to test the site today. Then move into the local workflow when
               you need repeatable scans, exportable reports, and a broader crawl.
             </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="page-section">
-        <div className="container">
-          <p className="kicker">Guides And Comparisons</p>
-          <h2 className="section-title">Read practical reviews and comparison guides.</h2>
-          <div className="cards-grid three">
-            {blogPages.map((entry) => (
-              <article className="feature-card" key={entry.href}>
-                <p className="kicker">Guide</p>
-                <h3>{entry.title}</h3>
-                <p className="muted">{entry.description}</p>
-                <div className="tool-actions">
-                  <Link className="button-secondary" href={entry.href}>
-                    Open page
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-          <div className="hero-actions compact">
-            <Link className="button-secondary" href="/blog">
-              Browse blog
-            </Link>
           </div>
         </div>
       </section>

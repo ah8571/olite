@@ -46,6 +46,111 @@ The practical posture is:
 - avoid claiming that a passing result means a site is fully compliant
 - treat deeper manual verification as outside the first product scope, even if it may become an enterprise service later
 
+## Verification Methods
+
+Olite should define each rule not only by what it checks, but also by how the product can actually verify it.
+
+The most useful verification ladder is:
+
+- static DOM verification for high-confidence markup and semantics issues
+- rendered browser verification for interaction, focus, visibility, and consent-state behavior
+- network verification for tracker and pre-consent request behavior
+- multi-page crawl verification for recurring template and footer or policy coverage issues
+- source-aware verification later in the CLI for template-level and component-level enforcement
+
+### 1. Static DOM Verification
+
+Best for:
+
+- page title presence
+- `html lang`
+- missing `main` landmark
+- heading outline warnings such as missing or multiple `h1` elements
+- images missing `alt`
+- unlabeled controls
+- placeholder-only form patterns
+- links or buttons missing accessible names
+- iframe title coverage
+- policy-link and cookie-wording visibility signals
+- insecure form action markup
+
+Why it works:
+
+- these checks are observable directly from markup
+- they are relatively stable across hosted, desktop, and CLI scans
+- they can produce concrete evidence like selectors, snippets, and affected elements
+
+### 2. Rendered Browser Verification
+
+Best for:
+
+- focus visibility
+- focus order
+- skip-link behavior once activated
+- dialog and menu focus management
+- cookie-banner interaction outcomes
+- rendered text contrast and UI contrast
+- client-rendered policy banners or consent controls that do not exist in initial HTML
+
+Why it works:
+
+- many modern sites hide important compliance behavior behind hydration or JavaScript
+- desktop and future browser automation are much better suited than the hosted scanner for these checks
+
+### 3. Network Verification
+
+Best for:
+
+- analytics firing before consent
+- marketing pixels firing before consent
+- third-party requests on first load
+- banner state ignored after reject or manage interactions
+
+Why it works:
+
+- privacy compliance often depends on runtime behavior, not just visible wording
+- network evidence is one of the strongest ways to support privacy findings without making legal claims
+
+### 4. Multi-Page Crawl Verification
+
+Best for:
+
+- footer policy coverage across templates
+- repeated missing landmarks or heading issues
+- form transparency consistency across marketing pages
+- whether privacy and cookie controls appear only on some routes
+
+Why it works:
+
+- many compliance failures are template-level or route-level, not isolated to a single page
+- this is where the desktop app provides stronger value than the hosted free tool
+
+### 5. Source-Aware Verification
+
+Best for later CLI phases:
+
+- component libraries that emit unlabeled controls
+- missing policy links in shared templates
+- consent platform configuration and environment drift
+- CI gating on critical accessibility and privacy regressions
+
+Why it works:
+
+- it catches regressions before deployment
+- it complements browser verification rather than replacing it
+
+### Evidence Standards For Rules
+
+Each automated rule should try to return:
+
+- a plain-language issue title
+- a concrete implementation detail explaining what was observed
+- a location summary that helps the user find the problem quickly
+- one or more evidence snippets, selectors, or header or network references where available
+- a limitation note when the finding is advisory or partial rather than definitive
+
+That keeps the product focused on observable compliance signals instead of overclaiming certainty.
+
 ### What Can Be Automated Well
 
 #### 1. DOM And Semantics Checks

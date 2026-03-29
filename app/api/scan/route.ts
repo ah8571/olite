@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { runBasicScan } from "@/lib/scanner";
+import type { PrivacyRegion } from "@/lib/scan/types";
 import type { ToolType } from "@/lib/scanner-config";
 
 export const runtime = "nodejs";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 type RequestBody = {
   tool?: ToolType;
   url?: string;
+  privacyRegion?: PrivacyRegion;
 };
 
 type RateLimitEntry = {
@@ -22,6 +24,10 @@ const rateLimitStore = getRateLimitStore();
 
 function isTool(value: string): value is ToolType {
   return value === "accessibility" || value === "privacy";
+}
+
+function isPrivacyRegion(value: string): value is PrivacyRegion {
+  return value === "us" || value === "eu";
 }
 
 function getRateLimitStore(): Map<string, RateLimitEntry> {
@@ -113,7 +119,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await runBasicScan(body.tool, body.url);
+    const privacyRegion = isPrivacyRegion(body.privacyRegion ?? "") ? body.privacyRegion : undefined;
+    const result = await runBasicScan(body.tool, body.url, privacyRegion);
     return NextResponse.json(result, { headers: buildRateLimitHeaders(rateLimit.remaining) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "The scan could not be completed.";

@@ -1,7 +1,13 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("oliteDesktop", {
-  runScan: (payload: { url: string; reviewMode: "single" | "focused" | "full"; maxPages?: number; sitemapUrl?: string }) =>
+  runScan: (payload: {
+    url: string;
+    reviewMode: "single" | "focused" | "full";
+    maxPages?: number;
+    sitemapUrl?: string;
+    privacyRegion?: "us" | "eu";
+  }) =>
     ipcRenderer.invoke("scanner:run-scan", payload) as Promise<unknown>,
   saveReport: (payload: { suggestedName: string; content: string }) =>
     ipcRenderer.invoke("scanner:save-report", payload) as Promise<unknown>,

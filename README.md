@@ -105,10 +105,17 @@ This repository currently serves as the project home while the product scope, MV
 The current local prototype now includes:
 
 - a shared scan engine in [lib/scanner-core.ts](lib/scanner-core.ts)
+- shared scan types and helpers in [lib/scan/types.ts](lib/scan/types.ts) and [lib/scan/helpers.ts](lib/scan/helpers.ts)
 - an Electron desktop shell in [desktop/src/main.ts](desktop/src/main.ts)
 - a new CLI entry point in [cli/src/main.ts](cli/src/main.ts)
 
 That gives the project a clean base where the desktop app and CLI can both wrap the same underlying scan logic.
+
+The intended direction is:
+
+- public web engine for fetched HTML, headers, and crawl-visible issues
+- codebase engine for local repo and framework-aware analysis
+- browser runtime engine later for hydrated UI states and click-through interaction checks
 
 ## Local Development
 

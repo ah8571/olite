@@ -50,6 +50,14 @@
                 <input id="url" name="url" class="input" type="url" inputmode="url" placeholder="https://example.com" required />
               </label>
 
+              <label class="label input-field" for="privacyRegion">
+                Privacy expectations
+                <select id="privacyRegion" name="privacyRegion" class="select">
+                  <option value="eu" selected>Including EU users</option>
+                  <option value="us">US users only</option>
+                </select>
+              </label>
+
               <div id="sitemap-options" class="conditional-panel hidden" aria-live="polite">
                 <label class="inline-toggle" for="capPages">
                   <input id="capPages" name="capPages" type="checkbox" checked />
@@ -105,8 +113,8 @@
       <footer class="desktop-footer disclosure-panel">
         <div class="footer-copy-row">
           <p class="kicker footer-kicker">Disclosure</p>
-          <p class="footer-title">Local-first scanner for public pages and sitemaps.</p>
-          <p class="form-note footer-note">Starts from one URL and discovers same-domain pages automatically. No authenticated flows, JavaScript interaction automation, or source-aware verification in this first pass.</p>
+          <p class="footer-title">Automation-oriented verification for public websites.</p>
+          <p class="form-note footer-note">Starts from one public URL and can discover same-domain pages automatically. Current checks focus on markup, public-page signals, and lightweight crawl evidence. Authenticated flows, richer JavaScript interaction automation, network-level consent verification, and source-aware rules are not fully covered in this first pass.</p>
         </div>
         <div class="footer-links-row">
           <a class="footer-link" href="https://github.com/ah8571/olite#readme">Docs</a>

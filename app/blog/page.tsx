@@ -13,7 +13,8 @@ export default function BlogIndexPage() {
   const groups = {
     review: blogPages.filter((page) => page.category === "review"),
     comparison: blogPages.filter((page) => page.category === "comparison"),
-    "best-of": blogPages.filter((page) => page.category === "best-of")
+    "best-of": blogPages.filter((page) => page.category === "best-of"),
+    guide: blogPages.filter((page) => page.category === "guide")
   };
 
   return (
@@ -42,7 +43,7 @@ export default function BlogIndexPage() {
       {Object.entries(groups).map(([group, entries]) => (
         <section className="page-section" key={group}>
           <div className="container">
-            <p className="kicker">{group === "best-of" ? "Best-Of" : group === "comparison" ? "Comparison" : "Review"}</p>
+            <p className="kicker">{group === "best-of" ? "Best-Of" : group === "comparison" ? "Comparison" : group === "guide" ? "Guide" : "Review"}</p>
             <div className="cards-grid two-up">
               {entries.map((entry) => (
                 <article className="feature-card" key={entry.href}>

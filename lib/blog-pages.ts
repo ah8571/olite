@@ -3,7 +3,7 @@ export type BlogPage = {
   shortTitle: string;
   title: string;
   description: string;
-  category: "review" | "comparison" | "best-of";
+  category: "review" | "comparison" | "best-of" | "guide";
 };
 
 export const blogPages: BlogPage[] = [
@@ -54,5 +54,13 @@ export const blogPages: BlogPage[] = [
     description:
       "A practical guide to privacy tooling for websites, from cookie-consent products to lighter signal scanners.",
     category: "best-of"
+  },
+  {
+    href: "/blog/what-is-global-privacy-control",
+    shortTitle: "What Is GPC?",
+    title: "What Is Global Privacy Control?",
+    description:
+      "A practical explanation of Global Privacy Control, how privacy-oriented browsers send it, and why website teams may need to respond.",
+    category: "guide"
   }
 ];

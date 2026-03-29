@@ -13,6 +13,7 @@ const sitemapOptions = document.getElementById("sitemap-options");
 const capPagesInput = document.getElementById("capPages");
 const maxPagesField = document.getElementById("max-pages-field");
 const maxPagesInput = document.getElementById("maxPages");
+const privacyRegionInput = document.getElementById("privacyRegion");
 const clearResultsButton = document.getElementById("clear-results-button");
 const scannerView = document.getElementById("scanner-view");
 const historyView = document.getElementById("history-view");
@@ -107,6 +108,10 @@ function summaryModeLabel(result) {
   return reviewModeLabel("single", 1, true);
 }
 
+function privacyRegionLabel(value) {
+  return value === "us" ? "US users only" : "Including EU users";
+}
+
 function buildScanRequest(inputUrl, scope, maxPages) {
   const normalizedInput = normalizeUrlValue(inputUrl);
 
@@ -181,7 +186,7 @@ function resetResults() {
   pagesPanel.innerHTML = "";
 }
 
-async function runScan(inputUrl, scope, maxPages) {
+async function runScan(inputUrl, scope, maxPages, privacyRegion) {
   status.textContent = "Scanning...";
   submitButton.disabled = true;
   navigateToView("scanner");
@@ -192,10 +197,18 @@ async function runScan(inputUrl, scope, maxPages) {
       url: request.startUrl,
       reviewMode: request.reviewMode,
       sitemapUrl: request.sitemapUrl || undefined,
-      maxPages: request.maxPages
+      maxPages: request.maxPages,
+      privacyRegion
     });
     loadResultIntoPanels(result, request.maxPages);
-    await storeCompletedScan(result, request.normalizedInput, normalizeScope(scope), request.maxPages, normalizeScope(scope) !== "sitemap" || capPagesInput.checked);
+    await storeCompletedScan(
+      result,
+      request.normalizedInput,
+      normalizeScope(scope),
+      request.maxPages,
+      normalizeScope(scope) !== "sitemap" || capPagesInput.checked,
+      privacyRegion
+    );
     status.textContent = "Scan complete.";
   } catch (error) {
     const message = error instanceof Error ? error.message : "The scan could not be completed.";
@@ -229,6 +242,7 @@ function renderRecentScans() {
           <div class="recent-meta recent-meta-compact">
             <span class="stat-pill">Score: ${escapeHtml(item.score)}</span>
             <span class="stat-pill">${escapeHtml(reviewModeLabel(item.reviewScope ?? (item.result?.sitemapUrl ? "sitemap" : "single"), item.maxPages, item.isCapped !== false))}</span>
+            <span class="stat-pill">${escapeHtml(privacyRegionLabel(item.privacyRegion ?? item.result?.pages?.[0]?.metadata?.privacyRegion))}</span>
           </div>
           <div class="recent-actions">
             <button class="recent-button" type="button" data-history-view="${index}">Open report</button>
@@ -246,16 +260,18 @@ function loadResultIntoPanels(result, maxPages) {
   maxPagesInput.value = String(Math.min(Math.max(maxPages, 10), 100));
   renderSummary(result);
   renderIssueRows(result);
-  renderPages(result);
+  pagesPanel.className = "panel result-panel hidden";
+  pagesPanel.innerHTML = "";
 }
 
-async function storeCompletedScan(result, originalInput, reviewScope, maxPages, isCapped) {
+async function storeCompletedScan(result, originalInput, reviewScope, maxPages, isCapped, privacyRegion) {
   const nextHistory = await window.oliteDesktop.storeScanResult({
     url: originalInput,
     host: new URL(originalInput).hostname,
     reviewScope,
     maxPages,
     isCapped,
+    privacyRegion,
     score: result.score,
     summary: result.summary,
     ranAt: new Date().toISOString(),
@@ -494,6 +510,7 @@ function renderSummary(result) {
       <span class="stat-pill">Scanned pages: ${escapeHtml(result.scannedPages)}</span>
       <span class="stat-pill">Discovered pages: ${escapeHtml(result.discoveredPages)}</span>
       <span class="stat-pill">Review: ${escapeHtml(summaryModeLabel(result))}</span>
+      <span class="stat-pill">Privacy expectations: ${escapeHtml(privacyRegionLabel(result.pages?.[0]?.metadata?.privacyRegion))}</span>
       ${result.sitemapUrl ? `<span class="stat-pill">Sitemap seeded</span>` : ""}
       ${rows.length > 0 ? buildIssueSummary(rows) : '<span class="stat-pill">No issues surfaced</span>'}
       ${layerCounts}
@@ -654,12 +671,13 @@ form.addEventListener("submit", async (event) => {
   const formData = new FormData(form);
   const url = normalizeUrlValue(formData.get("url"));
   const reviewScope = String(formData.get("reviewScope") ?? "single");
+  const privacyRegion = String(formData.get("privacyRegion") ?? "eu");
   const maxPages = normalizeScope(reviewScope) === "sitemap" ? getRequestedPageCap() : 1;
   urlInput.value = url;
   if (normalizeScope(reviewScope) === "sitemap") {
     maxPagesInput.value = String(maxPages);
   }
-  await runScan(url, reviewScope, maxPages);
+  await runScan(url, reviewScope, maxPages, privacyRegion === "us" ? "us" : "eu");
 });
 
 clearResultsButton.addEventListener("click", () => {
@@ -694,6 +712,7 @@ recentScansPanel.addEventListener("click", (event) => {
   urlInput.value = item.url;
   capPagesInput.checked = item.isCapped !== false;
   maxPagesInput.value = String(item.maxPages || 25);
+  privacyRegionInput.value = item.privacyRegion === "us" ? "us" : "eu";
   applyScopeUI(item.reviewScope ?? (item.result?.sitemapUrl ? "sitemap" : "single"));
   navigateToView("scanner");
   status.textContent = `Loaded ${item.url}. Run the scan to refresh the result.`;
