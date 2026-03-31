@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "",
     "/blog",
     "/compliance-foundations",
+    "/cookie-audit-tool",
     "/what-olite-checks",
     "/tools/accessibility",
     "/tools/privacy",

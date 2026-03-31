@@ -51,6 +51,9 @@ export function SiteFooter() {
             <Link className="footer-link" href="/compliance-foundations">
               Compliance Foundations
             </Link>
+            <Link className="footer-link" href="/cookie-audit-tool">
+              Cookie Audit Tool
+            </Link>
             <Link className="footer-link" href="/what-olite-checks">
               What Olite Checks
             </Link>

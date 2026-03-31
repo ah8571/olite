@@ -18,6 +18,18 @@
 - [Longer-Term Product Expansion](#longer-term-product-expansion)
 
 # To do's
+
+## cookie audit
+"That would mean a product direction like:
+
+detect tracking and likely cookie-setting technologies
+identify whether consent UI is present
+identify whether reject or manage controls are visible
+identify whether privacy and cookie policies are reachable
+later, verify whether trackers appear to fire before consent
+later, verify whether consent choices actually change runtime behavior"; words from search: "“cookie compliance tool” usually means “help me determine whether my cookie setup is compliant”
+“best cookie audit tool”"
+
 ## Unshared login credentials
 - connect billing 
 - develop system that two people can share the same login
@@ -264,6 +276,14 @@ The concrete bridge from HTML checks into more real-life automation should be:
 4. verify menu, modal, and disclosure behavior after interaction
 5. verify consent and privacy behavior after runtime state changes
 
+For privacy and cookie auditing specifically, this runtime path should eventually expand into:
+
+1. detect visible cookie controls and likely tracking technologies in the initial rendered state
+2. verify whether tracking appears active before any meaningful consent interaction
+3. activate reject, accept, or manage-preferences controls where they are visible
+4. verify whether runtime behavior changes after that interaction
+5. capture evidence showing whether the cookie widget appears meaningful or merely decorative
+
 That sequence matters because many important failures do not exist in the raw HTML. They only appear once the page renders, scripts hydrate, and keyboard interaction begins.
 
 This should still be kept lightweight by:
@@ -338,6 +358,19 @@ Possible later direction:
 - simple policy and consent configuration managed from Olite
 - a small script served from Olite infrastructure
 - a preference center or privacy choices surface later if the product proves useful
+
+Before building that layer, Olite should treat cookie auditing as its own product wedge.
+
+The likely near-term opportunity is:
+
+- detect tracking and likely cookie-setting technologies
+- identify whether consent UI is present
+- identify whether reject or manage controls are visible
+- identify whether privacy and cookie policies are reachable
+- later verify whether trackers appear to fire before consent
+- later verify whether consent choices appear to change runtime behavior
+
+This is a better near-term fit for the current scanner than jumping directly into a full widget product.
 
 Why this is attractive:
 
