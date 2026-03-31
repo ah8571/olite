@@ -62,5 +62,13 @@ export const blogPages: BlogPage[] = [
     description:
       "A practical explanation of Global Privacy Control, how privacy-oriented browsers send it, and why website teams may need to respond.",
     category: "guide"
+  },
+  {
+    href: "/blog/cookie-audit",
+    shortTitle: "Cookie Audit Tool",
+    title: "Cookie Audit Tool",
+    description:
+      "A practical framing page for Olite's cookie-audit direction: what can be verified now, what runtime consent checks add, and why audit-first matters.",
+    category: "guide"
   }
 ];
