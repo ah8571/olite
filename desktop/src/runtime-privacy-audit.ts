@@ -71,7 +71,41 @@ function buildRuntimeIssues(page: PageScanResult, runtimeAudit: PageRuntimeAudit
   const initialCookies = runtimeAudit.trackerCookies.filter((entry) => entry.phase === "before-interaction");
   const postInteractionRequests = runtimeAudit.trackerRequests.filter((entry) => entry.phase !== "before-interaction");
   const postInteractionCookies = runtimeAudit.trackerCookies.filter((entry) => entry.phase !== "before-interaction");
+  const hasConsentControls = runtimeAudit.consentControls.length > 0;
   const hasRejectControl = runtimeAudit.consentControls.some((control) => control.kind === "reject");
+  const hasManageControl = runtimeAudit.consentControls.some((control) => control.kind === "manage");
+
+  if (page.metadata.privacyRegion === "eu" && hasConsentControls && !hasRejectControl) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: page.normalizedUrl,
+      title: "Consent UI does not expose an obvious reject control",
+      detail: "The runtime browser audit detected consent-style controls, but it did not find an obvious reject or decline option.",
+      severity: "medium",
+      locationSummary: "Consent controls were detected without an obvious reject option",
+      evidence: runtimeAudit.consentControls.slice(0, 5).map((entry) => ({
+        selector: entry.selector,
+        snippet: entry.label,
+        note: `${entry.kind} control detected during runtime consent audit.`
+      }))
+    });
+  }
+
+  if (page.metadata.privacyRegion === "eu" && hasConsentControls && !hasManageControl) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: page.normalizedUrl,
+      title: "Consent UI does not expose an obvious manage-preferences control",
+      detail: "The runtime browser audit detected consent-style controls, but it did not find an obvious manage-preferences or settings option.",
+      severity: "low",
+      locationSummary: "Consent controls were detected without an obvious preferences management option",
+      evidence: runtimeAudit.consentControls.slice(0, 5).map((entry) => ({
+        selector: entry.selector,
+        snippet: entry.label,
+        note: `${entry.kind} control detected during runtime consent audit.`
+      }))
+    });
+  }
 
   if (page.metadata.privacyRegion === "eu" && initialRequests.length > 0) {
     issues.push({

@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
 import { Agent } from "undici";
 
 import type { ToolType } from "./scanner-config";
@@ -84,6 +85,11 @@ const TOOL_ISSUE_TITLES: Record<ToolType, string[]> = {
     "Weak heading structure signals",
     "Buttons without accessible names",
     "Links without accessible names",
+    "Repeated vague link text may not describe destinations",
+    "Non-interactive elements appear to act like controls",
+    "Tables may be missing clear headers",
+    "Malformed list structure detected",
+    "Duplicate landmark structure detected",
     "Iframes missing title attributes",
     "Potential focus order override from positive tabindex"
   ],
@@ -103,6 +109,12 @@ const TOOL_ISSUE_TITLES: Record<ToolType, string[]> = {
 
 function normalizePrivacyRegion(region: PrivacyRegion | undefined): PrivacyRegion {
   return region === "us" ? "us" : "eu";
+}
+
+function getAttributeMap(node: AnyNode): Record<string, string> {
+  return "attribs" in node && typeof node.attribs === "object" && node.attribs !== null
+    ? (node.attribs as Record<string, string>)
+    : {};
 }
 
 async function fetchHtmlPage(url: URL) {
@@ -392,10 +404,108 @@ function analyzeHtmlPage(
     .filter((_, element) => !getAccessibleName($, element))
     .get();
   const linkWithoutNameCount = linkWithoutNameElements.length;
+  const vagueLinkPattern = /^(read more|learn more|more|click here|here|details|see more|view more)$/i;
+  const vagueLinkGroups = new Map<string, AnyNode[]>();
+
+  $("a[href]").each((_, element) => {
+    const accessibleName = normalizeText(getAccessibleName($, element)).toLowerCase();
+
+    if (!accessibleName || !vagueLinkPattern.test(accessibleName)) {
+      return;
+    }
+
+    const existing = vagueLinkGroups.get(accessibleName) ?? [];
+    existing.push(element);
+    vagueLinkGroups.set(accessibleName, existing);
+  });
+
+  const repeatedVagueLinkElements = Array.from(vagueLinkGroups.values())
+    .filter((elements) => {
+      if (elements.length < 2) {
+        return false;
+      }
+
+      const hrefs = new Set(
+        elements
+          .map((element) => normalizeText($(element).attr("href")))
+          .filter(Boolean)
+      );
+
+      return hrefs.size > 1;
+    })
+    .flat();
+  const repeatedVagueLinkCount = repeatedVagueLinkElements.length;
   const iframeMissingTitleElements = $("iframe")
     .filter((_, element) => !normalizeText($(element).attr("title")))
     .get();
   const iframeMissingTitleCount = iframeMissingTitleElements.length;
+  const tableMissingHeaderElements = $("table")
+    .filter((_, element) => {
+      const rows = $(element).find("tr");
+      const columns = rows.first().find("th, td");
+      const thCount = $(element).find("th").length;
+
+      return rows.length >= 2 && columns.length >= 2 && thCount === 0;
+    })
+    .get();
+  const tableMissingHeaderCount = tableMissingHeaderElements.length;
+  const malformedListElements = $("ul, ol")
+    .filter((_, element) => {
+      const invalidChildren = $(element)
+        .children()
+        .filter((_, child) => {
+          if (!isTagNode(child)) {
+            return false;
+          }
+
+          return !["li", "script", "template"].includes(child.tagName.toLowerCase());
+        });
+
+      return invalidChildren.length > 0;
+    })
+    .get();
+  const malformedListCount = malformedListElements.length;
+  const duplicateMainElements = $("main, [role='main']").get();
+  const duplicateBannerElements = $("body > header, [role='banner']").get();
+  const duplicateContentInfoElements = $("body > footer, [role='contentinfo']").get();
+  const duplicateLandmarkElements = [
+    ...(duplicateMainElements.length > 1 ? duplicateMainElements : []),
+    ...(duplicateBannerElements.length > 1 ? duplicateBannerElements : []),
+    ...(duplicateContentInfoElements.length > 1 ? duplicateContentInfoElements : [])
+  ];
+  const duplicateLandmarkCount = duplicateLandmarkElements.length;
+  const controlLikeAttributeNames = new Set(["onclick", "ng-click", "@click", "v-on:click", "(click)", "data-click", "data-action"]);
+  const controlRolePattern = /^(button|link|tab|menuitem|checkbox|radio|switch)$/i;
+  const nonInteractiveControlLikeElements = $("*")
+    .filter((_, element) => {
+      if (!isTagNode(element)) {
+        return false;
+      }
+
+      const tagName = element.tagName.toLowerCase();
+
+      if (["a", "button", "input", "select", "textarea", "summary", "details", "label"].includes(tagName)) {
+        return false;
+      }
+
+      const attribs = getAttributeMap(element);
+      const attributeNames = Object.keys(attribs);
+      const hasControlLikeAttribute = attributeNames.some((name) => controlLikeAttributeNames.has(name.toLowerCase()));
+
+      if (!hasControlLikeAttribute) {
+        return false;
+      }
+
+      const role = normalizeText(attribs.role);
+      const tabindex = normalizeText(attribs.tabindex);
+      const hasRole = controlRolePattern.test(role);
+      const hasKeyboardFocus = tabindex !== "" && !Number.isNaN(Number(tabindex)) && Number(tabindex) >= 0;
+      const hasKeyboardHandler = attributeNames.some((name) => /^onkey(down|up|press)$/i.test(name) || /key(down|up|press)/i.test(name));
+
+      return !hasRole || !hasKeyboardFocus || !hasKeyboardHandler;
+    })
+    .get();
+  const nonInteractiveControlLikeCount = nonInteractiveControlLikeElements.length;
   const trackingEvidence = $("script[src], script")
     .filter((_, element) => TRACKING_PATTERNS.some((entry) => entry.match.test($(element).attr("src") ?? $(element).html() ?? "")))
     .get();
@@ -568,6 +678,93 @@ function analyzeHtmlPage(
       evidence: buildElementEvidence($, linkWithoutNameElements, (element) => {
         const href = normalizeText($(element).attr("href"));
         return href ? `Link target: ${href}` : "Link has no readable accessible name.";
+      })
+    });
+  }
+
+  if (repeatedVagueLinkCount > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Repeated vague link text may not describe destinations",
+      detail: `${repeatedVagueLinkCount} link${repeatedVagueLinkCount === 1 ? " appears" : "s appear"} to reuse vague text like 'read more' or 'click here' for different destinations.`,
+      severity: repeatedVagueLinkCount > 3 ? "medium" : "low",
+      locationSummary: `${repeatedVagueLinkCount} vague link label${repeatedVagueLinkCount === 1 ? "" : "s"} reused across different destinations`,
+      evidence: buildElementEvidence($, repeatedVagueLinkElements, (element) => {
+        const href = normalizeText($(element).attr("href"));
+        const name = normalizeText(getAccessibleName($, element));
+        return href ? `Link text \"${name}\" points to ${href}` : `Vague link text \"${name}\" was reused.`;
+      })
+    });
+  }
+
+  if (nonInteractiveControlLikeCount > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Non-interactive elements appear to act like controls",
+      detail: `${nonInteractiveControlLikeCount} non-interactive element${nonInteractiveControlLikeCount === 1 ? " appears" : "s appear"} to expose click-style behavior without complete role and keyboard support.`,
+      severity: nonInteractiveControlLikeCount > 2 ? "medium" : "low",
+      locationSummary: `${nonInteractiveControlLikeCount} non-semantic control-like element${nonInteractiveControlLikeCount === 1 ? "" : "s"}`,
+      evidence: buildElementEvidence($, nonInteractiveControlLikeElements, (element) => {
+        const role = normalizeText($(element).attr("role"));
+        const tabindex = normalizeText($(element).attr("tabindex"));
+        return [
+          role ? `role=${role}` : "missing role",
+          tabindex ? `tabindex=${tabindex}` : "missing keyboard focus",
+          Object.keys(getAttributeMap(element)).find((name) => controlLikeAttributeNames.has(name.toLowerCase())) ?? "click handler"
+        ].join(", ");
+      })
+    });
+  }
+
+  if (tableMissingHeaderCount > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Tables may be missing clear headers",
+      detail: `${tableMissingHeaderCount} table${tableMissingHeaderCount === 1 ? " appears" : "s appear"} to contain tabular data without any header cells.`,
+      severity: tableMissingHeaderCount > 1 ? "medium" : "low",
+      locationSummary: `${tableMissingHeaderCount} table${tableMissingHeaderCount === 1 ? "" : "s"} without th headers`,
+      evidence: buildElementEvidence($, tableMissingHeaderElements, () => "Review whether this table needs th cells or a clearer non-table structure.")
+    });
+  }
+
+  if (malformedListCount > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Malformed list structure detected",
+      detail: `${malformedListCount} list${malformedListCount === 1 ? " appears" : "s appear"} to contain direct children that are not list items.`,
+      severity: "low",
+      locationSummary: `${malformedListCount} list structure${malformedListCount === 1 ? "" : "s"} with non-li children`,
+      evidence: buildElementEvidence($, malformedListElements, (element) => {
+        const invalidChildTags = $(element)
+          .children()
+          .map((_, child) => (isTagNode(child) ? child.tagName.toLowerCase() : "unknown"))
+          .get()
+          .filter((tag) => !["li", "script", "template"].includes(tag));
+
+        return invalidChildTags.length > 0 ? `Unexpected direct children: ${invalidChildTags.join(", ")}` : "List contains unexpected direct child elements.";
+      })
+    });
+  }
+
+  if (duplicateLandmarkCount > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl: responseUrl,
+      title: "Duplicate landmark structure detected",
+      detail: "The page exposes multiple main, banner, or contentinfo landmark regions that may weaken structural navigation.",
+      severity: "low",
+      locationSummary: `${duplicateLandmarkCount} duplicated landmark element${duplicateLandmarkCount === 1 ? "" : "s"} detected`,
+      evidence: buildElementEvidence($, duplicateLandmarkElements, (element) => {
+        if (!isTagNode(element)) {
+          return "Duplicate landmark element detected.";
+        }
+
+        const role = normalizeText($(element).attr("role"));
+        return role ? `Landmark role: ${role}` : `Landmark tag: ${element.tagName.toLowerCase()}`;
       })
     });
   }

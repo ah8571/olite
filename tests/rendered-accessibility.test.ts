@@ -96,6 +96,20 @@ function handleFixtureRequest(request: IncomingMessage, response: ServerResponse
     return;
   }
 
+  if (path === "/broken-skip-activation") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <a href="#main-content" onclick="event.preventDefault()">Skip to content</a>
+          <main id="main-content" tabindex="-1">
+            <button>Start</button>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
   if (path === "/form-gaps") {
     response.writeHead(200, { "content-type": "text/html" });
     response.end(`<!doctype html>
@@ -136,6 +150,114 @@ function handleFixtureRequest(request: IncomingMessage, response: ServerResponse
     return;
   }
 
+  if (path === "/hydration-gap") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <a href="#main-content">Skip to content</a>
+          <main id="main-content" tabindex="-1">
+            <h1>Hydration fixture</h1>
+            <button>Start</button>
+          </main>
+          <script>
+            setTimeout(() => {
+              document.querySelector('main')?.remove();
+            }, 120);
+          </script>
+        </body>
+      </html>`);
+    return;
+  }
+
+  if (path === "/hydration-healthy") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <a href="#main-content">Skip to content</a>
+          <main id="main-content" tabindex="-1">
+            <h1>Hydration healthy fixture</h1>
+            <button>Start</button>
+          </main>
+          <script>
+            setTimeout(() => {
+              const heading = document.querySelector('h1');
+              if (heading) {
+                heading.textContent = 'Hydration healthy fixture updated';
+              }
+            }, 120);
+          </script>
+        </body>
+      </html>`);
+    return;
+  }
+
+  if (path === "/keyboard-gaps") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <a href="/next" style="position:absolute; left:-9999px; top:0;">Hidden step</a>
+            <button style="outline:none; box-shadow:none; border:0;">Continue</button>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
+  if (path === "/keyboard-healthy") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <head>
+          <style>
+            button:focus-visible,
+            a:focus-visible {
+              outline: 3px solid #0b57d0;
+              outline-offset: 2px;
+            }
+          </style>
+        </head>
+        <body>
+          <main>
+            <a href="/next">Visible next step</a>
+            <button>Continue</button>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
+  if (path === "/at-tree-gap") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <h1 role="presentation">ARIA tree gap fixture</h1>
+            <p>This page looks structured visually, but the heading is stripped from the accessibility tree.</p>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
+  if (path === "/at-tree-healthy") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <h1>ARIA tree healthy fixture</h1>
+            <p>This page keeps its main landmark and heading exposed in the accessibility tree.</p>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
   response.writeHead(404, { "content-type": "text/plain" });
   response.end("Not found");
 }
@@ -170,6 +292,13 @@ describe("augmentSiteResultWithRenderedAccessibility", () => {
     expect(result.limitationNotes.some((note) => note.includes("Desktop rendered accessibility checks sampled 1 page"))).toBe(true);
   });
 
+  it("flags a rendered skip link that fails to change focus or route on activation", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/broken-skip-activation`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).toContain("Skip link did not change focus or route after activation");
+  });
+
   it("flags rendered required-state and grouped-control structure gaps", async () => {
     const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/form-gaps`));
     const titles = result.pages[0].issues.map((issue) => issue.title);
@@ -184,5 +313,49 @@ describe("augmentSiteResultWithRenderedAccessibility", () => {
 
     expect(titles).not.toContain("Required form controls may lack a clear required indicator");
     expect(titles).not.toContain("Grouped form controls missing a clear legend");
+  });
+
+  it("flags semantic structure that disappears after hydration", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/hydration-gap`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).toContain("Hydration appears to remove key semantic structure");
+  });
+
+  it("does not flag hydration when semantics remain intact", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/hydration-healthy`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).not.toContain("Hydration appears to remove key semantic structure");
+  });
+
+  it("flags offscreen keyboard targets and weak visible focus cues", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/keyboard-gaps`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).toContain("Keyboard focus reached an offscreen or non-visible target");
+    expect(titles).toContain("Focused controls may lack a clear visible focus indicator");
+  });
+
+  it("keeps healthy keyboard-flow fixtures free of those new focus issues", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/keyboard-healthy`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).not.toContain("Keyboard focus reached an offscreen or non-visible target");
+    expect(titles).not.toContain("Focused controls may lack a clear visible focus indicator");
+  });
+
+  it("flags primary structure that drops out of the accessibility tree", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/at-tree-gap`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).toContain("Accessibility tree may not expose the primary page structure");
+  });
+
+  it("keeps healthy accessibility-tree structure free of that approximation gap", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/at-tree-healthy`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).not.toContain("Accessibility tree may not expose the primary page structure");
   });
 });

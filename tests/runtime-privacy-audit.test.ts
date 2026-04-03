@@ -103,6 +103,46 @@ function gpcTemplate(mode: "honor" | "ignore") {
     </html>`;
 }
 
+function consentControlsTemplate(mode: "accept-only" | "full-controls") {
+  const controls =
+    mode === "accept-only"
+      ? `<button id="accept-all">Accept all</button>`
+      : `<button id="accept-all">Accept all</button>
+         <button id="reject-all">Reject all</button>
+         <button id="manage-preferences">Manage preferences</button>`;
+
+  return `<!doctype html>
+    <html lang="en">
+      <body>
+        ${controls}
+        <script>
+          document.getElementById('accept-all')?.addEventListener('click', () => {
+            document.cookie = 'consent=accept; path=/';
+          });
+          document.getElementById('reject-all')?.addEventListener('click', () => {
+            document.cookie = 'consent=reject; path=/';
+          });
+        </script>
+      </body>
+    </html>`;
+}
+
+function preConsentTrackingTemplate() {
+  return `<!doctype html>
+    <html lang="en">
+      <body>
+        <button id="accept-all">Accept all</button>
+        <script>
+          document.cookie = '_ga=fixture-cookie; path=/';
+          fetch('/googletagmanager.com/collect?v=1', { mode: 'no-cors' }).catch(() => {});
+          document.getElementById('accept-all')?.addEventListener('click', () => {
+            document.cookie = 'consent=accept; path=/';
+          });
+        </script>
+      </body>
+    </html>`;
+}
+
 function handleFixtureRequest(request: IncomingMessage, response: ServerResponse) {
   const path = request.url ?? "/";
 
@@ -157,6 +197,24 @@ function handleFixtureRequest(request: IncomingMessage, response: ServerResponse
   if (path === "/gpc-ignore") {
     response.writeHead(200, { "content-type": "text/html" });
     response.end(gpcTemplate("ignore"));
+    return;
+  }
+
+  if (path === "/accept-only-controls") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(consentControlsTemplate("accept-only"));
+    return;
+  }
+
+  if (path === "/full-controls") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(consentControlsTemplate("full-controls"));
+    return;
+  }
+
+  if (path === "/pre-consent-tracking") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(preConsentTrackingTemplate());
     return;
   }
 
@@ -220,5 +278,34 @@ describe("augmentSiteResultWithRuntimePrivacyAudit", () => {
     expect(runtimeAudit?.gpcComparison?.simulated).toBe(true);
     expect(runtimeAudit?.gpcComparison?.behaviorChanged).toBe(false);
     expect(titles).toContain("Tracking behavior did not change when GPC was simulated");
+  }, 15000);
+
+  it("flags consent UI that lacks reject and manage-preferences controls", async () => {
+    const result = await augmentSiteResultWithRuntimePrivacyAudit(buildSite(`${baseUrl}/accept-only-controls`, "eu"));
+    const runtimeAudit = result.pages[0].metadata.runtimeAudit;
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(runtimeAudit?.consentControls.some((entry) => entry.kind === "accept")).toBe(true);
+    expect(titles).toContain("Consent UI does not expose an obvious reject control");
+    expect(titles).toContain("Consent UI does not expose an obvious manage-preferences control");
+  }, 15000);
+
+  it("keeps complete visible consent controls free of those new control-gap issues", async () => {
+    const result = await augmentSiteResultWithRuntimePrivacyAudit(buildSite(`${baseUrl}/full-controls`, "eu"));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).not.toContain("Consent UI does not expose an obvious reject control");
+    expect(titles).not.toContain("Consent UI does not expose an obvious manage-preferences control");
+  }, 15000);
+
+  it("flags tracker requests and tracking cookies observed before any consent interaction", async () => {
+    const result = await augmentSiteResultWithRuntimePrivacyAudit(buildSite(`${baseUrl}/pre-consent-tracking`, "eu"));
+    const runtimeAudit = result.pages[0].metadata.runtimeAudit;
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(runtimeAudit?.initialTrackerRequestCount).toBeGreaterThan(0);
+    expect(runtimeAudit?.initialTrackerCookieCount).toBeGreaterThan(0);
+    expect(titles).toContain("Tracking requests fired before consent interaction");
+    expect(titles).toContain("Tracking cookies set before consent interaction");
   }, 15000);
 });

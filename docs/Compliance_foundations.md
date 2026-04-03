@@ -206,6 +206,68 @@ Practical note:
 - first product versions should primarily model support indirectly through semantic checks, keyboard-flow checks, and browser-driven staged checks
 - direct orchestration of assistive technologies themselves should be treated as later research work rather than an MVP dependency
 
+### Assistive Technology Approximation And Manual Review Boundaries
+
+Olite can get meaningfully closer to the experience of a screen reader without claiming to run NVDA, JAWS,
+VoiceOver, or TalkBack directly.
+
+The right framing is to break the experience into parts that can be approximated with browser automation and to
+name the parts that still require manual review.
+
+#### 1. Accessibility Tree Exposure
+
+High-value automated checks include:
+
+- whether the browser accessibility tree still exposes the page's main landmark
+- whether primary headings remain present in the accessibility tree after hydration
+- whether obvious interactive controls keep a role and accessible name in the tree
+
+Why it matters:
+
+- many assistive technologies navigate what the browser exposes, not just what the visual DOM appears to show
+- this catches regressions where the page looks correct visually but key structure disappears from assistive technology navigation
+
+#### 2. Navigation Surfaces Assistive Technologies Rely On
+
+High-value automated checks include:
+
+- landmark availability and duplication
+- heading availability and hierarchy
+- skip-link presence and activation behavior
+- form-group and required-state announcement cues
+
+Why it matters:
+
+- these are the fast navigation surfaces many screen-reader and switch users depend on to move through a page
+
+#### 3. Dynamic Announcement Risk
+
+High-value automated checks include:
+
+- whether dialogs, validation errors, or client-rendered status changes move focus predictably
+- whether live-region style announcements appear to have an accessible target when the UI updates
+- whether hydration removes or replaces previously exposed semantic structure
+
+Why it matters:
+
+- many real accessibility failures happen after interaction rather than in initial markup
+
+#### 4. Manual Review Boundaries
+
+Olite should be explicit that some questions still require human assistive-technology review.
+
+Examples include:
+
+- whether a screen reader announces content in an intuitive or low-friction order
+- whether link wording, control naming, and instructions feel understandable in context
+- whether complex widgets are pleasant and efficient to use with a real assistive technology stack
+- whether virtual cursor behavior, rotor behavior, browse mode, or verbosity settings create practical friction
+
+Product rule:
+
+- automated findings in this area should be described as accessibility-tree or assistive-technology approximation issues
+- Olite should avoid claiming that these checks replace real screen-reader testing
+
 ## Accessibility Foundation
 
 ### Primary Standards To Anchor To

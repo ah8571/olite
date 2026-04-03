@@ -84,6 +84,12 @@ This version keeps the original roadmap intact but breaks the work into a checkl
 - [ ] Keep the current semantic checks and formalize them as the stable base layer.
   - Note: this section should continue absorbing accessibility gaps identified from Compliance_foundations.md.
 
+- [ ] Add assistive-technology approximation checks and explicit manual-review boundaries.
+  - Note: start with browser accessibility-tree verification rather than claiming full screen-reader automation.
+  - Note: first validated slice now checks whether rendered main-landmark and primary-heading cues remain exposed in the browser accessibility tree.
+  - Note: focus on landmark, heading, naming, and post-hydration exposure gaps that a visual DOM pass can miss.
+  - Note: reporting should make the boundary explicit: this approximates assistive-technology exposure but does not replace real screen-reader testing.
+
 - [x] Integrate axe-style rules into the desktop scan pipeline.
   - Note: keep results merged into the same reporting model.
 
@@ -91,21 +97,21 @@ This version keeps the original roadmap intact but breaks the work into a checkl
   - Note: Playwright is the preferred long-term foundation.
   - Note: move the existing hidden Electron window checks into the Playwright path so privacy and accessibility runtime checks share one browser engine.
 
-- [ ] Verify rendered DOM state after hydration.
+- [x] Verify rendered DOM state after hydration.
 
-- [ ] Expand keyboard-flow checks.
+- [x] Expand keyboard-flow checks.
   - Note: page-level tab order sanity.
   - Note: visible focus and focus progression.
   - Note: reachability of interactive controls without a mouse.
   - Note: early tab progression exists today, but it should be treated as the beginning of a fuller keyboard model rather than the finished implementation.
 
-- [ ] Add stronger basic interaction checks for links, buttons, and controls.
+- [x] Add stronger basic interaction checks for links, buttons, and controls.
   - Note: vague repeated link text.
   - Note: empty links.
   - Note: empty buttons.
   - Note: non-interactive elements acting like controls without role and keyboard support.
 
-- [ ] Add stronger form-structure checks.
+- [x] Add stronger form-structure checks.
   - Note: required inputs without clear indication.
   - Note: grouped controls without clear legends.
 
@@ -116,11 +122,11 @@ This version keeps the original roadmap intact but breaks the work into a checkl
   - Note: form validation and focus recovery.
   - Note: dynamic content updates should be checked in a real browser flow because React or other frontend state changes may alter the page after interaction.
 
-- [ ] Keep skip-link checks nuanced.
+- [x] Keep skip-link checks nuanced.
   - Note: verify target presence when a skip link exists.
   - Note: verify focus or route changes on activation.
 
-- [ ] Add stronger structural-semantics checks.
+- [x] Add stronger structural-semantics checks.
   - Note: tables missing clear headers where tabular structure is obvious.
   - Note: malformed list structures.
   - Note: duplicated or weak landmark structure beyond the current basics.
@@ -135,7 +141,7 @@ This version keeps the original roadmap intact but breaks the work into a checkl
 
 - [ ] Strengthen detection of tracking and likely cookie-setting technologies.
 
-- [ ] Strengthen detection of consent UI and visible control types.
+- [x] Strengthen detection of consent UI and visible control types.
   - Note: accept.
   - Note: reject.
   - Note: manage preferences.
@@ -145,7 +151,7 @@ This version keeps the original roadmap intact but breaks the work into a checkl
   - Note: verify destination pages are reachable.
   - Note: later verify destination content quality, not just URL reachability.
 
-- [ ] Expand runtime pre-consent verification.
+- [x] Expand runtime pre-consent verification.
   - Note: detect tracker requests before consent.
   - Note: detect tracking cookies before consent.
 
