@@ -19,6 +19,7 @@ type RenderedPageSnapshot = {
   weakControlNameFailures: RenderedEvidence[];
   validationAnnouncementFailures: RenderedEvidence[];
   dialogInteractionFailures: RenderedEvidence[];
+  disclosureInteractionFailures: RenderedEvidence[];
   requiredIndicatorFailures: RenderedEvidence[];
   groupedControlLegendFailures: RenderedEvidence[];
   keyboardWalk: RenderedEvidence[];
@@ -152,6 +153,18 @@ function buildRenderedIssues(pageUrl: string, snapshot: RenderedPageSnapshot): S
       severity: "medium",
       locationSummary: `${snapshot.dialogInteractionFailures.length} dialog interaction${snapshot.dialogInteractionFailures.length === 1 ? "" : "s"} with weak focus behavior`,
       evidence: snapshot.dialogInteractionFailures
+    });
+  }
+
+  if (snapshot.disclosureInteractionFailures.length > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl,
+      title: "Disclosure interaction may not expose state predictably",
+      detail: `${snapshot.disclosureInteractionFailures.length} disclosure interaction${snapshot.disclosureInteractionFailures.length === 1 ? " appears" : "s appear"} to fail to expose open state predictably after activation.`,
+      severity: "medium",
+      locationSummary: `${snapshot.disclosureInteractionFailures.length} disclosure interaction${snapshot.disclosureInteractionFailures.length === 1 ? "" : "s"} with weak state exposure`,
+      evidence: snapshot.disclosureInteractionFailures
     });
   }
 
@@ -776,6 +789,7 @@ async function collectRenderedSnapshot(page: Page): Promise<RenderedPageSnapshot
       weakControlNameFailures,
       validationAnnouncementFailures: [],
       dialogInteractionFailures: [],
+      disclosureInteractionFailures: [],
       requiredIndicatorFailures,
       groupedControlLegendFailures,
       keyboardWalk: [],
@@ -1021,6 +1035,121 @@ async function sampleDialogInteractionRisk(page: Page): Promise<RenderedEvidence
   });
 }
 
+async function sampleDisclosureInteractionRisk(page: Page): Promise<RenderedEvidence[]> {
+  return page.evaluate(async () => {
+    function normalizeText(value: string | null | undefined): string {
+      return String(value ?? "").replace(/\s+/g, " ").trim();
+    }
+
+    function getSelector(element: Element): string {
+      if (element.id) {
+        return `${element.tagName.toLowerCase()}#${element.id}`;
+      }
+
+      const parts: string[] = [];
+      let current: Element | null = element;
+
+      while (current && parts.length < 4) {
+        const tagName = current.tagName.toLowerCase();
+        const siblings = current.parentElement
+          ? Array.from(current.parentElement.children).filter((child) => child.tagName === current?.tagName)
+          : [];
+        const index = siblings.indexOf(current) + 1;
+        parts.unshift(`${tagName}:nth-of-type(${Math.max(index, 1)})`);
+        current = current.parentElement;
+      }
+
+      return parts.join(" > ");
+    }
+
+    function getSnippet(element: Element): string {
+      return normalizeText((element as HTMLElement).outerHTML || element.textContent || "").slice(0, 220);
+    }
+
+    function isVisible(element: Element | null): element is HTMLElement {
+      if (!(element instanceof HTMLElement)) {
+        return false;
+      }
+
+      const style = window.getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+
+      return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0" && rect.width > 0 && rect.height > 0;
+    }
+
+    function isFocusable(element: Element | null): element is HTMLElement {
+      if (!(element instanceof HTMLElement || element instanceof SVGElement)) {
+        return false;
+      }
+
+      if (element instanceof HTMLElement && element.hasAttribute("disabled")) {
+        return false;
+      }
+
+      if (element.closest('[hidden], [inert], [aria-hidden="true"]')) {
+        return false;
+      }
+
+      return true;
+    }
+
+    const focusableSelector = [
+      'a[href]',
+      'button',
+      'input:not([type="hidden"])',
+      'select',
+      'textarea',
+      '[tabindex]:not([tabindex="-1"])'
+    ].join(',');
+
+    const triggers = Array.from(document.querySelectorAll('[aria-expanded][aria-controls]'))
+      .filter((element): element is HTMLElement => element instanceof HTMLElement)
+      .filter(isVisible)
+      .slice(0, 3);
+
+    const failures: RenderedEvidence[] = [];
+
+    for (const trigger of triggers) {
+      const controlsId = normalizeText(trigger.getAttribute('aria-controls'));
+      const controlled = controlsId ? document.getElementById(controlsId) : null;
+
+      if (!isVisible(trigger) || !(controlled instanceof HTMLElement)) {
+        continue;
+      }
+
+      const startsCollapsed = normalizeText(trigger.getAttribute('aria-expanded')).toLowerCase() === 'false';
+      const collapsedFocusableChildren = Array.from(controlled.querySelectorAll(focusableSelector))
+        .filter(isFocusable)
+        .filter(isVisible);
+
+      if (startsCollapsed && collapsedFocusableChildren.length > 0 && !controlled.hasAttribute('hidden') && controlled.getAttribute('aria-hidden') !== 'true') {
+        failures.push({
+          selector: getSelector(trigger),
+          snippet: getSnippet(controlled),
+          note: 'This disclosure started collapsed, but the controlled region still exposed visible interactive content.'
+        });
+      }
+
+      trigger.click();
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await new Promise((resolve) => setTimeout(resolve, 140));
+
+      const expandedAfter = normalizeText(trigger.getAttribute('aria-expanded')).toLowerCase();
+      const controlledVisibleAfter = isVisible(controlled);
+
+      if (startsCollapsed && expandedAfter !== 'true' && !controlledVisibleAfter) {
+        failures.push({
+          selector: getSelector(trigger),
+          snippet: getSnippet(controlled),
+          note: 'Activating this disclosure did not expose an open state or visibly reveal the controlled content.'
+        });
+      }
+    }
+
+    return failures;
+  });
+}
+
 function rebuildPage(page: PageScanResult): PageScanResult {
   const score = scoreFromIssues(page.issues);
   const summary =
@@ -1086,6 +1215,7 @@ export async function inspectRenderedPage(url: string): Promise<RenderedPageSnap
     const ariaSnapshot = await page.locator("body").ariaSnapshot({ depth: 8, timeout: 5000 });
     const validationAnnouncementFailures = await sampleValidationAnnouncementRisk(page);
     const dialogInteractionFailures = await sampleDialogInteractionRisk(page);
+    const disclosureInteractionFailures = await sampleDisclosureInteractionRisk(page);
     const keyboardWalk = await sampleKeyboardWalk(page);
 
     return {
@@ -1094,6 +1224,7 @@ export async function inspectRenderedPage(url: string): Promise<RenderedPageSnap
       accessibilityTreeFailures: buildAccessibilityTreeFailures(afterHydration, ariaSnapshot),
       validationAnnouncementFailures,
       dialogInteractionFailures,
+      disclosureInteractionFailures,
       ...keyboardWalk
     };
   } finally {
@@ -1126,7 +1257,7 @@ export async function augmentSiteResultWithRenderedAccessibility(result: SiteSca
   }
 
   nextLimitations.push(
-    `Desktop rendered accessibility checks sampled ${pageLimit} page${pageLimit === 1 ? "" : "s"} for post-render focusability, skip-link behavior, hydration-sensitive semantic regressions, accessibility-tree structure cues, critical control naming quality, submit-driven validation announcement risk, explicit dialog focus behavior, early keyboard tab progression, visible keyboard focus cues, and basic rendered form structure cues.`
+    `Desktop rendered accessibility checks sampled ${pageLimit} page${pageLimit === 1 ? "" : "s"} for post-render focusability, skip-link behavior, hydration-sensitive semantic regressions, accessibility-tree structure cues, critical control naming quality, submit-driven validation announcement risk, dialog and disclosure interaction behavior, early keyboard tab progression, visible keyboard focus cues, and basic rendered form structure cues.`
   );
 
   return rebuildSite({

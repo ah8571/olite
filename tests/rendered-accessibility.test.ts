@@ -432,6 +432,56 @@ function handleFixtureRequest(request: IncomingMessage, response: ServerResponse
     return;
   }
 
+  if (path === "/disclosure-gap") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <button id="menu-trigger" aria-expanded="false" aria-controls="menu-panel">Open menu</button>
+            <div id="menu-panel" hidden>
+              <a href="/pricing">Pricing</a>
+            </div>
+            <script>
+              document.getElementById('menu-trigger')?.addEventListener('click', () => {
+                const trigger = document.getElementById('menu-trigger');
+                if (trigger instanceof HTMLElement) {
+                  trigger.setAttribute('aria-expanded', 'false');
+                }
+              });
+            </script>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
+  if (path === "/disclosure-healthy") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <button id="menu-trigger" aria-expanded="false" aria-controls="menu-panel">Open menu</button>
+            <div id="menu-panel" hidden>
+              <a href="/pricing">Pricing</a>
+            </div>
+            <script>
+              document.getElementById('menu-trigger')?.addEventListener('click', () => {
+                const trigger = document.getElementById('menu-trigger');
+                const panel = document.getElementById('menu-panel');
+                if (trigger instanceof HTMLElement && panel instanceof HTMLElement) {
+                  trigger.setAttribute('aria-expanded', 'true');
+                  panel.hidden = false;
+                }
+              });
+            </script>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
   response.writeHead(404, { "content-type": "text/plain" });
   response.end("Not found");
 }
@@ -575,5 +625,19 @@ describe("augmentSiteResultWithRenderedAccessibility", () => {
     const titles = result.pages[0].issues.map((issue) => issue.title);
 
     expect(titles).not.toContain("Dialog interaction may not move and return focus predictably");
+  });
+
+  it("flags disclosures that fail to expose open state after activation", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/disclosure-gap`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).toContain("Disclosure interaction may not expose state predictably");
+  });
+
+  it("keeps healthy disclosure state exposure free of that issue", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/disclosure-healthy`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).not.toContain("Disclosure interaction may not expose state predictably");
   });
 });

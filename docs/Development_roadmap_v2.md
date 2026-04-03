@@ -108,8 +108,8 @@ This version keeps the original roadmap intact but breaks the work into a checkl
       - Note: status-message updates outside forms, async content refreshes, and modal open-close cycles still need dedicated coverage before this subitem can be checked off.
       - Note: this is important because many practical screen-reader failures occur after interaction rather than on initial load.
     - [ ] Add interactive-pattern AT approximation checks.
-      - Note: first validated slice now checks explicit dialog triggers for focus entry into the opened dialog and focus return after close.
-      - Note: menus, disclosures, tabs, popovers, and stronger dialog containment checks still need dedicated coverage before this subitem can be checked off.
+      - Note: validated slices now check explicit dialog triggers for focus entry and focus return, plus explicit disclosure triggers for open-state exposure after activation.
+      - Note: tabs, popovers, menus with richer focus management, and stronger dialog containment checks still need dedicated coverage before this subitem can be checked off.
     - [ ] Add staged navigation checks that better approximate screen-reader wayfinding.
       - Note: landmark traversal, heading traversal, repeated-region noise, and route-to-route consistency should be sampled across multiple same-origin pages where justified.
     - [ ] Add issue messaging that separates confidence levels inside this layer.
