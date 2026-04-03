@@ -224,7 +224,7 @@ export default function WhatIsAtApproximationPage() {
                 <p className="kicker">Related Olite Pages</p>
                 <div className="article-link-list">
                   <Link href="/what-olite-checks">What Olite Checks</Link>
-                  <Link href="/compliance-foundations">Compliance Foundations</Link>
+                  <Link href="/blog/what-is-global-privacy-control">What Is Global Privacy Control?</Link>
                   <Link href="/tools/accessibility">Free Accessibility Scanner</Link>
                 </div>
               </div>

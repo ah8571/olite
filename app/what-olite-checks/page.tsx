@@ -99,6 +99,11 @@ export default function WhatOliteChecksPage() {
             today, and it also gives us a clear starting point for future explainers and blog articles.
           </p>
           <p className="section-copy">
+            It is also now the main public explainer hub for how Olite thinks about accessibility,
+            privacy, consent, and lightweight security checks, so the older standalone Compliance
+            Foundations summary is no longer needed as a separate route.
+          </p>
+          <p className="section-copy">
             The fuller internal framing lives in the repository docs:
             <Link className="footer-link" href="https://github.com/ah8571/olite/blob/main/docs/What_olite_checks.md"> issue catalog</Link>
             and
@@ -112,12 +117,29 @@ export default function WhatOliteChecksPage() {
           <ul className="bullet-list">
             <li>Static DOM review for markup, labels, titles, and semantics</li>
             <li>Visible public-page review for privacy, policy, and consent cues</li>
-            <li>Rendered browser checks in desktop reviews for keyboard and skip-link behavior</li>
+            <li>Rendered browser checks in desktop reviews for keyboard, accessibility-tree, and interaction behavior</li>
             <li>Lightweight evidence such as selectors, snippets, and page-level location summaries</li>
           </ul>
           <p className="section-copy">
             This is an automation-oriented review workflow, not legal advice, not certification, and not a
             guarantee that every issue on a site has been found.
+          </p>
+        </div>
+
+        <div className="section-panel">
+          <p className="kicker">Foundations</p>
+          <h2>The public logic behind the checks</h2>
+          <ul className="bullet-list">
+            <li>Accessibility checks start with semantic HTML, labels, headings, landmarks, and other structure the browser can expose programmatically</li>
+            <li>Rendered accessibility checks go one step further by sampling post-hydration state, focus movement, and interactive patterns that affect assistive technology</li>
+            <li>Privacy checks focus on visible policy, rights, opt-out, cookie, and tracking signals that can be observed from a public page</li>
+            <li>Consent coverage is intentionally narrower and avoids claiming that a visible banner alone proves compliant behavior</li>
+            <li>Security coverage is baseline-only and is meant to surface obvious public-web weaknesses, not replace a real security review</li>
+          </ul>
+          <p className="section-copy">
+            The goal is to separate strong observable checks from softer guidance, and to be explicit about
+            which findings come from static markup, which come from rendered browser evidence, and which still
+            need deeper manual review.
           </p>
         </div>
 
@@ -156,6 +178,21 @@ export default function WhatOliteChecksPage() {
           issues={privacyIssues}
         />
 
+        <div className="section-panel">
+          <p className="kicker">Privacy Signals</p>
+          <h2>Where browser privacy signals fit</h2>
+          <p className="section-copy">
+            Olite&apos;s public privacy checks are intentionally separate from deeper runtime verification. A
+            visible privacy notice or cookie banner is only the first layer. Browser-originated signals such as
+            Global Privacy Control become more meaningful when the product can compare site behavior with and
+            without that signal present.
+          </p>
+          <p className="section-copy">
+            For the dedicated explainer, read
+            <Link className="footer-link" href="/blog/what-is-global-privacy-control"> What Is Global Privacy Control?</Link>.
+          </p>
+        </div>
+
         <IssueSection
           kicker="Consent"
           title="Current consent issue"
@@ -178,7 +215,6 @@ export default function WhatOliteChecksPage() {
             <li>Why placeholder-only fields still create accessibility problems</li>
             <li>Why skip links break after render on modern websites</li>
             <li>What visible US privacy rights cues look like</li>
-            <li>Why GPC and browser-based opt-out language matter</li>
             <li>What baseline security-header coverage does and does not tell you</li>
           </ul>
         </div>

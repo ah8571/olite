@@ -121,8 +121,8 @@ export default function CookieAuditPage() {
             <p className="kicker">Related Pages</p>
             <h2>Where this fits in the broader product</h2>
             <ul className="bullet-list">
-              <li><Link href="/compliance-foundations">Compliance Foundations</Link></li>
               <li><Link href="/what-olite-checks">What Olite Checks</Link></li>
+              <li><Link href="/blog/what-is-global-privacy-control">What Is Global Privacy Control?</Link></li>
               <li><Link href="/tools/privacy">Free Privacy Checker</Link></li>
             </ul>
             <p className="section-copy">

@@ -123,11 +123,11 @@ export default function HomePage() {
             <ul className="bullet-list">
               <li>Use the homepage scanner for quick accessibility or privacy review</li>
               <li>Keep the dedicated tool pages as landing pages for search and category clarity</li>
-              <li>Use Compliance Foundations to see the broader running checklist behind the product</li>
+              <li>Use What Olite Checks as the main explainer hub for the product's public coverage and limits</li>
             </ul>
             <div className="hero-actions compact">
-              <Link className="button-secondary" href="/compliance-foundations">
-                Open Compliance Foundations
+              <Link className="button-secondary" href="/what-olite-checks">
+                Open What Olite Checks
               </Link>
             </div>
           </div>
@@ -145,8 +145,8 @@ export default function HomePage() {
               <li>Fast public-page checks for obvious issues before a fuller audit</li>
             </ul>
             <div className="hero-actions compact">
-              <Link className="button-secondary" href="/compliance-foundations">
-                View accessibility foundations
+              <Link className="button-secondary" href="/what-olite-checks">
+                View accessibility coverage
               </Link>
             </div>
           </div>
@@ -159,8 +159,8 @@ export default function HomePage() {
               <li>Tracking signals, opt-out cues, and baseline header presence before deeper review</li>
             </ul>
             <div className="hero-actions compact">
-              <Link className="button-secondary" href="/compliance-foundations">
-                View privacy foundations
+              <Link className="button-secondary" href="/what-olite-checks">
+                View privacy coverage
               </Link>
             </div>
           </div>

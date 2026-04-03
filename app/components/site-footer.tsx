@@ -48,9 +48,6 @@ export function SiteFooter() {
             <Link className="footer-link" href="/blog">
               Blog
             </Link>
-            <Link className="footer-link" href="/compliance-foundations">
-              Compliance Foundations
-            </Link>
             <Link className="footer-link" href="/cookie-audit-tool">
               Cookie Audit Tool
             </Link>
