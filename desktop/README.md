@@ -5,6 +5,7 @@ This is the first desktop prototype for Olite.
 Current scope:
 
 - single-page local review of a public website
+- optional runtime browser audit for one public page using Playwright
 - bounded same-domain page discovery
 - grouped findings across accessibility, privacy, consent, and security
 - export of scan results to JSON
@@ -26,3 +27,5 @@ Useful first-pass workflow:
 - reopen saved reports from local history without rescanning
 
 This first version is intentionally narrow and aimed at simple public websites.
+
+The runtime browser audit observes tracker requests and tracking-cookie signals before any consent click, then samples the page again immediately after one detected accept or reject interaction when possible. It is useful for catching obvious consent implementation problems, but it does not replace route-by-route, authenticated, or full sitewide privacy verification.

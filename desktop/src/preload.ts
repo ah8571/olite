@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld("oliteDesktop", {
     maxPages?: number;
     sitemapUrl?: string;
     privacyRegion?: "us" | "eu";
+    browserAudit?: boolean;
   }) =>
     ipcRenderer.invoke("scanner:run-scan", payload) as Promise<unknown>,
   saveReport: (payload: { suggestedName: string; content: string }) =>

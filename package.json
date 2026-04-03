@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "cli:build": "tsc -p cli/tsconfig.json",
     "cli:start": "npm run cli:build && node cli/dist/cli/src/main.js",
     "cli:typecheck": "tsc -p cli/tsconfig.json --noEmit",
@@ -15,8 +17,10 @@
     "desktop:typecheck": "tsc -p desktop/tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "cheerio": "^1.1.0",
     "next": "^15.3.0",
+    "playwright": "^1.59.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -25,6 +29,7 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "electron": "^35.0.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.2"
   }
 }

@@ -49,6 +49,11 @@
                 </select>
               </label>
 
+              <label class="inline-toggle" for="browserAudit">
+                <input id="browserAudit" name="browserAudit" type="checkbox" checked />
+                Run runtime browser audit for consent, cookies, and tracker requests
+              </label>
+
               <p id="status" class="form-note">Enter one page URL to run the free desktop review. Broader crawl depth will return with paid activation.</p>
 
               <div class="actions">
@@ -88,7 +93,7 @@
         <div class="footer-copy-row">
           <p class="kicker footer-kicker">Disclosure</p>
           <p class="footer-title">Automation-oriented verification for public websites.</p>
-          <p class="form-note footer-note">Starts from one public URL. Current checks focus on markup, public-page signals, and lightweight page evidence. Authenticated flows, broader multi-page crawl depth, richer JavaScript interaction automation, network-level consent verification, and source-aware rules are not fully covered in this first pass.</p>
+          <p class="form-note footer-note">Starts from one public URL. Current checks focus on markup, public-page signals, lightweight page evidence, and an optional runtime browser audit for one consent interaction. Authenticated flows, broader multi-page crawl depth, and deeper route-by-route consent verification are not fully covered in this first pass.</p>
         </div>
         <div class="footer-links-row">
           <a class="footer-link" href="https://github.com/ah8571/olite#readme">Docs</a>

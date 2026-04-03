@@ -5,7 +5,9 @@ import { app, BrowserWindow, dialog, ipcMain } from "electron";
 
 import { scanSinglePage } from "../../lib/scanner-core";
 import type { PrivacyRegion, SiteScanResult } from "../../lib/scanner-core";
+import { augmentSiteResultWithAxeAccessibility } from "./axe-accessibility";
 import { augmentSiteResultWithRenderedAccessibility } from "./rendered-accessibility";
+import { augmentSiteResultWithRuntimePrivacyAudit } from "./runtime-privacy-audit";
 
 const HISTORY_FILE_NAME = "scan-history.json";
 const MAX_STORED_SCANS = 12;
@@ -20,6 +22,7 @@ type StoredScanHistoryItem = {
   maxPages: number;
   reviewMode?: StoredReviewMode;
   privacyRegion?: PrivacyRegion;
+  browserAuditEnabled?: boolean;
   sitemapUrl?: string;
   score: number;
   summary: string;
@@ -98,14 +101,37 @@ ipcMain.handle(
   "scanner:run-scan",
   async (
     _event,
-    payload: { url: string; reviewMode: ReviewMode; maxPages?: number; sitemapUrl?: string; privacyRegion?: PrivacyRegion }
+    payload: {
+      url: string;
+      reviewMode: ReviewMode;
+      maxPages?: number;
+      sitemapUrl?: string;
+      privacyRegion?: PrivacyRegion;
+      browserAudit?: boolean;
+    }
   ) => {
     if (payload.reviewMode !== "single") {
       throw new Error("Broader crawl depth requires paid activation and is not available in this build.");
     }
 
     const page = await scanSinglePage(payload.url, "local", payload.privacyRegion);
-    return augmentSiteResultWithRenderedAccessibility(buildSiteResultFromSinglePage(page, payload.url));
+    let result = buildSiteResultFromSinglePage(page, payload.url);
+    result = await augmentSiteResultWithAxeAccessibility(result);
+    result = await augmentSiteResultWithRenderedAccessibility(result);
+
+    if (payload.browserAudit !== false) {
+      result = await augmentSiteResultWithRuntimePrivacyAudit(result);
+    } else {
+      result = {
+        ...result,
+        limitationNotes: [
+          ...result.limitationNotes,
+          "Runtime browser audit was disabled for this desktop scan."
+        ]
+      };
+    }
+
+    return result;
   }
 );
 
@@ -120,7 +146,8 @@ ipcMain.handle("scanner:store-scan-result", async (_event, payload: StoredScanHi
       item.result.normalizedUrl !== payload.result.normalizedUrl ||
       item.maxPages !== payload.maxPages ||
       (item.sitemapUrl ?? "") !== (payload.sitemapUrl ?? "") ||
-      (item.privacyRegion ?? "eu") !== (payload.privacyRegion ?? "eu")
+      (item.privacyRegion ?? "eu") !== (payload.privacyRegion ?? "eu") ||
+      (item.browserAuditEnabled ?? true) !== (payload.browserAuditEnabled ?? true)
   );
 
   const nextHistory = [payload, ...deduped].slice(0, MAX_STORED_SCANS);

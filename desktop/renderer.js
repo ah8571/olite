@@ -8,6 +8,7 @@ const recentScansPanel = document.getElementById("recent-scans");
 const urlInput = document.getElementById("url");
 const reviewScopeInput = document.getElementById("reviewScope");
 const privacyRegionInput = document.getElementById("privacyRegion");
+const browserAuditInput = document.getElementById("browserAudit");
 const clearResultsButton = document.getElementById("clear-results-button");
 const scannerView = document.getElementById("scanner-view");
 const historyView = document.getElementById("history-view");
@@ -149,7 +150,7 @@ function resetResults() {
   pagesPanel.innerHTML = "";
 }
 
-async function runScan(inputUrl, scope, maxPages, privacyRegion) {
+async function runScan(inputUrl, scope, maxPages, privacyRegion, browserAuditEnabled) {
   status.textContent = "Scanning...";
   submitButton.disabled = true;
   navigateToView("scanner");
@@ -161,7 +162,8 @@ async function runScan(inputUrl, scope, maxPages, privacyRegion) {
       reviewMode: request.reviewMode,
       sitemapUrl: request.sitemapUrl || undefined,
       maxPages: request.maxPages,
-      privacyRegion
+      privacyRegion,
+      browserAudit: browserAuditEnabled
     });
     loadResultIntoPanels(result, request.maxPages);
     await storeCompletedScan(
@@ -169,8 +171,9 @@ async function runScan(inputUrl, scope, maxPages, privacyRegion) {
       request.normalizedInput,
       normalizeScope(scope),
       request.maxPages,
-      normalizeScope(scope) !== "sitemap" || capPagesInput.checked,
-      privacyRegion
+      true,
+      privacyRegion,
+      browserAuditEnabled
     );
     status.textContent = "Scan complete.";
   } catch (error) {
@@ -206,6 +209,7 @@ function renderRecentScans() {
             <span class="stat-pill">Score: ${escapeHtml(item.score)}</span>
             <span class="stat-pill">${escapeHtml(reviewModeLabel(item.reviewScope ?? (item.result?.sitemapUrl ? "sitemap" : "single"), item.maxPages, item.isCapped !== false))}</span>
             <span class="stat-pill">${escapeHtml(privacyRegionLabel(item.privacyRegion ?? item.result?.pages?.[0]?.metadata?.privacyRegion))}</span>
+            <span class="stat-pill">Browser audit: ${escapeHtml(item.browserAuditEnabled === false ? "off" : "on")}</span>
           </div>
           <div class="recent-actions">
             <button class="recent-button" type="button" data-history-view="${index}">Open report</button>
@@ -226,7 +230,7 @@ function loadResultIntoPanels(result, maxPages) {
   pagesPanel.innerHTML = "";
 }
 
-async function storeCompletedScan(result, originalInput, reviewScope, maxPages, isCapped, privacyRegion) {
+async function storeCompletedScan(result, originalInput, reviewScope, maxPages, isCapped, privacyRegion, browserAuditEnabled) {
   const nextHistory = await window.oliteDesktop.storeScanResult({
     url: originalInput,
     host: new URL(originalInput).hostname,
@@ -234,6 +238,7 @@ async function storeCompletedScan(result, originalInput, reviewScope, maxPages, 
     maxPages,
     isCapped,
     privacyRegion,
+    browserAuditEnabled,
     score: result.score,
     summary: result.summary,
     ranAt: new Date().toISOString(),
@@ -450,9 +455,58 @@ function severityLabel(severity) {
   return severity.charAt(0).toUpperCase() + severity.slice(1);
 }
 
+function runtimeAuditSummary(runtimeAudit) {
+  if (!runtimeAudit || runtimeAudit.ran !== true) {
+    return '<span class="stat-pill">Browser audit: not run</span>';
+  }
+
+  const gpcSummary = runtimeAudit.gpcComparison?.simulated
+    ? `<span class="stat-pill">GPC comparison: ${escapeHtml(runtimeAudit.gpcComparison.behaviorChanged ? "changed" : "unchanged")}</span>`
+    : "";
+
+  return [
+    '<span class="stat-pill">Browser audit: on</span>',
+    `<span class="stat-pill">Sampled URLs: ${escapeHtml(runtimeAudit.sampledUrls?.length ?? 1)}</span>`,
+    `<span class="stat-pill">Initial tracker requests: ${escapeHtml(runtimeAudit.initialTrackerRequestCount)}</span>`,
+    `<span class="stat-pill">Initial tracker cookies: ${escapeHtml(runtimeAudit.initialTrackerCookieCount)}</span>`,
+    `<span class="stat-pill">Interaction: ${escapeHtml(runtimeAudit.interactionAttempted)}</span>`,
+    `<span class="stat-pill">Post-interaction requests: ${escapeHtml(runtimeAudit.postInteractionTrackerRequestCount)}</span>`,
+    `<span class="stat-pill">Post-interaction cookies: ${escapeHtml(runtimeAudit.postInteractionTrackerCookieCount)}</span>`,
+    gpcSummary
+  ].join("");
+}
+
+function runtimeAuditDetails(runtimeAudit) {
+  if (!runtimeAudit || runtimeAudit.ran !== true) {
+    return "";
+  }
+
+  const controls = Array.isArray(runtimeAudit.consentControls)
+    ? runtimeAudit.consentControls.map((entry) => `${entry.kind}: ${entry.label}`).join(" | ")
+    : "";
+  const sampledUrls = Array.isArray(runtimeAudit.sampledUrls) ? runtimeAudit.sampledUrls.join(" | ") : "";
+  const gpcDetails = runtimeAudit.gpcComparison?.simulated
+    ? `<p class="form-note">GPC comparison: baseline requests/cookies ${escapeHtml(runtimeAudit.gpcComparison.baselineTrackerRequestCount)}/${escapeHtml(runtimeAudit.gpcComparison.baselineTrackerCookieCount)}; with GPC ${escapeHtml(runtimeAudit.gpcComparison.gpcTrackerRequestCount)}/${escapeHtml(runtimeAudit.gpcComparison.gpcTrackerCookieCount)}.</p>`
+    : "";
+
+  return `
+    <div class="summary-section">
+      <h3>Runtime browser audit</h3>
+      <p class="form-note">Observed request and cookie signals before any consent click and immediately after one detected consent interaction.</p>
+      <div class="summary-stats">
+        ${runtimeAuditSummary(runtimeAudit)}
+      </div>
+      ${sampledUrls ? `<p class="form-note">Sampled URLs: ${escapeHtml(sampledUrls)}</p>` : ""}
+      ${controls ? `<p class="form-note">Detected consent controls: ${escapeHtml(controls)}</p>` : '<p class="form-note">No obvious consent controls were detected during the runtime browser audit.</p>'}
+      ${gpcDetails}
+    </div>
+  `;
+}
+
 function renderSummary(result) {
   const scannedUrls = result.pages.map((page) => page.normalizedUrl);
   const rows = sortIssueRows(flattenIssueRows(result));
+  const runtimeAudit = result.pages?.[0]?.metadata?.runtimeAudit;
   const layerCounts = Object.entries(result.issuesByLayer)
     .filter(([, issues]) => Array.isArray(issues) && issues.length > 0)
     .map(([layer, issues]) => `<span class="stat-pill layer-pill">${escapeHtml(layer)}: ${escapeHtml(issues.length)}</span>`)
@@ -473,6 +527,7 @@ function renderSummary(result) {
       <span class="stat-pill">Discovered pages: ${escapeHtml(result.discoveredPages)}</span>
       <span class="stat-pill">Review: ${escapeHtml(summaryModeLabel(result))}</span>
       <span class="stat-pill">Privacy expectations: ${escapeHtml(privacyRegionLabel(result.pages?.[0]?.metadata?.privacyRegion))}</span>
+      ${runtimeAuditSummary(runtimeAudit)}
       ${result.sitemapUrl ? `<span class="stat-pill">Legacy sitemap-seeded result</span>` : ""}
       ${rows.length > 0 ? buildIssueSummary(rows) : '<span class="stat-pill">No issues surfaced</span>'}
       ${layerCounts}
@@ -491,6 +546,7 @@ function renderSummary(result) {
           .join("")}
       </div>
     </div>
+      ${runtimeAuditDetails(runtimeAudit)}
     <div class="actions">
       <button id="export-json-button" class="button secondary-button" type="button">Export JSON report</button>
       <button id="export-csv-button" class="button secondary-button" type="button">Export CSV issue list</button>
@@ -634,9 +690,10 @@ form.addEventListener("submit", async (event) => {
   const url = normalizeUrlValue(formData.get("url"));
   const reviewScope = String(formData.get("reviewScope") ?? "single");
   const privacyRegion = String(formData.get("privacyRegion") ?? "eu");
+  const browserAuditEnabled = browserAuditInput?.checked !== false;
   const maxPages = 1;
   urlInput.value = url;
-  await runScan(url, reviewScope, maxPages, privacyRegion === "us" ? "us" : "eu");
+  await runScan(url, reviewScope, maxPages, privacyRegion === "us" ? "us" : "eu", browserAuditEnabled);
 });
 
 clearResultsButton.addEventListener("click", () => {
@@ -670,6 +727,7 @@ recentScansPanel.addEventListener("click", (event) => {
 
   urlInput.value = item.url;
   privacyRegionInput.value = item.privacyRegion === "us" ? "us" : "eu";
+  browserAuditInput.checked = item.browserAuditEnabled !== false;
   applyScopeUI("single");
   navigateToView("scanner");
   status.textContent = `Loaded ${item.url}. Run the scan to refresh this target as a single-page review.`;

@@ -10,6 +10,53 @@ export type ScanIssueEvidence = {
   note?: string;
 };
 
+export type RuntimeAuditPhase = "before-interaction" | "after-reject" | "after-accept";
+export type RuntimeAuditInteraction = "none" | "reject" | "accept" | "failed";
+
+export type RuntimeAuditTrackerRequest = {
+  label: string;
+  url: string;
+  resourceType: string;
+  phase: RuntimeAuditPhase;
+};
+
+export type RuntimeAuditCookie = {
+  label: string;
+  name: string;
+  domain: string;
+  path: string;
+  phase: RuntimeAuditPhase;
+};
+
+export type RuntimeAuditControl = {
+  kind: "accept" | "reject" | "manage";
+  label: string;
+  selector: string;
+};
+
+export type RuntimeAuditGpcComparison = {
+  simulated: boolean;
+  baselineTrackerRequestCount: number;
+  baselineTrackerCookieCount: number;
+  gpcTrackerRequestCount: number;
+  gpcTrackerCookieCount: number;
+  behaviorChanged: boolean;
+};
+
+export type PageRuntimeAudit = {
+  ran: boolean;
+  consentControls: RuntimeAuditControl[];
+  interactionAttempted: RuntimeAuditInteraction;
+  sampledUrls: string[];
+  gpcComparison?: RuntimeAuditGpcComparison;
+  trackerRequests: RuntimeAuditTrackerRequest[];
+  trackerCookies: RuntimeAuditCookie[];
+  initialTrackerRequestCount: number;
+  initialTrackerCookieCount: number;
+  postInteractionTrackerRequestCount: number;
+  postInteractionTrackerCookieCount: number;
+};
+
 export type ScanIssue = {
   layer: ComplianceLayer;
   pageUrl: string;
@@ -43,6 +90,7 @@ export type PageScanMetadata = {
   skipLinkCount: number;
   positiveTabindexCount: number;
   insecureFormActionCount: number;
+  runtimeAudit?: PageRuntimeAudit;
 };
 
 export type PageScanResult = {
