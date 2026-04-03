@@ -18,6 +18,7 @@ type RenderedPageSnapshot = {
   missingControlNameFailures: RenderedEvidence[];
   weakControlNameFailures: RenderedEvidence[];
   validationAnnouncementFailures: RenderedEvidence[];
+  dialogInteractionFailures: RenderedEvidence[];
   requiredIndicatorFailures: RenderedEvidence[];
   groupedControlLegendFailures: RenderedEvidence[];
   keyboardWalk: RenderedEvidence[];
@@ -139,6 +140,18 @@ function buildRenderedIssues(pageUrl: string, snapshot: RenderedPageSnapshot): S
       severity: "medium",
       locationSummary: `${snapshot.validationAnnouncementFailures.length} validation interaction${snapshot.validationAnnouncementFailures.length === 1 ? "" : "s"} with weak announcement behavior`,
       evidence: snapshot.validationAnnouncementFailures
+    });
+  }
+
+  if (snapshot.dialogInteractionFailures.length > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl,
+      title: "Dialog interaction may not move and return focus predictably",
+      detail: `${snapshot.dialogInteractionFailures.length} dialog interaction${snapshot.dialogInteractionFailures.length === 1 ? " appears" : "s appear"} to expose weak focus entry or focus return behavior after open and close actions.`,
+      severity: "medium",
+      locationSummary: `${snapshot.dialogInteractionFailures.length} dialog interaction${snapshot.dialogInteractionFailures.length === 1 ? "" : "s"} with weak focus behavior`,
+      evidence: snapshot.dialogInteractionFailures
     });
   }
 
@@ -762,6 +775,7 @@ async function collectRenderedSnapshot(page: Page): Promise<RenderedPageSnapshot
       missingControlNameFailures,
       weakControlNameFailures,
       validationAnnouncementFailures: [],
+      dialogInteractionFailures: [],
       requiredIndicatorFailures,
       groupedControlLegendFailures,
       keyboardWalk: [],
@@ -892,6 +906,121 @@ async function sampleValidationAnnouncementRisk(page: Page): Promise<RenderedEvi
   });
 }
 
+async function sampleDialogInteractionRisk(page: Page): Promise<RenderedEvidence[]> {
+  return page.evaluate(async () => {
+    function normalizeText(value: string | null | undefined): string {
+      return String(value ?? "").replace(/\s+/g, " ").trim();
+    }
+
+    function getSelector(element: Element): string {
+      if (element.id) {
+        return `${element.tagName.toLowerCase()}#${element.id}`;
+      }
+
+      const parts: string[] = [];
+      let current: Element | null = element;
+
+      while (current && parts.length < 4) {
+        const tagName = current.tagName.toLowerCase();
+        const siblings = current.parentElement
+          ? Array.from(current.parentElement.children).filter((child) => child.tagName === current?.tagName)
+          : [];
+        const index = siblings.indexOf(current) + 1;
+        parts.unshift(`${tagName}:nth-of-type(${Math.max(index, 1)})`);
+        current = current.parentElement;
+      }
+
+      return parts.join(" > ");
+    }
+
+    function getSnippet(element: Element): string {
+      return normalizeText((element as HTMLElement).outerHTML || element.textContent || "").slice(0, 220);
+    }
+
+    function isVisible(element: Element | null): element is HTMLElement {
+      if (!(element instanceof HTMLElement)) {
+        return false;
+      }
+
+      const style = window.getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+
+      return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0" && rect.width > 0 && rect.height > 0;
+    }
+
+    function getVisibleDialogs(): HTMLElement[] {
+      return Array.from(document.querySelectorAll('[role="dialog"], [aria-modal="true"]')).filter(isVisible);
+    }
+
+    function getDialogForTrigger(trigger: HTMLElement, dialogsBefore: HTMLElement[]): HTMLElement | null {
+      const controlsId = normalizeText(trigger.getAttribute("aria-controls"));
+
+      if (controlsId) {
+        const controlled = document.getElementById(controlsId);
+        if (isVisible(controlled)) {
+          return controlled;
+        }
+      }
+
+      const dialogsAfter = getVisibleDialogs();
+      return dialogsAfter.find((dialog) => !dialogsBefore.includes(dialog)) ?? dialogsAfter[0] ?? null;
+    }
+
+    const triggers = Array.from(document.querySelectorAll('[aria-haspopup="dialog"], button[aria-controls], a[aria-controls]'))
+      .filter((element): element is HTMLElement => element instanceof HTMLElement)
+      .filter(isVisible)
+      .slice(0, 3);
+
+    const failures: RenderedEvidence[] = [];
+
+    for (const trigger of triggers) {
+      const dialogsBefore = getVisibleDialogs();
+      trigger.focus();
+      trigger.click();
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await new Promise((resolve) => setTimeout(resolve, 160));
+
+      const dialog = getDialogForTrigger(trigger, dialogsBefore);
+      if (!dialog) {
+        continue;
+      }
+
+      const activeAfterOpen = document.activeElement;
+      const focusEnteredDialog = Boolean(activeAfterOpen && (activeAfterOpen === dialog || dialog.contains(activeAfterOpen)));
+
+      if (!focusEnteredDialog) {
+        failures.push({
+          selector: getSelector(trigger),
+          snippet: getSnippet(dialog),
+          note: "This dialog appeared after activation, but focus did not move into the dialog content."
+        });
+      }
+
+      const closeControl = Array.from(
+        dialog.querySelectorAll('button, [role="button"], a[href], [data-close-dialog], [aria-label*="close" i]')
+      ).find((element): element is HTMLElement => element instanceof HTMLElement && isVisible(element));
+
+      if (!closeControl) {
+        continue;
+      }
+
+      closeControl.click();
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await new Promise((resolve) => setTimeout(resolve, 160));
+
+      if (document.activeElement !== trigger) {
+        failures.push({
+          selector: getSelector(trigger),
+          snippet: getSnippet(trigger),
+          note: "The dialog close action did not return focus to the invoking control."
+        });
+      }
+    }
+
+    return failures;
+  });
+}
+
 function rebuildPage(page: PageScanResult): PageScanResult {
   const score = scoreFromIssues(page.issues);
   const summary =
@@ -956,6 +1085,7 @@ export async function inspectRenderedPage(url: string): Promise<RenderedPageSnap
     const afterHydration = await collectHydrationSemanticState(page);
     const ariaSnapshot = await page.locator("body").ariaSnapshot({ depth: 8, timeout: 5000 });
     const validationAnnouncementFailures = await sampleValidationAnnouncementRisk(page);
+    const dialogInteractionFailures = await sampleDialogInteractionRisk(page);
     const keyboardWalk = await sampleKeyboardWalk(page);
 
     return {
@@ -963,6 +1093,7 @@ export async function inspectRenderedPage(url: string): Promise<RenderedPageSnap
       hydrationRegressionFailures: buildHydrationRegressionFailures(beforeHydration, afterHydration),
       accessibilityTreeFailures: buildAccessibilityTreeFailures(afterHydration, ariaSnapshot),
       validationAnnouncementFailures,
+      dialogInteractionFailures,
       ...keyboardWalk
     };
   } finally {
@@ -995,7 +1126,7 @@ export async function augmentSiteResultWithRenderedAccessibility(result: SiteSca
   }
 
   nextLimitations.push(
-    `Desktop rendered accessibility checks sampled ${pageLimit} page${pageLimit === 1 ? "" : "s"} for post-render focusability, skip-link behavior, hydration-sensitive semantic regressions, accessibility-tree structure cues, critical control naming quality, submit-driven validation announcement risk, early keyboard tab progression, visible keyboard focus cues, and basic rendered form structure cues.`
+    `Desktop rendered accessibility checks sampled ${pageLimit} page${pageLimit === 1 ? "" : "s"} for post-render focusability, skip-link behavior, hydration-sensitive semantic regressions, accessibility-tree structure cues, critical control naming quality, submit-driven validation announcement risk, explicit dialog focus behavior, early keyboard tab progression, visible keyboard focus cues, and basic rendered form structure cues.`
   );
 
   return rebuildSite({

@@ -252,7 +252,20 @@ Why it matters:
 
 - many real accessibility failures happen after interaction rather than in initial markup
 
-#### 4. Manual Review Boundaries
+#### 4. Interactive Pattern Focus Cycles
+
+High-value automated checks include:
+
+- whether opening a dialog moves focus into the dialog
+- whether closing a dialog returns focus to the invoking control
+- whether collapsible and popover-style patterns expose state changes predictably after activation
+
+Why it matters:
+
+- many assistive-technology failures come from state changes that are visually obvious but leave keyboard and screen-reader users disoriented
+- this is one of the highest-confidence ways to approximate post-interaction assistive-technology friction in a browser harness
+
+#### 5. Manual Review Boundaries
 
 Olite should be explicit that some questions still require human assistive-technology review.
 

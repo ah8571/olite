@@ -361,6 +361,77 @@ function handleFixtureRequest(request: IncomingMessage, response: ServerResponse
     return;
   }
 
+  if (path === "/dialog-gap") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <button id="open-dialog" aria-haspopup="dialog" aria-controls="newsletter-dialog">Open dialog</button>
+            <div id="newsletter-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" hidden>
+              <h2 id="dialog-title">Newsletter preferences</h2>
+              <button id="close-dialog" aria-label="Close dialog">Close</button>
+            </div>
+            <script>
+              const trigger = document.getElementById('open-dialog');
+              const dialog = document.getElementById('newsletter-dialog');
+              const close = document.getElementById('close-dialog');
+              trigger?.addEventListener('click', () => {
+                if (dialog instanceof HTMLElement) {
+                  dialog.hidden = false;
+                }
+              });
+              close?.addEventListener('click', () => {
+                if (dialog instanceof HTMLElement) {
+                  dialog.hidden = true;
+                }
+                document.body.focus();
+              });
+            </script>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
+  if (path === "/dialog-healthy") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <button id="open-dialog" aria-haspopup="dialog" aria-controls="newsletter-dialog">Open dialog</button>
+            <div id="newsletter-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" hidden>
+              <h2 id="dialog-title">Newsletter preferences</h2>
+              <button id="close-dialog" aria-label="Close dialog">Close</button>
+            </div>
+            <script>
+              const trigger = document.getElementById('open-dialog');
+              const dialog = document.getElementById('newsletter-dialog');
+              const close = document.getElementById('close-dialog');
+              trigger?.addEventListener('click', () => {
+                if (dialog instanceof HTMLElement) {
+                  dialog.hidden = false;
+                }
+                if (close instanceof HTMLElement) {
+                  close.focus();
+                }
+              });
+              close?.addEventListener('click', () => {
+                if (dialog instanceof HTMLElement) {
+                  dialog.hidden = true;
+                }
+                if (trigger instanceof HTMLElement) {
+                  trigger.focus();
+                }
+              });
+            </script>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
   response.writeHead(404, { "content-type": "text/plain" });
   response.end("Not found");
 }
@@ -490,5 +561,19 @@ describe("augmentSiteResultWithRenderedAccessibility", () => {
     const titles = result.pages[0].issues.map((issue) => issue.title);
 
     expect(titles).not.toContain("Validation feedback may not be announced clearly after interaction");
+  });
+
+  it("flags dialog interactions that do not move focus into the dialog or return it after close", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/dialog-gap`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).toContain("Dialog interaction may not move and return focus predictably");
+  });
+
+  it("keeps healthy dialog focus entry and return behavior free of that issue", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/dialog-healthy`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).not.toContain("Dialog interaction may not move and return focus predictably");
   });
 });
