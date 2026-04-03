@@ -206,18 +206,6 @@ export default function WhatOliteChecksPage() {
           intro="These are lightweight public-web checks, not a full security audit. They are included because they often reveal obvious weaknesses quickly."
           issues={securityIssues}
         />
-
-        <div className="section-panel">
-          <p className="kicker">Article Backlog</p>
-          <h2>Natural explainers we can build from this list</h2>
-          <ul className="bullet-list">
-            <li>Why a privacy policy link can fail verification even when a footer link exists</li>
-            <li>Why placeholder-only fields still create accessibility problems</li>
-            <li>Why skip links break after render on modern websites</li>
-            <li>What visible US privacy rights cues look like</li>
-            <li>What baseline security-header coverage does and does not tell you</li>
-          </ul>
-        </div>
       </div>
     </section>
   );
