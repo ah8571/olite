@@ -20,6 +20,7 @@ type RenderedPageSnapshot = {
   validationAnnouncementFailures: RenderedEvidence[];
   dialogInteractionFailures: RenderedEvidence[];
   disclosureInteractionFailures: RenderedEvidence[];
+  tabInteractionFailures: RenderedEvidence[];
   requiredIndicatorFailures: RenderedEvidence[];
   groupedControlLegendFailures: RenderedEvidence[];
   keyboardWalk: RenderedEvidence[];
@@ -165,6 +166,18 @@ function buildRenderedIssues(pageUrl: string, snapshot: RenderedPageSnapshot): S
       severity: "medium",
       locationSummary: `${snapshot.disclosureInteractionFailures.length} disclosure interaction${snapshot.disclosureInteractionFailures.length === 1 ? "" : "s"} with weak state exposure`,
       evidence: snapshot.disclosureInteractionFailures
+    });
+  }
+
+  if (snapshot.tabInteractionFailures.length > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl,
+      title: "Tab interaction may not expose selected state and panel content predictably",
+      detail: `${snapshot.tabInteractionFailures.length} tab interaction${snapshot.tabInteractionFailures.length === 1 ? " appears" : "s appear"} to fail to expose the newly selected tab state or the related tabpanel content after activation.`,
+      severity: "medium",
+      locationSummary: `${snapshot.tabInteractionFailures.length} tab interaction${snapshot.tabInteractionFailures.length === 1 ? "" : "s"} with weak selected-state or panel exposure`,
+      evidence: snapshot.tabInteractionFailures
     });
   }
 
@@ -790,6 +803,7 @@ async function collectRenderedSnapshot(page: Page): Promise<RenderedPageSnapshot
       validationAnnouncementFailures: [],
       dialogInteractionFailures: [],
       disclosureInteractionFailures: [],
+      tabInteractionFailures: [],
       requiredIndicatorFailures,
       groupedControlLegendFailures,
       keyboardWalk: [],
@@ -966,6 +980,10 @@ async function sampleDialogInteractionRisk(page: Page): Promise<RenderedEvidence
       return Array.from(document.querySelectorAll('[role="dialog"], [aria-modal="true"]')).filter(isVisible);
     }
 
+    function isDialogElement(element: Element | null): element is HTMLElement {
+      return element instanceof HTMLElement && (element.getAttribute("role") === "dialog" || element.getAttribute("aria-modal") === "true");
+    }
+
     function getDialogForTrigger(trigger: HTMLElement, dialogsBefore: HTMLElement[]): HTMLElement | null {
       const controlsId = normalizeText(trigger.getAttribute("aria-controls"));
 
@@ -982,6 +1000,14 @@ async function sampleDialogInteractionRisk(page: Page): Promise<RenderedEvidence
 
     const triggers = Array.from(document.querySelectorAll('[aria-haspopup="dialog"], button[aria-controls], a[aria-controls]'))
       .filter((element): element is HTMLElement => element instanceof HTMLElement)
+      .filter((element) => {
+        if (normalizeText(element.getAttribute("aria-haspopup")).toLowerCase() === "dialog") {
+          return true;
+        }
+
+        const controlsId = normalizeText(element.getAttribute("aria-controls"));
+        return controlsId.length > 0 && isDialogElement(document.getElementById(controlsId));
+      })
       .filter(isVisible)
       .slice(0, 3);
 
@@ -1150,6 +1176,97 @@ async function sampleDisclosureInteractionRisk(page: Page): Promise<RenderedEvid
   });
 }
 
+async function sampleTabInteractionRisk(page: Page): Promise<RenderedEvidence[]> {
+  return page.evaluate(async () => {
+    function normalizeText(value: string | null | undefined): string {
+      return String(value ?? "").replace(/\s+/g, " ").trim();
+    }
+
+    function getSelector(element: Element): string {
+      if (element.id) {
+        return `${element.tagName.toLowerCase()}#${element.id}`;
+      }
+
+      const parts: string[] = [];
+      let current: Element | null = element;
+
+      while (current && parts.length < 4) {
+        const tagName = current.tagName.toLowerCase();
+        const siblings = current.parentElement
+          ? Array.from(current.parentElement.children).filter((child) => child.tagName === current?.tagName)
+          : [];
+        const index = siblings.indexOf(current) + 1;
+        parts.unshift(`${tagName}:nth-of-type(${Math.max(index, 1)})`);
+        current = current.parentElement;
+      }
+
+      return parts.join(" > ");
+    }
+
+    function getSnippet(element: Element): string {
+      return normalizeText((element as HTMLElement).outerHTML || element.textContent || "").slice(0, 220);
+    }
+
+    function isVisible(element: Element | null): element is HTMLElement {
+      if (!(element instanceof HTMLElement)) {
+        return false;
+      }
+
+      const style = window.getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+
+      return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0" && rect.width > 0 && rect.height > 0;
+    }
+
+    const tablists = Array.from(document.querySelectorAll('[role="tablist"]')).slice(0, 2);
+    const failures: RenderedEvidence[] = [];
+
+    for (const tablist of tablists) {
+      const tabs = Array.from(tablist.querySelectorAll('[role="tab"]')).filter((element): element is HTMLElement => element instanceof HTMLElement);
+
+      if (tabs.length < 2) {
+        continue;
+      }
+
+      const inactiveTab = tabs.find((tab) => normalizeText(tab.getAttribute("aria-selected")).toLowerCase() === "false") ?? tabs[1];
+
+      if (!isVisible(inactiveTab)) {
+        continue;
+      }
+
+      const controlsId = normalizeText(inactiveTab.getAttribute("aria-controls"));
+      const controlledPanel = controlsId ? document.getElementById(controlsId) : null;
+
+      if (!(controlledPanel instanceof HTMLElement)) {
+        continue;
+      }
+
+      inactiveTab.focus();
+      inactiveTab.click();
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await new Promise((resolve) => setTimeout(resolve, 140));
+
+      const selectedAfter = normalizeText(inactiveTab.getAttribute("aria-selected")).toLowerCase();
+      const panelVisibleAfter = isVisible(controlledPanel);
+
+      if (selectedAfter !== "true" || !panelVisibleAfter) {
+        failures.push({
+          selector: getSelector(inactiveTab),
+          snippet: getSnippet(controlledPanel),
+          note:
+            selectedAfter !== "true" && !panelVisibleAfter
+              ? "Activating this tab did not expose the selected state or visibly reveal the controlled tabpanel."
+              : selectedAfter !== "true"
+                ? "Activating this tab revealed content, but the tab itself did not expose aria-selected=true afterward."
+                : "Activating this tab changed selection state, but the controlled tabpanel did not become visibly available afterward."
+        });
+      }
+    }
+
+    return failures;
+  });
+}
+
 function rebuildPage(page: PageScanResult): PageScanResult {
   const score = scoreFromIssues(page.issues);
   const summary =
@@ -1216,6 +1333,7 @@ export async function inspectRenderedPage(url: string): Promise<RenderedPageSnap
     const validationAnnouncementFailures = await sampleValidationAnnouncementRisk(page);
     const dialogInteractionFailures = await sampleDialogInteractionRisk(page);
     const disclosureInteractionFailures = await sampleDisclosureInteractionRisk(page);
+    const tabInteractionFailures = await sampleTabInteractionRisk(page);
     const keyboardWalk = await sampleKeyboardWalk(page);
 
     return {
@@ -1225,6 +1343,7 @@ export async function inspectRenderedPage(url: string): Promise<RenderedPageSnap
       validationAnnouncementFailures,
       dialogInteractionFailures,
       disclosureInteractionFailures,
+      tabInteractionFailures,
       ...keyboardWalk
     };
   } finally {
@@ -1257,7 +1376,7 @@ export async function augmentSiteResultWithRenderedAccessibility(result: SiteSca
   }
 
   nextLimitations.push(
-    `Desktop rendered accessibility checks sampled ${pageLimit} page${pageLimit === 1 ? "" : "s"} for post-render focusability, skip-link behavior, hydration-sensitive semantic regressions, accessibility-tree structure cues, critical control naming quality, submit-driven validation announcement risk, dialog and disclosure interaction behavior, early keyboard tab progression, visible keyboard focus cues, and basic rendered form structure cues.`
+    `Desktop rendered accessibility checks sampled ${pageLimit} page${pageLimit === 1 ? "" : "s"} for post-render focusability, skip-link behavior, hydration-sensitive semantic regressions, accessibility-tree structure cues, critical control naming quality, submit-driven validation announcement risk, dialog, disclosure, and tab interaction behavior, early keyboard tab progression, visible keyboard focus cues, and basic rendered form structure cues.`
   );
 
   return rebuildSite({

@@ -57,7 +57,7 @@ export function getIssueClassification(layer: ScanIssue["layer"], title: string)
       return { issueFamily: "dynamic-announcement", verificationMethod: "interaction-flow", confidenceLevel: "medium", manualReviewRecommended: true };
     }
 
-    if (["Dialog interaction may not move and return focus predictably", "Disclosure interaction may not expose state predictably", "Skip link did not change focus or route after activation"].includes(title)) {
+    if (["Dialog interaction may not move and return focus predictably", "Disclosure interaction may not expose state predictably", "Tab interaction may not expose selected state and panel content predictably", "Skip link did not change focus or route after activation"].includes(title)) {
       return { issueFamily: "interactive-pattern", verificationMethod: "interaction-flow", confidenceLevel: "medium", manualReviewRecommended: true };
     }
   }
@@ -100,6 +100,7 @@ export function getIssueSuggestedFix(layer: ScanIssue["layer"], title: string): 
     if (title === "Validation feedback may not be announced clearly after interaction") return "When validation fails, move focus to the affected field or summary, and expose a readable alert, status, or aria-live announcement so the error is surfaced after interaction.";
     if (title === "Dialog interaction may not move and return focus predictably") return "When a dialog opens, move focus into it, and when it closes, return focus to the invoking control so keyboard and screen-reader users keep their place.";
     if (title === "Disclosure interaction may not expose state predictably") return "Keep disclosure triggers synchronized with the controlled region by updating aria-expanded and revealing the controlled content when the trigger is activated.";
+    if (title === "Tab interaction may not expose selected state and panel content predictably") return "Keep each tab's aria-selected state synchronized with the active panel, and reveal the controlled tabpanel when the user activates a different tab.";
     if (title === "Required form controls may lack a clear required indicator") return "Expose required state through visible label text or nearby guidance so users can tell which fields are mandatory before they submit the form.";
     if (title === "Grouped form controls missing a clear legend") return "Wrap related radio buttons or checkboxes in a fieldset with a readable legend so the group purpose is announced clearly.";
     if (title === "Keyboard tab progression could not be established after render") return "Review the first keyboard steps after load and make sure an obvious interactive control receives focus when a user starts tabbing through the page.";

@@ -482,6 +482,75 @@ function handleFixtureRequest(request: IncomingMessage, response: ServerResponse
     return;
   }
 
+  if (path === "/tabs-gap") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <div role="tablist" aria-label="Plan details">
+              <button id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview">Overview</button>
+              <button id="tab-pricing" role="tab" aria-selected="false" aria-controls="panel-pricing">Pricing</button>
+            </div>
+            <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">Overview details</section>
+            <section id="panel-pricing" role="tabpanel" aria-labelledby="tab-pricing" hidden>Pricing details</section>
+            <script>
+              document.getElementById('tab-pricing')?.addEventListener('click', () => {
+                const pricingPanel = document.getElementById('panel-pricing');
+                const overviewPanel = document.getElementById('panel-overview');
+                if (pricingPanel instanceof HTMLElement && overviewPanel instanceof HTMLElement) {
+                  pricingPanel.hidden = false;
+                  pricingPanel.removeAttribute('hidden');
+                  overviewPanel.hidden = true;
+                  overviewPanel.setAttribute('hidden', '');
+                }
+              });
+            </script>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
+  if (path === "/tabs-healthy") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <div role="tablist" aria-label="Plan details">
+              <button id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview">Overview</button>
+              <button id="tab-pricing" role="tab" aria-selected="false" aria-controls="panel-pricing">Pricing</button>
+            </div>
+            <section id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">Overview details</section>
+            <section id="panel-pricing" role="tabpanel" aria-labelledby="tab-pricing" hidden>Pricing details</section>
+            <script>
+              document.getElementById('tab-pricing')?.addEventListener('click', () => {
+                const pricingTab = document.getElementById('tab-pricing');
+                const overviewTab = document.getElementById('tab-overview');
+                const pricingPanel = document.getElementById('panel-pricing');
+                const overviewPanel = document.getElementById('panel-overview');
+                if (
+                  pricingTab instanceof HTMLElement &&
+                  overviewTab instanceof HTMLElement &&
+                  pricingPanel instanceof HTMLElement &&
+                  overviewPanel instanceof HTMLElement
+                ) {
+                  pricingTab.setAttribute('aria-selected', 'true');
+                  overviewTab.setAttribute('aria-selected', 'false');
+                  pricingPanel.hidden = false;
+                  pricingPanel.removeAttribute('hidden');
+                  overviewPanel.hidden = true;
+                  overviewPanel.setAttribute('hidden', '');
+                }
+              });
+            </script>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
   response.writeHead(404, { "content-type": "text/plain" });
   response.end("Not found");
 }
@@ -639,5 +708,19 @@ describe("augmentSiteResultWithRenderedAccessibility", () => {
     const titles = result.pages[0].issues.map((issue) => issue.title);
 
     expect(titles).not.toContain("Disclosure interaction may not expose state predictably");
+  });
+
+  it("flags tabs that fail to expose selected state or the controlled panel after activation", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/tabs-gap`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).toContain("Tab interaction may not expose selected state and panel content predictably");
+  });
+
+  it("keeps healthy tab selection and panel exposure free of that issue", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/tabs-healthy`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).not.toContain("Tab interaction may not expose selected state and panel content predictably");
   });
 });

@@ -16,10 +16,20 @@ describe("issue guidance", () => {
     expect(getIssueSuggestedFix("accessibility", "Validation feedback may not be announced clearly after interaction")).toContain(
       "aria-live"
     );
+    expect(getIssueSuggestedFix("accessibility", "Tab interaction may not expose selected state and panel content predictably")).toContain(
+      "aria-selected"
+    );
   });
 
   it("classifies assistive-technology approximation findings for export consumers", () => {
     expect(getIssueClassification("accessibility", "Dialog interaction may not move and return focus predictably")).toMatchObject({
+      issueFamily: "interactive-pattern",
+      verificationMethod: "interaction-flow",
+      confidenceLevel: "medium",
+      manualReviewRecommended: true
+    });
+
+    expect(getIssueClassification("accessibility", "Tab interaction may not expose selected state and panel content predictably")).toMatchObject({
       issueFamily: "interactive-pattern",
       verificationMethod: "interaction-flow",
       confidenceLevel: "medium",
