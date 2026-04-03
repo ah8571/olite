@@ -70,5 +70,13 @@ export const blogPages: BlogPage[] = [
     description:
       "A practical framing page for Olite's cookie-audit direction: what can be verified now, what runtime consent checks add, and why audit-first matters.",
     category: "guide"
+  },
+  {
+    href: "/blog/what-is-at-approximation",
+    shortTitle: "What Is AT Approximation?",
+    title: "What Is AT Approximation In Accessibility Testing?",
+    description:
+      "A practical explanation of assistive-technology approximation, how it relates to screen readers, and where automation stops.",
+    category: "guide"
   }
 ];

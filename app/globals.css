@@ -895,6 +895,44 @@ select {
   gap: 24px;
 }
 
+.article-section {
+  display: grid;
+  gap: 16px;
+}
+
+.article-section h2,
+.article-section h3 {
+  margin: 0;
+}
+
+.article-section .section-copy {
+  margin: 0;
+}
+
+.article-callout {
+  border: 1px solid rgba(14, 107, 98, 0.16);
+  background: rgba(14, 107, 98, 0.08);
+}
+
+.article-link-list {
+  display: grid;
+  gap: 12px;
+}
+
+.inline-sources {
+  color: var(--muted);
+}
+
+.inline-sources a {
+  color: var(--brand-dark);
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
+.inline-sources a:hover {
+  color: var(--text);
+}
+
 .toc-panel {
   position: sticky;
   top: 96px;

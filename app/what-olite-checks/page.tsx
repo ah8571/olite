@@ -20,6 +20,13 @@ const renderedAccessibilityIssues = [
   "Focusable elements hidden from view after render",
   "Rendered skip link target missing",
   "Skip link did not change focus or route after activation",
+  "Accessibility tree may not expose the primary page structure",
+  "Critical controls may lack accessible names after render",
+  "Critical controls may expose weak accessible names after render",
+  "Validation feedback may not be announced clearly after interaction",
+  "Dialog interaction may not move and return focus predictably",
+  "Disclosure interaction may not expose state predictably",
+  "Tab interaction may not expose selected state and panel content predictably",
   "Keyboard tab progression could not be established after render",
   "Keyboard focus appears stalled during early tab progression"
 ];
@@ -124,9 +131,23 @@ export default function WhatOliteChecksPage() {
         <IssueSection
           kicker="Rendered Accessibility"
           title="Current desktop-only rendered checks"
-          intro="These checks currently come from the local desktop workflow, where Olite can inspect the page after render and sample early keyboard movement."
+          intro="These checks currently come from the local desktop workflow, where Olite can inspect the page after render, sample keyboard movement, and approximate assistive-technology-relevant structure and interaction behavior."
           issues={renderedAccessibilityIssues}
         />
+
+        <div className="section-panel">
+          <p className="kicker">AT Approximation</p>
+          <h2>Why these rendered checks relate to screen-reader behavior</h2>
+          <p className="section-copy">
+            Olite&apos;s newer rendered checks are not claiming to run a real screen reader. They are checking
+            the browser signals that assistive technology depends on, such as accessibility-tree structure,
+            accessible names, focus movement, and exposed state changes.
+          </p>
+          <p className="section-copy">
+            For the full explanation, read
+            <Link className="footer-link" href="/blog/what-is-at-approximation"> What Is AT Approximation In Accessibility Testing?</Link>.
+          </p>
+        </div>
 
         <IssueSection
           kicker="Privacy"
