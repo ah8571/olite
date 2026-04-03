@@ -10,6 +10,14 @@ export type ScanIssueEvidence = {
   note?: string;
 };
 
+export type IssueConfidenceLevel = "high" | "medium" | "low";
+export type IssueVerificationMethod =
+  | "static-dom"
+  | "rendered-browser"
+  | "accessibility-tree"
+  | "interaction-flow"
+  | "network-runtime";
+
 export type RuntimeAuditPhase = "before-interaction" | "after-reject" | "after-accept";
 export type RuntimeAuditInteraction = "none" | "reject" | "accept" | "failed";
 
@@ -64,6 +72,10 @@ export type ScanIssue = {
   detail: string;
   severity: ScanSeverity;
   suggestedFix?: string;
+  issueFamily?: string;
+  verificationMethod?: IssueVerificationMethod;
+  confidenceLevel?: IssueConfidenceLevel;
+  manualReviewRecommended?: boolean;
   locationSummary?: string;
   evidence?: ScanIssueEvidence[];
 };
@@ -146,6 +158,10 @@ export type HostedToolScanResult = {
     detail: string;
     severity: ScanSeverity;
     suggestedFix?: string;
+    issueFamily?: string;
+    verificationMethod?: IssueVerificationMethod;
+    confidenceLevel?: IssueConfidenceLevel;
+    manualReviewRecommended?: boolean;
     locationSummary?: string;
     evidence?: ScanIssueEvidence[];
   }>;

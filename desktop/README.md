@@ -11,6 +11,7 @@ Current scope:
 - export of scan results to JSON
 - export of flattened issue rows to CSV
 - suggested-fix guidance included in exported issue data for remediation and chat-agent workflows
+- machine-readable issue family, verification method, confidence level, and manual-review flags included in exported issue data
 - saved local scan history inside the desktop shell, including reopening past reports
 - saved local test targets for repeated comparisons while exploring the interface
 

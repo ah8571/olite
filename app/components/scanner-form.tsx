@@ -20,6 +20,10 @@ type ScanResponse = {
     detail: string;
     severity: Severity;
     suggestedFix?: string;
+    issueFamily?: string;
+    verificationMethod?: string;
+    confidenceLevel?: string;
+    manualReviewRecommended?: boolean;
     locationSummary?: string;
     evidence?: Array<{
       selector: string;
@@ -49,7 +53,22 @@ type ScanResponse = {
 
 function buildHostedIssueCsv(result: ScanResponse): string {
   const rows = [
-    ["layer", "severity", "issue_title", "issue_detail", "suggested_fix", "location_summary", "selector", "snippet", "note", "page_url"]
+    [
+      "layer",
+      "severity",
+      "issue_title",
+      "issue_detail",
+      "issue_family",
+      "verification_method",
+      "confidence_level",
+      "manual_review_recommended",
+      "suggested_fix",
+      "location_summary",
+      "selector",
+      "snippet",
+      "note",
+      "page_url"
+    ]
   ];
 
   for (const issue of result.issues) {
@@ -61,6 +80,10 @@ function buildHostedIssueCsv(result: ScanResponse): string {
         issue.severity,
         issue.title,
         issue.detail,
+        issue.issueFamily ?? "",
+        issue.verificationMethod ?? "",
+        issue.confidenceLevel ?? "",
+        typeof issue.manualReviewRecommended === "boolean" ? String(issue.manualReviewRecommended) : "",
         issue.suggestedFix ?? getIssueSuggestedFix(issue.layer, issue.title),
         issue.locationSummary ?? "",
         item.selector,

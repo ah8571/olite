@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { applyIssueGuidanceToHostedToolResult, applyIssueGuidanceToSiteResult, getIssueSuggestedFix } from "../lib/issue-guidance";
+import {
+  applyIssueGuidanceToHostedToolResult,
+  applyIssueGuidanceToSiteResult,
+  getIssueClassification,
+  getIssueSuggestedFix
+} from "../lib/issue-guidance";
 import type { HostedToolScanResult, SiteScanResult } from "../lib/scan/types";
 
 describe("issue guidance", () => {
@@ -11,6 +16,20 @@ describe("issue guidance", () => {
     expect(getIssueSuggestedFix("accessibility", "Validation feedback may not be announced clearly after interaction")).toContain(
       "aria-live"
     );
+  });
+
+  it("classifies assistive-technology approximation findings for export consumers", () => {
+    expect(getIssueClassification("accessibility", "Dialog interaction may not move and return focus predictably")).toMatchObject({
+      issueFamily: "interactive-pattern",
+      verificationMethod: "interaction-flow",
+      confidenceLevel: "medium",
+      manualReviewRecommended: true
+    });
+
+    expect(getIssueClassification("privacy", "Tracking requests fired before consent interaction")).toMatchObject({
+      issueFamily: "consent-runtime",
+      verificationMethod: "network-runtime"
+    });
   });
 
   it("enriches site results with suggested fixes and refreshes layer grouping", () => {
@@ -76,6 +95,8 @@ describe("issue guidance", () => {
 
     const enriched = applyIssueGuidanceToSiteResult(result);
     expect(enriched.pages[0].issues[0].suggestedFix).toContain("programmatically named");
+    expect(enriched.pages[0].issues[0].issueFamily).toBe("post-hydration-accessibility");
+    expect(enriched.pages[0].issues[0].verificationMethod).toBe("rendered-browser");
     expect(enriched.issuesByLayer.accessibility[0].suggestedFix).toContain("programmatically named");
   });
 

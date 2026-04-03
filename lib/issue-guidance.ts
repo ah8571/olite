@@ -1,7 +1,78 @@
-import type { HostedToolScanResult, ScanIssue, SiteScanResult } from "./scan/types";
+import type {
+  HostedToolScanResult,
+  IssueConfidenceLevel,
+  IssueVerificationMethod,
+  ScanIssue,
+  SiteScanResult
+} from "./scan/types";
+
+type IssueClassification = {
+  issueFamily: string;
+  verificationMethod: IssueVerificationMethod;
+  confidenceLevel: IssueConfidenceLevel;
+  manualReviewRecommended: boolean;
+};
 
 function fallbackSuggestedFix(): string {
   return "Review the affected element or behavior in context and adjust the markup or runtime implementation so the user flow stays understandable to browsers, assistive technologies, and keyboard users.";
+}
+
+function fallbackClassification(layer: ScanIssue["layer"]): IssueClassification {
+  if (layer === "privacy" || layer === "consent" || layer === "security") {
+    return {
+      issueFamily: "privacy-runtime",
+      verificationMethod: "network-runtime",
+      confidenceLevel: "medium",
+      manualReviewRecommended: true
+    };
+  }
+
+  return {
+    issueFamily: "accessibility-general",
+    verificationMethod: "static-dom",
+    confidenceLevel: "medium",
+    manualReviewRecommended: true
+  };
+}
+
+export function getIssueClassification(layer: ScanIssue["layer"], title: string): IssueClassification {
+  if (layer === "accessibility") {
+    if (["Missing page title", "Missing html lang attribute", "Images missing alt text", "Inputs missing visible or programmatic labels", "Buttons without accessible names", "Links without accessible names", "Iframes missing title attributes", "Potential focus order override from positive tabindex", "Tables may be missing clear headers", "Malformed list structure detected", "Duplicate landmark structure detected", "Repeated vague link text may not describe destinations", "Non-interactive elements appear to act like controls"].includes(title)) {
+      return { issueFamily: "markup-semantics", verificationMethod: "static-dom", confidenceLevel: "high", manualReviewRecommended: false };
+    }
+
+    if (["Rendered skip link target missing", "Focusable elements hidden from view after render", "Required form controls may lack a clear required indicator", "Grouped form controls missing a clear legend", "Keyboard tab progression could not be established after render", "Keyboard focus reached an offscreen or non-visible target", "Focused controls may lack a clear visible focus indicator", "Keyboard focus appears stalled during early tab progression"].includes(title)) {
+      return { issueFamily: "rendered-interaction", verificationMethod: "rendered-browser", confidenceLevel: "medium", manualReviewRecommended: true };
+    }
+
+    if (["Hydration appears to remove key semantic structure", "Critical controls may lack accessible names after render", "Critical controls may expose weak accessible names after render"].includes(title)) {
+      return { issueFamily: "post-hydration-accessibility", verificationMethod: "rendered-browser", confidenceLevel: "medium", manualReviewRecommended: true };
+    }
+
+    if (title === "Accessibility tree may not expose the primary page structure") {
+      return { issueFamily: "accessibility-tree-structure", verificationMethod: "accessibility-tree", confidenceLevel: "medium", manualReviewRecommended: true };
+    }
+
+    if (title === "Validation feedback may not be announced clearly after interaction") {
+      return { issueFamily: "dynamic-announcement", verificationMethod: "interaction-flow", confidenceLevel: "medium", manualReviewRecommended: true };
+    }
+
+    if (["Dialog interaction may not move and return focus predictably", "Disclosure interaction may not expose state predictably", "Skip link did not change focus or route after activation"].includes(title)) {
+      return { issueFamily: "interactive-pattern", verificationMethod: "interaction-flow", confidenceLevel: "medium", manualReviewRecommended: true };
+    }
+  }
+
+  if (layer === "privacy" || layer === "consent" || layer === "security") {
+    if (["Tracking requests fired before consent interaction", "Tracking cookies set before consent interaction", "Tracking requests continued after reject interaction", "Tracking cookies persisted after reject interaction", "Tracking behavior did not change when GPC was simulated", "Consent UI does not expose an obvious reject control", "Consent UI does not expose an obvious manage-preferences control"].includes(title)) {
+      return { issueFamily: "consent-runtime", verificationMethod: "network-runtime", confidenceLevel: "medium", manualReviewRecommended: true };
+    }
+
+    if (["Tracking signals without visible cookie wording", "No obvious privacy or cookie policy links detected", "No obvious privacy rights request path detected", "No obvious sale or sharing opt-out path detected", "Limited visible US privacy rights cues", "No visible Global Privacy Control cue detected", "Email capture without visible privacy cues", "Limited security header coverage", "Cookie banner without obvious reject or manage controls"].includes(title)) {
+      return { issueFamily: "privacy-surface", verificationMethod: "static-dom", confidenceLevel: "high", manualReviewRecommended: false };
+    }
+  }
+
+  return fallbackClassification(layer);
 }
 
 export function getIssueSuggestedFix(layer: ScanIssue["layer"], title: string): string {
@@ -60,9 +131,19 @@ export function getIssueSuggestedFix(layer: ScanIssue["layer"], title: string): 
 }
 
 function withSuggestedFix<T extends Pick<ScanIssue, "layer" | "title"> & { suggestedFix?: string }>(issue: T): T & { suggestedFix: string } {
+  const classification = getIssueClassification(issue.layer, issue.title);
+
   return {
     ...issue,
-    suggestedFix: issue.suggestedFix || getIssueSuggestedFix(issue.layer, issue.title)
+    suggestedFix: issue.suggestedFix || getIssueSuggestedFix(issue.layer, issue.title),
+    issueFamily: "issueFamily" in issue && issue.issueFamily ? issue.issueFamily : classification.issueFamily,
+    verificationMethod:
+      "verificationMethod" in issue && issue.verificationMethod ? issue.verificationMethod : classification.verificationMethod,
+    confidenceLevel: "confidenceLevel" in issue && issue.confidenceLevel ? issue.confidenceLevel : classification.confidenceLevel,
+    manualReviewRecommended:
+      "manualReviewRecommended" in issue && typeof issue.manualReviewRecommended === "boolean"
+        ? issue.manualReviewRecommended
+        : classification.manualReviewRecommended
   };
 }
 

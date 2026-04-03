@@ -113,7 +113,7 @@ This version keeps the original roadmap intact but breaks the work into a checkl
     - [ ] Add staged navigation checks that better approximate screen-reader wayfinding.
       - Note: landmark traversal, heading traversal, repeated-region noise, and route-to-route consistency should be sampled across multiple same-origin pages where justified.
     - [ ] Add issue messaging that separates confidence levels inside this layer.
-      - Note: JSON and CSV exports now include suggested-fix guidance, so downstream chat-agent workflows already receive explicit remediation text.
+      - Note: JSON and CSV exports now include suggested-fix guidance plus machine-readable issue family, verification method, confidence level, and manual-review flags, so downstream chat-agent workflows do not need to infer those from titles alone.
       - Note: examples: likely AT-structure failure, likely AT-naming failure, likely post-interaction announcement risk, manual review recommended.
     - [ ] Build a stronger fixture matrix for AT approximation coverage.
       - Note: each new slice should ship with both failing and healthy fixtures so confidence stays tied to repeatable tests.
