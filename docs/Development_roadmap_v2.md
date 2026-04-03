@@ -85,10 +85,41 @@ This version keeps the original roadmap intact but breaks the work into a checkl
   - Note: this section should continue absorbing accessibility gaps identified from Compliance_foundations.md.
 
 - [ ] Add assistive-technology approximation checks and explicit manual-review boundaries.
-  - Note: start with browser accessibility-tree verification rather than claiming full screen-reader automation.
-  - Note: first validated slice now checks whether rendered main-landmark and primary-heading cues remain exposed in the browser accessibility tree.
-  - Note: focus on landmark, heading, naming, and post-hydration exposure gaps that a visual DOM pass can miss.
-  - Note: reporting should make the boundary explicit: this approximates assistive-technology exposure but does not replace real screen-reader testing.
+  - Goal: reach a high-confidence browser-based approximation of the structural and interaction issues a screen-reader user is likely to encounter, without claiming direct NVDA, JAWS, VoiceOver, or TalkBack execution.
+  - Done so far:
+    - [x] Define the product boundary and manual-review posture.
+      - Note: the product now explicitly frames these as assistive-technology approximation findings rather than real screen-reader runs.
+      - Note: documented in Compliance_foundations.md.
+    - [x] Verify primary structure survives into the browser accessibility tree.
+      - Note: current validated slice checks whether rendered main-landmark and primary-heading cues remain exposed in the ARIA snapshot.
+      - Note: covered by rendered-accessibility fixture tests.
+    - [x] Preserve prerequisite signals this layer depends on.
+      - Note: hydration-regression checks, keyboard-flow checks, skip-link activation checks, form-structure checks, and structural-semantics checks are already implemented and tested.
+      - Note: these are not sufficient on their own, but they materially improve confidence in later AT approximation findings.
+  - Still needed for higher confidence:
+    - [ ] Expand accessibility-tree verification beyond main and heading exposure.
+      - Note: verify landmark coverage and duplication in the tree, not just in the DOM.
+      - Note: verify that key controls retain usable role, name, and state exposure after render and hydration.
+    - [x] Add accessible-name quality checks for critical controls in the browser context.
+      - Note: current validated slice checks missing post-render names and weak generic names for visible buttons, links, and form controls.
+      - Note: initial coverage is strongest for common visible controls; pattern-specific checks for dialogs and consent triggers can still deepen this later.
+    - [ ] Add browser-driven dynamic announcement risk checks.
+      - Note: validation errors, status messages, async updates, and modal open-close cycles should be inspected for focus movement and live-region style exposure.
+      - Note: this is important because many practical screen-reader failures occur after interaction rather than on initial load.
+    - [ ] Add interactive-pattern AT approximation checks.
+      - Note: dialogs, menus, disclosures, tabs, and popovers should be checked for exposed roles, states, focus entry, focus containment when appropriate, and focus return.
+    - [ ] Add staged navigation checks that better approximate screen-reader wayfinding.
+      - Note: landmark traversal, heading traversal, repeated-region noise, and route-to-route consistency should be sampled across multiple same-origin pages where justified.
+    - [ ] Add issue messaging that separates confidence levels inside this layer.
+      - Note: examples: likely AT-structure failure, likely AT-naming failure, likely post-interaction announcement risk, manual review recommended.
+    - [ ] Build a stronger fixture matrix for AT approximation coverage.
+      - Note: each new slice should ship with both failing and healthy fixtures so confidence stays tied to repeatable tests.
+  - Exit criteria for checking this item off:
+    - landmark and heading exposure are verified in the accessibility tree
+    - critical control naming and role exposure are checked after render
+    - key interaction patterns are sampled for focus and announcement risk
+    - multi-step and post-hydration failures have representative fixture coverage
+    - reporting still states that this is a high-confidence approximation layer, not a replacement for real assistive-technology testing
 
 - [x] Integrate axe-style rules into the desktop scan pipeline.
   - Note: keep results merged into the same reporting model.

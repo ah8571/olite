@@ -15,6 +15,8 @@ type RenderedPageSnapshot = {
   skipActivationFailures: RenderedEvidence[];
   hydrationRegressionFailures: RenderedEvidence[];
   accessibilityTreeFailures: RenderedEvidence[];
+  missingControlNameFailures: RenderedEvidence[];
+  weakControlNameFailures: RenderedEvidence[];
   requiredIndicatorFailures: RenderedEvidence[];
   groupedControlLegendFailures: RenderedEvidence[];
   keyboardWalk: RenderedEvidence[];
@@ -100,6 +102,30 @@ function buildRenderedIssues(pageUrl: string, snapshot: RenderedPageSnapshot): S
       severity: "medium",
       locationSummary: `${snapshot.accessibilityTreeFailures.length} primary structure cue${snapshot.accessibilityTreeFailures.length === 1 ? "" : "s"} missing from the accessibility tree snapshot`,
       evidence: snapshot.accessibilityTreeFailures
+    });
+  }
+
+  if (snapshot.missingControlNameFailures.length > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl,
+      title: "Critical controls may lack accessible names after render",
+      detail: `${snapshot.missingControlNameFailures.length} critical control${snapshot.missingControlNameFailures.length === 1 ? " appears" : "s appear"} to lose or lack a usable accessible name in the rendered browser state.`,
+      severity: "medium",
+      locationSummary: `${snapshot.missingControlNameFailures.length} critical control${snapshot.missingControlNameFailures.length === 1 ? "" : "s"} without a usable post-render name`,
+      evidence: snapshot.missingControlNameFailures
+    });
+  }
+
+  if (snapshot.weakControlNameFailures.length > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl,
+      title: "Critical controls may expose weak accessible names after render",
+      detail: `${snapshot.weakControlNameFailures.length} critical control${snapshot.weakControlNameFailures.length === 1 ? " appears" : "s appear"} to rely on a vague or overly generic accessible name in the rendered browser state.`,
+      severity: "low",
+      locationSummary: `${snapshot.weakControlNameFailures.length} critical control${snapshot.weakControlNameFailures.length === 1 ? "" : "s"} with a weak post-render name`,
+      evidence: snapshot.weakControlNameFailures
     });
   }
 
@@ -563,6 +589,118 @@ async function collectRenderedSnapshot(page: Page): Promise<RenderedPageSnapshot
       return [closestLabel, linkedLabel, labelledByText, describedByText, explicitLabel].filter(Boolean).join(" ");
     }
 
+    function getRenderedControlName(element: Element): string {
+      if (!(element instanceof HTMLElement)) {
+        return "";
+      }
+
+      const labelledBy = normalizeText(element.getAttribute("aria-labelledby"));
+      const ariaLabel = normalizeText(element.getAttribute("aria-label"));
+      const title = normalizeText(element.getAttribute("title"));
+      const id = element.id;
+      const linkedLabel = id ? normalizeText(document.querySelector(`label[for="${CSS.escape(id)}"]`)?.textContent) : "";
+      const closestLabel = normalizeText(element.closest("label")?.textContent);
+      const labelledByText = labelledBy
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((value) => normalizeText(document.getElementById(value)?.textContent))
+        .join(" ");
+
+      if (ariaLabel) {
+        return ariaLabel;
+      }
+
+      if (labelledByText) {
+        return labelledByText;
+      }
+
+      if (linkedLabel) {
+        return linkedLabel;
+      }
+
+      if (closestLabel) {
+        return closestLabel;
+      }
+
+      const tagName = element.tagName.toLowerCase();
+
+      if (tagName === "input") {
+        const input = element as HTMLInputElement;
+        const type = input.type.toLowerCase();
+
+        if (["button", "submit", "reset"].includes(type)) {
+          return normalizeText(input.value) || title;
+        }
+
+        if (type === "image") {
+          return normalizeText(input.alt) || title;
+        }
+
+        return title;
+      }
+
+      const textContent = normalizeText(element.textContent);
+      return textContent || title;
+    }
+
+    function getControlKind(element: Element): string {
+      const explicitRole = normalizeText(element.getAttribute("role"));
+
+      if (explicitRole) {
+        return explicitRole;
+      }
+
+      const tagName = element.tagName.toLowerCase();
+      if (tagName === "input") {
+        return (element as HTMLInputElement).type?.toLowerCase() || "input";
+      }
+
+      return tagName;
+    }
+
+    const weakNamePattern = /^(click here|here|more|read more|learn more|details|see more|open|go)$/i;
+    const criticalControlSelector = [
+      "button",
+      "a[href]",
+      'input:not([type="hidden"])',
+      "select",
+      "textarea",
+      "summary",
+      '[role="button"]',
+      '[role="link"]',
+      '[role="checkbox"]',
+      '[role="radio"]',
+      '[role="switch"]',
+      '[role="tab"]',
+      '[role="menuitem"]'
+    ].join(",");
+
+    const criticalControls = Array.from(document.querySelectorAll(criticalControlSelector))
+      .filter(isCandidateFocusable)
+      .filter((element) => isVisible(element))
+      .slice(0, 20);
+
+    const missingControlNameFailures = criticalControls
+      .filter((element) => getRenderedControlName(element).length === 0)
+      .slice(0, 5)
+      .map((element) => ({
+        selector: getSelector(element),
+        snippet: getSnippet(element),
+        note: `${getControlKind(element)} control was visible after render but did not expose a usable accessible name.`
+      }));
+
+    const weakControlNameFailures = criticalControls
+      .filter((element) => {
+        const name = getRenderedControlName(element);
+        return name.length > 0 && weakNamePattern.test(name);
+      })
+      .slice(0, 5)
+      .map((element) => ({
+        selector: getSelector(element),
+        snippet: getSnippet(element),
+        note: `${getControlKind(element)} control used the vague post-render name "${getRenderedControlName(element)}".`
+      }));
+
     const requiredIndicatorFailures = Array.from(
       document.querySelectorAll('input[required], select[required], textarea[required], [aria-required="true"]')
     )
@@ -608,6 +746,8 @@ async function collectRenderedSnapshot(page: Page): Promise<RenderedPageSnapshot
       skipActivationFailures,
       hydrationRegressionFailures: [],
       accessibilityTreeFailures: [],
+      missingControlNameFailures,
+      weakControlNameFailures,
       requiredIndicatorFailures,
       groupedControlLegendFailures,
       keyboardWalk: [],
@@ -720,7 +860,7 @@ export async function augmentSiteResultWithRenderedAccessibility(result: SiteSca
   }
 
   nextLimitations.push(
-    `Desktop rendered accessibility checks sampled ${pageLimit} page${pageLimit === 1 ? "" : "s"} for post-render focusability, skip-link behavior, hydration-sensitive semantic regressions, accessibility-tree structure cues, early keyboard tab progression, visible keyboard focus cues, and basic rendered form structure cues.`
+    `Desktop rendered accessibility checks sampled ${pageLimit} page${pageLimit === 1 ? "" : "s"} for post-render focusability, skip-link behavior, hydration-sensitive semantic regressions, accessibility-tree structure cues, critical control naming quality, early keyboard tab progression, visible keyboard focus cues, and basic rendered form structure cues.`
   );
 
   return rebuildSite({

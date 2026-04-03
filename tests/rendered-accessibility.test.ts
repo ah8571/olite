@@ -258,6 +258,45 @@ function handleFixtureRequest(request: IncomingMessage, response: ServerResponse
     return;
   }
 
+  if (path === "/control-name-gaps") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <button id="menu-button" aria-label="Open navigation"><span aria-hidden="true">☰</span></button>
+            <a href="/pricing">Read more</a>
+            <label id="search-label" for="site-search">Site search</label>
+            <input id="site-search" type="search" aria-labelledby="search-label">
+          </main>
+          <script>
+            setTimeout(() => {
+              document.getElementById('menu-button')?.removeAttribute('aria-label');
+              document.getElementById('site-search')?.removeAttribute('aria-labelledby');
+              document.getElementById('search-label')?.remove();
+            }, 120);
+          </script>
+        </body>
+      </html>`);
+    return;
+  }
+
+  if (path === "/control-name-healthy") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <button aria-label="Open navigation"><span aria-hidden="true">☰</span></button>
+            <a href="/pricing">View pricing plans</a>
+            <label for="site-search">Search the help center</label>
+            <input id="site-search" type="search">
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
   response.writeHead(404, { "content-type": "text/plain" });
   response.end("Not found");
 }
@@ -357,5 +396,21 @@ describe("augmentSiteResultWithRenderedAccessibility", () => {
     const titles = result.pages[0].issues.map((issue) => issue.title);
 
     expect(titles).not.toContain("Accessibility tree may not expose the primary page structure");
+  });
+
+  it("flags missing and weak critical control names after render", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/control-name-gaps`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).toContain("Critical controls may lack accessible names after render");
+    expect(titles).toContain("Critical controls may expose weak accessible names after render");
+  });
+
+  it("keeps healthy critical control naming free of those post-render issues", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/control-name-healthy`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).not.toContain("Critical controls may lack accessible names after render");
+    expect(titles).not.toContain("Critical controls may expose weak accessible names after render");
   });
 });
