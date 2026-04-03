@@ -297,6 +297,70 @@ function handleFixtureRequest(request: IncomingMessage, response: ServerResponse
     return;
   }
 
+  if (path === "/validation-announcement-gap") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <form novalidate>
+              <label for="email">Email</label>
+              <input id="email" type="email" required>
+              <button type="submit">Continue</button>
+            </form>
+            <script>
+              document.querySelector('form')?.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const input = document.getElementById('email');
+                if (input instanceof HTMLInputElement && !input.value) {
+                  input.setAttribute('aria-invalid', 'true');
+                  const existing = document.getElementById('email-error');
+                  if (!existing) {
+                    const error = document.createElement('div');
+                    error.id = 'email-error';
+                    error.textContent = 'Email is required';
+                    input.insertAdjacentElement('afterend', error);
+                  }
+                  document.querySelector('button[type="submit"]')?.focus();
+                }
+              });
+            </script>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
+  if (path === "/validation-announcement-healthy") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <body>
+          <main>
+            <form novalidate>
+              <label for="email">Email</label>
+              <input id="email" type="email" required>
+              <div id="form-status" role="alert"></div>
+              <button type="submit">Continue</button>
+            </form>
+            <script>
+              document.querySelector('form')?.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const input = document.getElementById('email');
+                const status = document.getElementById('form-status');
+                if (input instanceof HTMLInputElement && status instanceof HTMLElement && !input.value) {
+                  input.setAttribute('aria-invalid', 'true');
+                  input.focus();
+                  status.textContent = 'Please enter your email address.';
+                }
+              });
+            </script>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
   response.writeHead(404, { "content-type": "text/plain" });
   response.end("Not found");
 }
@@ -412,5 +476,19 @@ describe("augmentSiteResultWithRenderedAccessibility", () => {
 
     expect(titles).not.toContain("Critical controls may lack accessible names after render");
     expect(titles).not.toContain("Critical controls may expose weak accessible names after render");
+  });
+
+  it("flags validation feedback that appears without focus movement or a live announcement", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/validation-announcement-gap`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).toContain("Validation feedback may not be announced clearly after interaction");
+  });
+
+  it("keeps validation feedback with focus movement or alert semantics free of that issue", async () => {
+    const result = await augmentSiteResultWithRenderedAccessibility(buildSite(`${baseUrl}/validation-announcement-healthy`));
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(titles).not.toContain("Validation feedback may not be announced clearly after interaction");
   });
 });

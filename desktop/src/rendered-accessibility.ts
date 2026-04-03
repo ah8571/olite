@@ -17,6 +17,7 @@ type RenderedPageSnapshot = {
   accessibilityTreeFailures: RenderedEvidence[];
   missingControlNameFailures: RenderedEvidence[];
   weakControlNameFailures: RenderedEvidence[];
+  validationAnnouncementFailures: RenderedEvidence[];
   requiredIndicatorFailures: RenderedEvidence[];
   groupedControlLegendFailures: RenderedEvidence[];
   keyboardWalk: RenderedEvidence[];
@@ -126,6 +127,18 @@ function buildRenderedIssues(pageUrl: string, snapshot: RenderedPageSnapshot): S
       severity: "low",
       locationSummary: `${snapshot.weakControlNameFailures.length} critical control${snapshot.weakControlNameFailures.length === 1 ? "" : "s"} with a weak post-render name`,
       evidence: snapshot.weakControlNameFailures
+    });
+  }
+
+  if (snapshot.validationAnnouncementFailures.length > 0) {
+    issues.push({
+      layer: "accessibility",
+      pageUrl,
+      title: "Validation feedback may not be announced clearly after interaction",
+      detail: `${snapshot.validationAnnouncementFailures.length} form interaction${snapshot.validationAnnouncementFailures.length === 1 ? " appears" : "s appear"} to surface invalid controls without moving focus to the affected field or exposing a readable live-region style announcement.`,
+      severity: "medium",
+      locationSummary: `${snapshot.validationAnnouncementFailures.length} validation interaction${snapshot.validationAnnouncementFailures.length === 1 ? "" : "s"} with weak announcement behavior`,
+      evidence: snapshot.validationAnnouncementFailures
     });
   }
 
@@ -748,6 +761,7 @@ async function collectRenderedSnapshot(page: Page): Promise<RenderedPageSnapshot
       accessibilityTreeFailures: [],
       missingControlNameFailures,
       weakControlNameFailures,
+      validationAnnouncementFailures: [],
       requiredIndicatorFailures,
       groupedControlLegendFailures,
       keyboardWalk: [],
@@ -757,6 +771,125 @@ async function collectRenderedSnapshot(page: Page): Promise<RenderedPageSnapshot
       keyboardWalkStalled: false
     };
   }) as Promise<RenderedPageSnapshot>;
+}
+
+async function sampleValidationAnnouncementRisk(page: Page): Promise<RenderedEvidence[]> {
+  return page.evaluate(async () => {
+    function normalizeText(value: string | null | undefined): string {
+      return String(value ?? "").replace(/\s+/g, " ").trim();
+    }
+
+    function getSelector(element: Element): string {
+      if (element.id) {
+        return `${element.tagName.toLowerCase()}#${element.id}`;
+      }
+
+      const parts: string[] = [];
+      let current: Element | null = element;
+
+      while (current && parts.length < 4) {
+        const tagName = current.tagName.toLowerCase();
+        const siblings = current.parentElement
+          ? Array.from(current.parentElement.children).filter((child) => child.tagName === current?.tagName)
+          : [];
+        const index = siblings.indexOf(current) + 1;
+        parts.unshift(`${tagName}:nth-of-type(${Math.max(index, 1)})`);
+        current = current.parentElement;
+      }
+
+      return parts.join(" > ");
+    }
+
+    function getSnippet(element: Element): string {
+      return normalizeText((element as HTMLElement).outerHTML || element.textContent || "").slice(0, 220);
+    }
+
+    function isVisible(element: Element): boolean {
+      if (!(element instanceof HTMLElement)) {
+        return true;
+      }
+
+      const style = window.getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+
+      return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0" && rect.width > 0 && rect.height > 0;
+    }
+
+    function collectReadableLiveRegions(): string[] {
+      return Array.from(document.querySelectorAll('[role="alert"], [role="status"], [aria-live]'))
+        .filter(isVisible)
+        .map((element) => normalizeText(element.textContent || element.getAttribute("aria-label") || ""))
+        .filter(Boolean);
+    }
+
+    const submitSelector = 'button[type="submit"], input[type="submit"], button:not([type]), input[type="image"]';
+    const forms = Array.from(document.querySelectorAll("form")).filter((form) => {
+      const submitControl = Array.from(form.querySelectorAll(submitSelector)).find(isVisible);
+      const fields = Array.from(form.querySelectorAll("input, select, textarea")).filter((field) => {
+        if (!(field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement)) {
+          return false;
+        }
+
+        if (field instanceof HTMLInputElement && field.type.toLowerCase() === "hidden") {
+          return false;
+        }
+
+        return isVisible(field);
+      });
+
+      return Boolean(submitControl) && fields.length > 0;
+    });
+
+    const failures: RenderedEvidence[] = [];
+
+    for (const form of forms.slice(0, 2)) {
+      const submitControl = Array.from(form.querySelectorAll(submitSelector)).find(isVisible);
+
+      if (!(submitControl instanceof HTMLElement)) {
+        continue;
+      }
+
+      const liveBefore = collectReadableLiveRegions();
+      const preventNavigation = (event: Event) => event.preventDefault();
+      form.addEventListener("submit", preventNavigation, true);
+      submitControl.click();
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await new Promise((resolve) => setTimeout(resolve, 180));
+      form.removeEventListener("submit", preventNavigation, true);
+
+      const invalidControls = Array.from(form.querySelectorAll("input, select, textarea")).filter((field) => {
+        if (!(field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement)) {
+          return false;
+        }
+
+        if (!isVisible(field)) {
+          return false;
+        }
+
+        return field.matches(":invalid") || field.getAttribute("aria-invalid") === "true";
+      });
+
+      if (invalidControls.length === 0) {
+        continue;
+      }
+
+      const activeElement = document.activeElement;
+      const focusReachedInvalidControl = invalidControls.some((field) => field === activeElement);
+      const liveAfter = collectReadableLiveRegions();
+      const newLiveText = liveAfter.filter((entry) => !liveBefore.includes(entry));
+
+      if (!focusReachedInvalidControl && newLiveText.length === 0 && liveAfter.length === 0) {
+        const firstInvalid = invalidControls[0];
+        failures.push({
+          selector: getSelector(firstInvalid),
+          snippet: getSnippet(firstInvalid),
+          note: "Submitting this form surfaced invalid controls, but focus did not move to the affected field and no readable alert, status, or aria-live region appeared."
+        });
+      }
+    }
+
+    return failures;
+  });
 }
 
 function rebuildPage(page: PageScanResult): PageScanResult {
@@ -822,12 +955,14 @@ export async function inspectRenderedPage(url: string): Promise<RenderedPageSnap
     const snapshot = await collectRenderedSnapshot(page);
     const afterHydration = await collectHydrationSemanticState(page);
     const ariaSnapshot = await page.locator("body").ariaSnapshot({ depth: 8, timeout: 5000 });
+    const validationAnnouncementFailures = await sampleValidationAnnouncementRisk(page);
     const keyboardWalk = await sampleKeyboardWalk(page);
 
     return {
       ...snapshot,
       hydrationRegressionFailures: buildHydrationRegressionFailures(beforeHydration, afterHydration),
       accessibilityTreeFailures: buildAccessibilityTreeFailures(afterHydration, ariaSnapshot),
+      validationAnnouncementFailures,
       ...keyboardWalk
     };
   } finally {
@@ -860,7 +995,7 @@ export async function augmentSiteResultWithRenderedAccessibility(result: SiteSca
   }
 
   nextLimitations.push(
-    `Desktop rendered accessibility checks sampled ${pageLimit} page${pageLimit === 1 ? "" : "s"} for post-render focusability, skip-link behavior, hydration-sensitive semantic regressions, accessibility-tree structure cues, critical control naming quality, early keyboard tab progression, visible keyboard focus cues, and basic rendered form structure cues.`
+    `Desktop rendered accessibility checks sampled ${pageLimit} page${pageLimit === 1 ? "" : "s"} for post-render focusability, skip-link behavior, hydration-sensitive semantic regressions, accessibility-tree structure cues, critical control naming quality, submit-driven validation announcement risk, early keyboard tab progression, visible keyboard focus cues, and basic rendered form structure cues.`
   );
 
   return rebuildSite({

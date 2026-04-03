@@ -104,7 +104,8 @@ This version keeps the original roadmap intact but breaks the work into a checkl
       - Note: current validated slice checks missing post-render names and weak generic names for visible buttons, links, and form controls.
       - Note: initial coverage is strongest for common visible controls; pattern-specific checks for dialogs and consent triggers can still deepen this later.
     - [ ] Add browser-driven dynamic announcement risk checks.
-      - Note: validation errors, status messages, async updates, and modal open-close cycles should be inspected for focus movement and live-region style exposure.
+      - Note: first validated slice now checks submit-driven validation feedback for focus movement and readable alert, status, or aria-live exposure.
+      - Note: status-message updates outside forms, async content refreshes, and modal open-close cycles still need dedicated coverage before this subitem can be checked off.
       - Note: this is important because many practical screen-reader failures occur after interaction rather than on initial load.
     - [ ] Add interactive-pattern AT approximation checks.
       - Note: dialogs, menus, disclosures, tabs, and popovers should be checked for exposed roles, states, focus entry, focus containment when appropriate, and focus return.
