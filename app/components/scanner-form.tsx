@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { getIssueSuggestedFix } from "@/lib/issue-guidance";
 import { toolConfig, type ToolType } from "@/lib/scanner-config";
 
 type Severity = "low" | "medium" | "high";
@@ -18,6 +19,7 @@ type ScanResponse = {
     title: string;
     detail: string;
     severity: Severity;
+    suggestedFix?: string;
     locationSummary?: string;
     evidence?: Array<{
       selector: string;
@@ -47,7 +49,7 @@ type ScanResponse = {
 
 function buildHostedIssueCsv(result: ScanResponse): string {
   const rows = [
-    ["layer", "severity", "issue_title", "issue_detail", "location_summary", "selector", "snippet", "note", "page_url"]
+    ["layer", "severity", "issue_title", "issue_detail", "suggested_fix", "location_summary", "selector", "snippet", "note", "page_url"]
   ];
 
   for (const issue of result.issues) {
@@ -59,6 +61,7 @@ function buildHostedIssueCsv(result: ScanResponse): string {
         issue.severity,
         issue.title,
         issue.detail,
+        issue.suggestedFix ?? getIssueSuggestedFix(issue.layer, issue.title),
         issue.locationSummary ?? "",
         item.selector,
         item.snippet,
@@ -119,79 +122,7 @@ function normalizeSubmittedUrl(rawUrl: string): string {
 }
 
 function issueRemediation(tool: ToolType, title: string): string {
-  if (tool === "accessibility") {
-    if (title === "Missing page title") {
-      return "Add a concise, descriptive title element so browsers and assistive technologies can identify the page correctly.";
-    }
-
-    if (title === "Missing html lang attribute") {
-      return "Add a valid language attribute to the html element so assistive technologies can interpret the page correctly.";
-    }
-
-    if (title === "Images missing alt text") {
-      return "Review each flagged image and add meaningful alt text for informative images. Use empty alt text only for purely decorative images.";
-    }
-
-    if (title === "Inputs missing visible or programmatic labels") {
-      return "Ensure each form control has a visible label, or a reliable programmatic label through aria-label or aria-labelledby when appropriate.";
-    }
-
-    if (title === "Buttons without accessible names") {
-      return "Give each button a meaningful accessible name through visible text, aria-label, or another reliable naming pattern that matches the control's purpose.";
-    }
-
-    if (title === "Links without accessible names") {
-      return "Make sure each link exposes a readable name through link text, linked image alt text, or an explicit aria-label when needed.";
-    }
-
-    if (title === "Iframes missing title attributes") {
-      return "Add a short, descriptive title attribute to each iframe so users understand the embedded content before entering it.";
-    }
-
-    if (title === "Potential focus order override from positive tabindex") {
-      return "Prefer the natural DOM tab order unless there is a strong reason to override it. Positive tabindex values often create fragile keyboard navigation.";
-    }
-  }
-
-  if (tool === "privacy") {
-    if (title === "Tracking signals without visible cookie wording") {
-      return "Review whether tracking loads before consent and make the cookie or consent message clearer on the page.";
-    }
-
-    if (title === "No obvious privacy or cookie policy links detected") {
-      return "Add clearly visible privacy and cookie-policy links in the header, footer, or near form capture points.";
-    }
-
-    if (title === "Cookie banner without obvious reject or manage controls") {
-      return "Add a clear reject-all option or a visible manage-preferences path so the banner does not read like accept-only consent.";
-    }
-
-    if (title === "Email capture without visible privacy cues") {
-      return "Place a privacy link or clear notice near the email form so visitors can understand how their data will be used before submitting.";
-    }
-
-    if (title === "Limited security header coverage") {
-      return "Check server or CDN configuration for headers like content-security-policy, referrer-policy, and strict-transport-security.";
-    }
-
-    if (title === "No obvious privacy rights request path detected") {
-      return "Expose an obvious privacy-rights or data-request path so visitors can find deletion, access, correction, or consumer-rights workflows more easily.";
-    }
-
-    if (title === "No obvious sale or sharing opt-out path detected") {
-      return "If sale or sharing rules may apply, expose a visible 'Do Not Sell or Share' or equivalent privacy-choices path.";
-    }
-
-    if (title === "Limited visible US privacy rights cues") {
-      return "Make sure the public privacy flow clearly surfaces access, correction, and deletion request options instead of burying them in a general notice.";
-    }
-
-    if (title === "No visible Global Privacy Control cue detected") {
-      return "If US opt-out workflows are relevant, clarify whether and how browser-based opt-out signals such as GPC are honored.";
-    }
-  }
-
-  return "Review this issue manually and confirm the page implementation matches your intended compliance behavior.";
+  return getIssueSuggestedFix(tool === "privacy" ? "privacy" : "accessibility", title);
 }
 
 function severityLabel(severity: Severity): string {
@@ -432,7 +363,7 @@ export function ScannerForm({ tool }: { tool: ToolType }) {
                       <strong className="table-problem">{issue.title}</strong>
                       <div className="table-subtext">{issue.detail}</div>
                       <div className="issue-remediation hosted-remediation">
-                        <strong>What to do:</strong> {issueRemediation(tool, issue.title)}
+                        <strong>What to do:</strong> {issue.suggestedFix ?? issueRemediation(tool, issue.title)}
                       </div>
                     </td>
                     <td>

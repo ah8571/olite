@@ -295,6 +295,7 @@ function buildIssueCsv(result) {
       "severity",
       "issue_title",
       "issue_detail",
+      "suggested_fix",
       "location_summary",
       "selector",
       "snippet",
@@ -310,6 +311,7 @@ function buildIssueCsv(result) {
       row.severity,
       row.issueTitle,
       row.issueDetail,
+      row.suggestedFix,
       row.locationSummary,
       row.selector,
       row.snippet,
@@ -332,6 +334,7 @@ function flattenIssueRows(result) {
         severity: issue.severity,
         issueTitle: issue.title,
         issueDetail: issue.detail,
+        suggestedFix: issue.suggestedFix ?? "",
         locationSummary: issue.locationSummary ?? "",
         selector: item?.selector ?? "",
         snippet: item?.snippet ?? "",
@@ -350,6 +353,7 @@ function buildIssueTableRows(result) {
       severity: issue.severity,
       issueTitle: issue.title,
       issueDetail: issue.detail,
+      suggestedFix: issue.suggestedFix ?? "",
       locationSummary: issue.locationSummary ?? "",
       evidence: Array.isArray(issue.evidence) ? issue.evidence : []
     }))
@@ -564,7 +568,7 @@ function renderIssueRows(result) {
   issueRowsPanel.innerHTML = `
     <p class="kicker">Issues Found</p>
     <h2>Issue list</h2>
-    <p class="form-note">This is the main crawler-style view: what the problem is, where it appears, and the supporting selector, snippet, and note details.</p>
+    <p class="form-note">This is the main crawler-style view: what the problem is, what to do next, where it appears, and the supporting selector, snippet, and note details.</p>
     ${
       rows.length === 0
         ? '<div class="issue-card"><p class="issue-copy">No issue rows to display for this scan.</p></div>'
@@ -590,6 +594,7 @@ function renderIssueRows(result) {
                         <td>
                           <strong class="table-problem">${escapeHtml(row.issueTitle)}</strong>
                           <div class="table-subtext">${escapeHtml(row.issueDetail)}</div>
+                          ${row.suggestedFix ? `<div class="issue-remediation hosted-remediation"><strong>What to do:</strong> ${escapeHtml(row.suggestedFix)}</div>` : ""}
                         </td>
                         <td>
                           <div class="table-location">${escapeHtml(row.locationSummary || "-")}</div>
@@ -649,6 +654,7 @@ function renderPages(result) {
                                 <span class="severity-badge severity-${escapeHtml(issue.severity)}">${escapeHtml(severityLabel(issue.severity))}</span>
                               </div>
                               <p class="issue-copy">${escapeHtml(issue.detail)}</p>
+                              ${issue.suggestedFix ? `<p class="issue-location"><strong>What to do:</strong> ${escapeHtml(issue.suggestedFix)}</p>` : ""}
                               ${issue.locationSummary ? `<p class="issue-location"><strong>Location summary:</strong> ${escapeHtml(issue.locationSummary)}</p>` : ""}
                               ${
                                 Array.isArray(issue.evidence) && issue.evidence.length > 0

@@ -63,6 +63,7 @@ export type ScanIssue = {
   title: string;
   detail: string;
   severity: ScanSeverity;
+  suggestedFix?: string;
   locationSummary?: string;
   evidence?: ScanIssueEvidence[];
 };
@@ -144,6 +145,7 @@ export type HostedToolScanResult = {
     title: string;
     detail: string;
     severity: ScanSeverity;
+    suggestedFix?: string;
     locationSummary?: string;
     evidence?: ScanIssueEvidence[];
   }>;

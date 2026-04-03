@@ -3,6 +3,7 @@ import { writeFile } from "node:fs/promises";
 
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 
+import { applyIssueGuidanceToSiteResult } from "../../lib/issue-guidance";
 import { scanSinglePage } from "../../lib/scanner-core";
 import type { PrivacyRegion, SiteScanResult } from "../../lib/scanner-core";
 import { augmentSiteResultWithAxeAccessibility } from "./axe-accessibility";
@@ -131,7 +132,7 @@ ipcMain.handle(
       };
     }
 
-    return result;
+    return applyIssueGuidanceToSiteResult(result);
   }
 );
 

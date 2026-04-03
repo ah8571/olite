@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 import { Agent } from "undici";
 
+import { applyIssueGuidanceToHostedToolResult } from "./issue-guidance";
 import type { ToolType } from "./scanner-config";
 import {
   buildElementEvidence,
@@ -1166,7 +1167,7 @@ export async function runHostedToolScan(
   const allowedTitles = new Set(TOOL_ISSUE_TITLES[tool]);
   const filteredIssues = page.issues.filter((issue) => allowedTitles.has(issue.title));
 
-  return {
+  return applyIssueGuidanceToHostedToolResult({
     tool,
     url: rawUrl,
     normalizedUrl: page.normalizedUrl,
@@ -1186,5 +1187,5 @@ export async function runHostedToolScan(
     })),
     limitationNotes: page.limitationNotes,
     metadata: page.metadata
-  };
+  });
 }

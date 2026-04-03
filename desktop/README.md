@@ -10,6 +10,7 @@ Current scope:
 - grouped findings across accessibility, privacy, consent, and security
 - export of scan results to JSON
 - export of flattened issue rows to CSV
+- suggested-fix guidance included in exported issue data for remediation and chat-agent workflows
 - saved local scan history inside the desktop shell, including reopening past reports
 - saved local test targets for repeated comparisons while exploring the interface
 
