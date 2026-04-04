@@ -4,6 +4,8 @@
 
 - [Purpose](#purpose)
 - [Semgrep](#semgrep)
+- [SonarQube](#sonarqube)
+- [Snyk Code](#snyk-code)
 - [Sentry](#sentry)
 - [Terraform](#terraform)
 - [PostHog](#posthog)
@@ -43,6 +45,50 @@ The goal is to keep a concise reference for:
 - high-signal findings matter more than volume
 - rules can become a major product asset over time
 - source-code-first model is not Olite's starting point
+
+## SonarQube
+
+### Product Profile
+
+- code quality and security verification platform
+- strong CI, pull request, and policy-gate workflow model
+- spans developer feedback, organizational standards, and enterprise reporting
+- broader than a single scanner because it expands into governance and compliance enforcement
+
+### Languages Used
+
+- Java in much of the platform and analysis ecosystem
+- JavaScript and TypeScript across web surfaces and integrations
+- multi-language analyzer model across a large supported language set
+
+### Relevant Takeaways For Olite
+
+- quality gates are a strong pattern once scan trust is high
+- reports can serve both practitioners and management without becoming separate products
+- policy and standards enforcement can be a later expansion layer after the scanner is mature
+- enterprise reporting is useful to study even if Olite stays lighter and more focused
+
+## Snyk Code
+
+### Product Profile
+
+- developer-first SAST product with strong IDE, PR, and CI presence
+- emphasizes fast results, prioritization, and guided or automatic remediation
+- built to fit inside existing developer workflows instead of creating a separate review ritual
+- part of a broader security platform, but its code product stays tightly tied to time-to-fix
+
+### Languages Used
+
+- broad polyglot product stack typical of developer security platforms
+- strong integration story across IDEs, SCM platforms, and CI systems
+- machine-learning and analysis infrastructure behind prioritization and fixes
+
+### Relevant Takeaways For Olite
+
+- speed-to-understanding matters as much as detection breadth
+- in-workflow remediation language is valuable when findings are actionable
+- prioritization is part of the product, not just a reporting detail
+- a scanner feels more useful when it helps users decide what to fix first
 
 ## Sentry
 
@@ -156,7 +202,7 @@ The goal is to keep a concise reference for:
 
 ## Shared Patterns
 
-Across all five case studies:
+Across all seven case studies:
 
 - start with a strong technical core
 - deliver clear value quickly

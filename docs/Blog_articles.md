@@ -1,16 +1,7 @@
 # Blog Articles
 
-This file is the internal planning note for blog article development.
-
-## Purpose
-
-- Keep public utility pages focused on product coverage and limitations.
-- Move article ideation, clustering, and writing conventions into docs instead of exposing backlog lists on utility pages.
-- Track candidate topics that can become fuller SEO or education articles later.
-
 ## Current Article Conventions
 
-- Prefer intentional authored pages over generic content generation.
 - Use the shared blog article UI when possible:
   - `app/components/blog-article-hero.tsx`
   - `app/components/blog-toc.tsx`
@@ -23,10 +14,28 @@ This file is the internal planning note for blog article development.
 
 - `app/what-olite-checks/page.tsx` is the main public explainer hub for what the product checks.
 - Deeper educational topics should usually live as blog articles rather than bloating the utility hub.
-- Current supporting explainers include:
-  - `/blog/what-is-at-approximation`
-  - `/blog/what-is-global-privacy-control`
-  - `/blog/cookie-audit`
+- Current blog articles include:
+
+### Guides
+
+- `/blog/what-is-at-approximation`
+- `/blog/what-is-global-privacy-control`
+- `/blog/cookie-audit`
+
+### Reviews
+
+- `/blog/review-of-siteimprove`
+- `/blog/review-of-cookiebot`
+
+### Comparisons
+
+- `/blog/siteimprove-vs-olite`
+- `/blog/cookiebot-vs-olite`
+
+### Best-Of Pages
+
+- `/blog/best-accessibility-tools`
+- `/blog/best-privacy-compliance-tools`
 
 ## Candidate Article Topics
 

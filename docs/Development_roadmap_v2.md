@@ -127,6 +127,18 @@ This version keeps the original roadmap intact but breaks the work into a checkl
 - [x] Integrate axe-style rules into the desktop scan pipeline.
   - Note: keep results merged into the same reporting model.
 
+- [ ] Review the axe-core repo as a product-engineering precedent and summarize the most useful patterns for Olite.
+  - Note: study rule structure, metadata design, result typing, standards mapping, fixture strategy, release cadence, and limitation messaging.
+  - Note: focus on what should influence Olite's product and rule architecture, not just what could be copied technically.
+
+- [ ] Draft a concrete compliance checklist for using `axe-core` as a dependency versus copying `axe-core` source.
+  - Note: dependency use, copied-source use, modified-source use, attribution, notice preservation, third-party license tracking, and source-availability obligations should be separated clearly.
+  - Note: the goal is operational clarity before any code reuse decision is made.
+
+- [ ] Identify which parts of `axe-core` are most worth learning from without reusing code directly.
+  - Note: likely areas include rule taxonomy, incomplete and manual-review boundaries, fixture coverage, browser limitations, and standards-tagging patterns.
+  - Note: prefer learning from architecture and product discipline before considering source reuse.
+
 - [x] Consolidate browser-driven accessibility checks around a durable browser harness.
   - Note: Playwright is the preferred long-term foundation.
   - Note: move the existing hidden Electron window checks into the Playwright path so privacy and accessibility runtime checks share one browser engine.

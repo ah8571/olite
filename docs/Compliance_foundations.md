@@ -519,6 +519,40 @@ Why these matter:
 
 High-value checks:
 
+## Key Terms
+
+These plain-language definitions are useful when discussing competitor categories, privacy tooling, and workflow design.
+
+### Privacy vendors cluster around consent
+
+These tools mostly help a company ask users for permission to track them, show cookie banners, record those choices, and pass those choices to ad or analytics tools.
+
+### DSARs
+
+DSARs means data subject access requests. That is the workflow for when a person asks, "What data do you have on me?" or "Delete my data."
+
+### Policies
+
+Policies means the legal and public-facing documents, such as a privacy policy, cookie policy, terms, and similar compliance docs.
+
+### Governance
+
+Governance means managing compliance as an ongoing business process, not just running one scan.
+
+A governance product usually helps teams assign owners, monitor many sites or systems over time, track fixes, create reports for management, keep evidence for audits, and show that the organization is following its rules consistently.
+
+### Dev-first analogs cluster around in-workflow detection
+
+These tools are built for developers and try to catch issues inside the places developers already work, like the IDE, pull request, or CI pipeline.
+
+### Prioritization
+
+Prioritization means helping users decide what matters first instead of dumping a giant issue list on them.
+
+### Remediation
+
+Remediation means helping users fix the issue, not just telling them it exists.
+
 - tracking signals present without visible cookie banner or consent wording
 - cookie banner present but no obvious reject or manage-preferences path
 - accept-only cookie UI patterns
