@@ -34,6 +34,9 @@ export function SiteFooter() {
             <Link className="footer-link" href="/tools/accessibility">
               Free Accessibility Scanner
             </Link>
+            <Link className="footer-link" href="/tools/cookie-scanner">
+              Free Cookie Scanner
+            </Link>
             <Link className="footer-link" href="/tools/privacy">
               Free Privacy Checker
             </Link>
@@ -48,8 +51,8 @@ export function SiteFooter() {
             <Link className="footer-link" href="/blog">
               Blog
             </Link>
-            <Link className="footer-link" href="/cookie-audit-tool">
-              Cookie Audit Tool
+            <Link className="footer-link" href="/blog/cookie-audit">
+              Cookie Audit Guide
             </Link>
             <Link className="footer-link" href="/what-olite-checks">
               What Olite Checks

@@ -27,6 +27,20 @@ const toolPageSections: Record<
     nextStepCopy:
       "If the scanner flags issues, use the output to identify the template, component, or form pattern behind them. Then move into the desktop app when you need broader local scans and more than the hosted daily limit."
   },
+  cookie: {
+    scopeTitle: "Cookie signals that are visible without runtime guesswork",
+    scopeCopy:
+      "The cookie scanner focuses on public-page signs that are useful immediately: cookie-policy visibility, banner wording, obvious reject and manage controls, revisit-settings access, and tracker signals that make those UI gaps more important.",
+    scopePoints: [
+      "2 free hosted scans per day",
+      "Focused on cookie-policy and cookie-banner surface checks",
+      "Useful for quick pre-launch cookie reviews and prospect audits",
+      "Does not yet verify full CMP behavior or all post-click consent flows in the hosted pass"
+    ],
+    nextStepTitle: "How to use the result",
+    nextStepCopy:
+      "Use the findings to review your cookie-policy path, reject visibility, and later settings access. Then move into the desktop app when you need runtime evidence rather than public-page signals."
+  },
   privacy: {
     scopeTitle: "Public privacy signals, not legal theater",
     scopeCopy:
@@ -108,8 +122,8 @@ export function ToolPage({ tool }: { tool: ToolType }) {
           <p className="kicker">Other Free Tools</p>
           <h2>Use the free scans to test the site. Then download the app.</h2>
           <p className="section-copy">
-            Olite is leading with two free public-page checks so the product stays concrete: accessibility
-            signals and privacy standards. The hosted tools are capped at 2 free scans per day, and the
+            Olite is leading with free public-page checks so the product stays concrete: accessibility,
+            cookie, and privacy standards. The hosted tools are capped at 2 free scans per day, and the
             desktop app is the path to broader local-first scanning after that.
           </p>
           <div className="tool-link-row">

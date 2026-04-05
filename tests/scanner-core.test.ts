@@ -114,6 +114,75 @@ function handleFixtureRequest(request: IncomingMessage, response: ServerResponse
     return;
   }
 
+  if (path === "/cookie-audit-gaps") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <head>
+          <title>Cookie audit gaps</title>
+          <script async src="https://www.googletagmanager.com/gtag/js?id=G-TEST"></script>
+        </head>
+        <body>
+          <header>
+            <a href="/privacy-policy">Privacy Policy</a>
+          </header>
+          <main>
+            <section>
+              <p>This website uses cookies to improve your experience.</p>
+              <button>Accept all</button>
+            </section>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
+  if (path === "/cookie-audit-healthy") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <head>
+          <title>Cookie audit healthy</title>
+          <script async src="https://www.googletagmanager.com/gtag/js?id=G-TEST"></script>
+        </head>
+        <body>
+          <header>
+            <a href="/privacy-policy">Privacy Policy</a>
+            <a href="/cookie-policy">Cookie Policy</a>
+            <a href="/cookie-settings">Cookie Settings</a>
+          </header>
+          <main>
+            <section>
+              <p>This website uses cookies to improve your experience.</p>
+              <button>Accept all</button>
+              <button>Reject all</button>
+              <button>Manage preferences</button>
+            </section>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
+  if (path === "/cookie-audit-link-only") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(`<!doctype html>
+      <html lang="en">
+        <head>
+          <title>Cookie audit link only</title>
+        </head>
+        <body>
+          <footer>
+            <a href="/blog/cookie-audit">Cookie Audit Tool</a>
+          </footer>
+          <main>
+            <p>No cookie banner is shown on this page.</p>
+          </main>
+        </body>
+      </html>`);
+    return;
+  }
+
   response.writeHead(200, { "content-type": "text/html" });
   response.end(`<!doctype html><html lang="en"><head><title>Fallback</title></head><body><main>ok</main></body></html>`);
 }
@@ -193,5 +262,58 @@ describe("scanSinglePage structural semantics heuristics", () => {
     expect(titles).not.toContain("Tables may be missing clear headers");
     expect(titles).not.toContain("Malformed list structure detected");
     expect(titles).not.toContain("Duplicate landmark structure detected");
+  });
+});
+
+describe("scanSinglePage privacy cookie heuristics", () => {
+  let server: ReturnType<typeof createServer>;
+  let baseUrl = "";
+
+  beforeAll(async () => {
+    server = createServer(handleFixtureRequest);
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const address = server.address() as AddressInfo;
+    baseUrl = `http://127.0.0.1:${address.port}`;
+  });
+
+  afterAll(async () => {
+    await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+  });
+
+  it("flags cookie-audit gaps when tracking is present but cookie policy and controls are weak", async () => {
+    const result = await scanSinglePage(`${baseUrl}/cookie-audit-gaps`, "local", "eu");
+    const titles = result.issues.map((issue) => issue.title);
+
+    expect(result.metadata.cookieBannerSignalPresent).toBe(true);
+    expect(result.metadata.cookiePolicyLinkCount).toBe(0);
+    expect(result.metadata.cookieRejectControlPresent).toBe(false);
+    expect(result.metadata.cookieManageControlPresent).toBe(false);
+    expect(result.metadata.cookieReopenControlPresent).toBe(false);
+    expect(titles).toContain("No obvious cookie policy link detected");
+    expect(titles).toContain("No obvious cookie settings or withdrawal path detected");
+    expect(titles).toContain("Cookie banner without obvious reject or manage controls");
+  });
+
+  it("keeps stronger cookie-policy and control patterns free of those cookie-audit issues", async () => {
+    const result = await scanSinglePage(`${baseUrl}/cookie-audit-healthy`, "local", "eu");
+    const titles = result.issues.map((issue) => issue.title);
+
+    expect(result.metadata.cookieBannerSignalPresent).toBe(true);
+    expect(result.metadata.cookiePolicyLinkCount).toBeGreaterThan(0);
+    expect(result.metadata.cookieRejectControlPresent).toBe(true);
+    expect(result.metadata.cookieManageControlPresent).toBe(true);
+    expect(result.metadata.cookieReopenControlPresent).toBe(true);
+    expect(titles).not.toContain("No obvious cookie policy link detected");
+    expect(titles).not.toContain("No obvious cookie settings or withdrawal path detected");
+    expect(titles).not.toContain("Cookie banner without obvious reject or manage controls");
+  });
+
+  it("does not treat a cookie-related navigation link as an accept control in hosted metadata", async () => {
+    const result = await scanSinglePage(`${baseUrl}/cookie-audit-link-only`, "local", "eu");
+
+    expect(result.metadata.cookieAcceptControlPresent).toBe(false);
+    expect(result.metadata.cookieRejectControlPresent).toBe(false);
+    expect(result.metadata.cookieManageControlPresent).toBe(false);
+    expect(result.metadata.cookieReopenControlPresent).toBe(false);
   });
 });

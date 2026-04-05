@@ -23,7 +23,7 @@ const DAILY_SCAN_LIMIT = 2;
 const rateLimitStore = getRateLimitStore();
 
 function isTool(value: string): value is ToolType {
-  return value === "accessibility" || value === "privacy";
+  return value === "accessibility" || value === "cookie" || value === "privacy";
 }
 
 function isPrivacyRegion(value: string): value is PrivacyRegion {

@@ -1,4 +1,4 @@
-export type ToolType = "accessibility" | "privacy";
+export type ToolType = "accessibility" | "cookie" | "privacy";
 
 export const toolConfig: Record<
   ToolType,
@@ -39,6 +39,31 @@ export const toolConfig: Record<
       "Use the output to prioritize which templates or forms need deeper remediation."
     ]
   },
+  cookie: {
+    title: "Free Cookie Scanner",
+    description:
+      "Check a public page for cookie-policy visibility, banner wording, reject and manage-preferences cues, obvious revisit-settings paths, and tracking signals that affect cookie compliance review.",
+    slug: "cookie-scanner",
+    eyebrow: "Free Cookie Scanner",
+    ctaLabel: "Run cookie scan",
+    scoreLabel: "Cookie audit score",
+    sampleChecks: [
+      "Cookie policy link detection",
+      "Cookie banner control detection",
+      "Tracking script detection",
+      "Later cookie-settings path detection"
+    ],
+    bestFor: [
+      "Teams checking whether a site looks accept-only before a deeper privacy review",
+      "Agencies preparing fast cookie-consent findings for prospects or clients",
+      "Founders who need a practical first pass on public cookie-policy and banner signals"
+    ],
+    resultGuidance: [
+      "Treat this as a public-page cookie audit, not a full consent-platform verification.",
+      "The strongest cookie findings still come from runtime browser checks in the desktop workflow.",
+      "Use the result to tighten cookie-policy visibility, reject paths, and later preference access."
+    ]
+  },
   privacy: {
     title: "Free Privacy Checker",
     description:
@@ -66,4 +91,4 @@ export const toolConfig: Record<
   }
 };
 
-export const toolOrder: ToolType[] = ["accessibility", "privacy"];
+export const toolOrder: ToolType[] = ["accessibility", "cookie", "privacy"];

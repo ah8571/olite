@@ -67,8 +67,16 @@ export function getIssueClassification(layer: ScanIssue["layer"], title: string)
       return { issueFamily: "consent-runtime", verificationMethod: "network-runtime", confidenceLevel: "medium", manualReviewRecommended: true };
     }
 
-    if (["Tracking signals without visible cookie wording", "No obvious privacy or cookie policy links detected", "No obvious privacy rights request path detected", "No obvious sale or sharing opt-out path detected", "Limited visible US privacy rights cues", "No visible Global Privacy Control cue detected", "Email capture without visible privacy cues", "Limited security header coverage", "Cookie banner without obvious reject or manage controls"].includes(title)) {
+    if (["No obvious cookie settings or withdrawal path was detected after consent interaction"].includes(title)) {
+      return { issueFamily: "consent-runtime", verificationMethod: "interaction-flow", confidenceLevel: "low", manualReviewRecommended: true };
+    }
+
+    if (["Tracking signals without visible cookie wording", "No obvious privacy or cookie policy links detected", "No obvious cookie policy link detected", "No obvious privacy rights request path detected", "No obvious sale or sharing opt-out path detected", "Limited visible US privacy rights cues", "No visible Global Privacy Control cue detected", "Email capture without visible privacy cues", "Limited security header coverage", "Cookie banner without obvious reject or manage controls"].includes(title)) {
       return { issueFamily: "privacy-surface", verificationMethod: "static-dom", confidenceLevel: "high", manualReviewRecommended: false };
+    }
+
+    if (["No obvious cookie settings or withdrawal path detected"].includes(title)) {
+      return { issueFamily: "privacy-surface", verificationMethod: "static-dom", confidenceLevel: "medium", manualReviewRecommended: true };
     }
   }
 
@@ -112,6 +120,8 @@ export function getIssueSuggestedFix(layer: ScanIssue["layer"], title: string): 
   if (layer === "privacy" || layer === "consent" || layer === "security") {
     if (title === "Tracking signals without visible cookie wording") return "Review whether tracking loads before consent and make the cookie or consent message clearer on the page.";
     if (title === "No obvious privacy or cookie policy links detected") return "Add clearly visible privacy and cookie-policy links in the header, footer, or near form capture points.";
+    if (title === "No obvious cookie policy link detected") return "Add a clearly visible cookie-policy or cookie-notice link so visitors can review cookie categories and related tracking details.";
+    if (title === "No obvious cookie settings or withdrawal path detected") return "Add a visible Cookie Settings, Privacy Choices, or similar path so visitors can revisit and change cookie choices after the initial banner.";
     if (title === "Cookie banner without obvious reject or manage controls") return "Add a clear reject-all option or a visible manage-preferences path so the banner does not read like accept-only consent.";
     if (title === "Email capture without visible privacy cues") return "Place a privacy link or clear notice near the email form so visitors can understand how their data will be used before submitting.";
     if (title === "Limited security header coverage") return "Check server or CDN configuration for headers like content-security-policy, referrer-policy, and strict-transport-security.";
@@ -121,6 +131,7 @@ export function getIssueSuggestedFix(layer: ScanIssue["layer"], title: string): 
     if (title === "No visible Global Privacy Control cue detected") return "If US opt-out workflows are relevant, clarify whether and how browser-based opt-out signals such as GPC are honored.";
     if (title === "Consent UI does not expose an obvious reject control") return "Add a visible reject-all or decline option alongside accept so the consent choice is real and not effectively accept-only.";
     if (title === "Consent UI does not expose an obvious manage-preferences control") return "Add a visible manage-preferences or settings path when consent choices are granular, so users can review and change categories.";
+    if (title === "No obvious cookie settings or withdrawal path was detected after consent interaction") return "Keep a persistent Cookie Settings, Privacy Choices, or withdrawal path available after the initial banner so visitors can revisit and change their choice later.";
     if (title === "Tracking requests fired before consent interaction") return "Delay non-essential tracker requests until consent is granted, and verify that marketing or analytics libraries do not initialize on first load.";
     if (title === "Tracking cookies set before consent interaction") return "Block non-essential cookies until consent is granted and verify that third-party or analytics scripts are not setting them on initial load.";
     if (title === "Tracking requests continued after reject interaction") return "Make the reject path disable non-essential trackers immediately and confirm the page stops emitting those requests after the refusal is recorded.";

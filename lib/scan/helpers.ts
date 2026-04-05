@@ -179,6 +179,27 @@ export function isPolicyLinkCandidate($: cheerio.CheerioAPI, baseUrl: URL, eleme
   );
 }
 
+export function isCookiePolicyLinkCandidate($: cheerio.CheerioAPI, baseUrl: URL, element: AnyNode): boolean {
+  const node = $(element);
+  const href = normalizeText(node.attr("href"));
+  const resolvedHref = href ? normalizeLink(baseUrl, href) : null;
+  const accessibleName = getAccessibleName($, element);
+  const combinedSignal = normalizeText(
+    [
+      accessibleName,
+      node.text(),
+      node.attr("title"),
+      node.attr("aria-label"),
+      href,
+      resolvedHref ? new URL(resolvedHref).pathname : ""
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
+
+  return /(cookie policy|cookie notice|cookie statement|use of cookies|cookies)/i.test(combinedSignal);
+}
+
 export function isPrivacyRightsCandidate($: cheerio.CheerioAPI, baseUrl: URL, element: AnyNode): boolean {
   const node = $(element);
   const href = normalizeText(node.attr("href"));

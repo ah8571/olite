@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 const navItems = [
   { href: "/", label: "Product" },
+  { href: "/tools/cookie-scanner", label: "Cookie Scanner" },
   { href: "/#download", label: "Download" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/blog", label: "Blog" }

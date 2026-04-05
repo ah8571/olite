@@ -46,6 +46,9 @@ export default function HomePage() {
               <Link className="button" href="/#scanner">
                 Try homepage scanner
               </Link>
+              <Link className="button-secondary" href="/tools/cookie-scanner">
+                Open cookie scanner
+              </Link>
               <Link className="button-secondary" href="/#pricing">
                 View pricing
               </Link>
@@ -122,10 +125,14 @@ export default function HomePage() {
             <p className="kicker">What This Means</p>
             <ul className="bullet-list">
               <li>Use the homepage scanner for quick accessibility or privacy review</li>
+              <li>Use the dedicated cookie scanner when cookie-policy and banner cues are the main question</li>
               <li>Keep the dedicated tool pages as landing pages for search and category clarity</li>
               <li>Use What Olite Checks as the main explainer hub for the product's public coverage and limits</li>
             </ul>
             <div className="hero-actions compact">
+              <Link className="button-secondary" href="/tools/cookie-scanner">
+                Open cookie scanner
+              </Link>
               <Link className="button-secondary" href="/what-olite-checks">
                 Open What Olite Checks
               </Link>
@@ -151,16 +158,16 @@ export default function HomePage() {
             </div>
           </div>
           <div className="section-panel">
-            <p className="kicker">Privacy Coverage</p>
-            <h2>What the free privacy checker looks for</h2>
+            <p className="kicker">Cookie Coverage</p>
+            <h2>What the free cookie scanner looks for tonight</h2>
             <ul className="bullet-list">
-              <li>Privacy or cookie policy link visibility and public rights-request cues</li>
-              <li>Cookie wording for EU-inclusive reviews and softer rights-based signals for US-only reviews</li>
-              <li>Tracking signals, opt-out cues, and baseline header presence before deeper review</li>
+              <li>Cookie policy link visibility separate from broader privacy links</li>
+              <li>Cookie banner cues plus obvious reject, manage, and reopen paths</li>
+              <li>Known tracking signals that help interpret consent and cookie gaps</li>
             </ul>
             <div className="hero-actions compact">
-              <Link className="button-secondary" href="/what-olite-checks">
-                View privacy coverage
+              <Link className="button-secondary" href="/tools/cookie-scanner">
+                Open cookie scanner
               </Link>
             </div>
           </div>

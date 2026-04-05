@@ -56,9 +56,10 @@ const TRACKER_COOKIE_PATTERNS: CookiePattern[] = [
 ];
 
 const CONTROL_PATTERNS: Record<ConsentControlKind, RegExp> = {
-  accept: /(accept|allow|agree|ok|got it|enable all|accept all|allow all|i agree|consent)/i,
-  reject: /(reject|decline|deny|refuse|opt out|continue without accepting|necessary only|essential only)/i,
-  manage: /(manage|preferences|settings|customi[sz]e|choices|privacy choices)/i
+  accept: /\b(accept(?: all| cookies)?|allow(?: all| cookies)?|got it|enable all|i agree)\b/i,
+  reject: /\b(reject(?: all| cookies)?|decline|deny|refuse|opt out|continue without accepting|necessary only|essential only)\b/i,
+  manage: /\b(manage(?: preferences| cookies)?|settings|customi[sz]e|privacy choices|your choices)\b/i,
+  reopen: /\b(cookie settings|cookie preferences|privacy choices|change(?: privacy| cookie)? settings|update preferences|review choices|review preferences|withdraw consent|privacy settings)\b/i
 };
 
 function delay(ms: number) {
@@ -74,6 +75,7 @@ function buildRuntimeIssues(page: PageScanResult, runtimeAudit: PageRuntimeAudit
   const hasConsentControls = runtimeAudit.consentControls.length > 0;
   const hasRejectControl = runtimeAudit.consentControls.some((control) => control.kind === "reject");
   const hasManageControl = runtimeAudit.consentControls.some((control) => control.kind === "manage");
+  const hasPostInteractionReopenControl = runtimeAudit.postInteractionControls.some((control) => control.kind === "reopen");
 
   if (page.metadata.privacyRegion === "eu" && hasConsentControls && !hasRejectControl) {
     issues.push({
@@ -103,6 +105,28 @@ function buildRuntimeIssues(page: PageScanResult, runtimeAudit: PageRuntimeAudit
         selector: entry.selector,
         snippet: entry.label,
         note: `${entry.kind} control detected during runtime consent audit.`
+      }))
+    });
+  }
+
+  if (
+    page.metadata.privacyRegion === "eu" &&
+    hasConsentControls &&
+    (runtimeAudit.interactionAttempted === "reject" || runtimeAudit.interactionAttempted === "accept") &&
+    !hasPostInteractionReopenControl
+  ) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: page.normalizedUrl,
+      title: "No obvious cookie settings or withdrawal path was detected after consent interaction",
+      detail:
+        "The runtime browser audit interacted with the visible consent UI, but it did not find an obvious Cookie Settings, Privacy Choices, or withdrawal path afterward.",
+      severity: "low",
+      locationSummary: "No obvious way to revisit cookie choices was detected after the consent interaction",
+      evidence: runtimeAudit.consentControls.slice(0, 5).map((entry) => ({
+        selector: entry.selector,
+        snippet: entry.label,
+        note: `${entry.kind} control detected before the consent interaction.`
       }))
     });
   }
@@ -424,7 +448,7 @@ async function detectConsentControls(page: Page): Promise<RuntimeAuditControl[]>
   return page.evaluate((patternSource) => {
     const patterns = Object.fromEntries(
       Object.entries(patternSource).map(([key, value]) => [key, new RegExp(value, "i")])
-    ) as Record<"accept" | "reject" | "manage", RegExp>;
+    ) as Record<"accept" | "reject" | "manage" | "reopen", RegExp>;
 
     function normalizeText(value: string | null | undefined): string {
       return String(value ?? "").replace(/\s+/g, " ").trim();
@@ -461,7 +485,7 @@ async function detectConsentControls(page: Page): Promise<RuntimeAuditControl[]>
       return style.display !== "none" && style.visibility !== "hidden" && style.opacity !== "0" && rect.width > 0 && rect.height > 0;
     }
 
-    const controls: Array<{ kind: "accept" | "reject" | "manage"; label: string; selector: string }> = [];
+    const controls: Array<{ kind: "accept" | "reject" | "manage" | "reopen"; label: string; selector: string }> = [];
     const candidates = Array.from(
       document.querySelectorAll('button, a[href], input[type="button"], input[type="submit"], [role="button"]')
     );
@@ -482,7 +506,7 @@ async function detectConsentControls(page: Page): Promise<RuntimeAuditControl[]>
         continue;
       }
 
-      for (const kind of ["reject", "manage", "accept"] as const) {
+      for (const kind of ["reject", "manage", "reopen", "accept"] as const) {
         if (!controls.some((entry) => entry.kind === kind) && patterns[kind].test(label)) {
           controls.push({ kind, label, selector: buildSelector(element) });
         }
@@ -493,7 +517,8 @@ async function detectConsentControls(page: Page): Promise<RuntimeAuditControl[]>
   }, {
     accept: CONTROL_PATTERNS.accept.source,
     reject: CONTROL_PATTERNS.reject.source,
-    manage: CONTROL_PATTERNS.manage.source
+    manage: CONTROL_PATTERNS.manage.source,
+    reopen: CONTROL_PATTERNS.reopen.source
   });
 }
 
@@ -560,6 +585,9 @@ async function inspectRuntimePrivacy(url: string, privacyRegion: PrivacyRegion):
       await followSameOriginRoutes(page, sampledUrls, sameOriginRoutes);
     }
 
+    const postInteractionControls =
+      interactionAttempted === "none" || interactionAttempted === "failed" ? [] : await detectConsentControls(page);
+
     const postInteractionCookies =
       interactionAttempted === "none" || interactionAttempted === "failed"
         ? []
@@ -569,6 +597,7 @@ async function inspectRuntimePrivacy(url: string, privacyRegion: PrivacyRegion):
     const runtimeAudit: PageRuntimeAudit = {
       ran: true,
       consentControls,
+      postInteractionControls,
       interactionAttempted,
       sampledUrls,
       ...(gpcComparison ? { gpcComparison } : {}),

@@ -7,6 +7,7 @@ import { toolConfig, type ToolType } from "@/lib/scanner-config";
 
 type Severity = "low" | "medium" | "high";
 type PrivacyRegion = "us" | "eu";
+type IssueLayer = "accessibility" | "privacy" | "consent" | "security";
 
 type ScanResponse = {
   tool: ToolType;
@@ -15,7 +16,7 @@ type ScanResponse = {
   score: number;
   summary: string;
   issues: Array<{
-    layer: ToolType | "consent" | "security";
+    layer: IssueLayer;
     title: string;
     detail: string;
     severity: Severity;
@@ -35,6 +36,12 @@ type ScanResponse = {
   metadata: {
     privacyRegion: PrivacyRegion;
     htmlLangPresent: boolean;
+    cookieBannerSignalPresent: boolean;
+    cookieAcceptControlPresent: boolean;
+    cookieRejectControlPresent: boolean;
+    cookieManageControlPresent: boolean;
+    cookieReopenControlPresent: boolean;
+    cookiePolicyLinkCount: number;
     trackingSignals: string[];
     securityHeadersPresent: string[];
     imageCount: number;
@@ -145,19 +152,33 @@ function normalizeSubmittedUrl(rawUrl: string): string {
 }
 
 function issueRemediation(tool: ToolType, title: string): string {
-  return getIssueSuggestedFix(tool === "privacy" ? "privacy" : "accessibility", title);
+  return getIssueSuggestedFix(tool === "accessibility" ? "accessibility" : "privacy", title);
 }
 
 function severityLabel(severity: Severity): string {
   return severity.charAt(0).toUpperCase() + severity.slice(1);
 }
 
-function issueLayerLabel(layer: ScanResponse["issues"][number]["layer"]): string {
+function issueLayerLabel(layer: IssueLayer): string {
   return layer.charAt(0).toUpperCase() + layer.slice(1);
 }
 
-export function ScannerForm({ tool }: { tool: ToolType }) {
+export function ScannerForm({
+  tool,
+  overrides
+}: {
+  tool: ToolType;
+  overrides?: {
+    ctaLabel?: string;
+    scoreLabel?: string;
+    formNote?: string;
+    exampleUrl?: string;
+  };
+}) {
   const config = toolConfig[tool];
+  const isPrivacyStyleTool = tool === "privacy" || tool === "cookie";
+  const ctaLabel = overrides?.ctaLabel ?? config.ctaLabel;
+  const scoreLabel = overrides?.scoreLabel ?? config.scoreLabel;
   const [url, setUrl] = useState("");
   const [privacyRegion, setPrivacyRegion] = useState<PrivacyRegion>("eu");
   const [result, setResult] = useState<ScanResponse | null>(null);
@@ -172,9 +193,14 @@ export function ScannerForm({ tool }: { tool: ToolType }) {
           `Forms: ${result?.metadata.formCount ?? 0}`,
           `Email fields: ${result?.metadata.emailFieldCount ?? 0}`
         ]
-      : [
+        : [
           `Privacy expectations: ${result?.metadata.privacyRegion === "us" ? "US users only" : "Including EU users"}`,
+          `Cookie banner: ${result?.metadata.cookieBannerSignalPresent ? "present" : "missing"}`,
           `Policy links: ${result?.metadata.policyLinkCount ?? 0}`,
+          `Cookie policy links: ${result?.metadata.cookiePolicyLinkCount ?? 0}`,
+          `Reject path: ${result?.metadata.cookieRejectControlPresent ? "present" : "missing"}`,
+          `Manage path: ${result?.metadata.cookieManageControlPresent ? "present" : "missing"}`,
+          `Reopen path: ${result?.metadata.cookieReopenControlPresent ? "present" : "missing"}`,
           `Rights paths: ${result?.metadata.privacyRightsLinkCount ?? 0}`,
           `Opt-out cues: ${result?.metadata.doNotSellLinkCount ?? 0}`,
           `Rights wording: ${[
@@ -232,7 +258,7 @@ export function ScannerForm({ tool }: { tool: ToolType }) {
         headers: {
           "content-type": "application/json"
         },
-        body: JSON.stringify({ tool, url: normalizedUrl, privacyRegion: tool === "privacy" ? privacyRegion : undefined })
+        body: JSON.stringify({ tool, url: normalizedUrl, privacyRegion: isPrivacyStyleTool ? privacyRegion : undefined })
       });
 
       const payload = await response.json();
@@ -282,12 +308,12 @@ export function ScannerForm({ tool }: { tool: ToolType }) {
             <button
               className="button-secondary"
               type="button"
-              onClick={() => setUrl(tool === "accessibility" ? "https://www.w3.org/WAI/" : "https://www.mozilla.org/")}
+              onClick={() => setUrl(overrides?.exampleUrl ?? (tool === "accessibility" ? "https://www.w3.org/WAI/" : "https://www.mozilla.org/"))}
             >
               Use example URL
             </button>
           </div>
-          {tool === "privacy" ? (
+          {isPrivacyStyleTool ? (
             <div className="privacy-settings-block">
               <label className="label">
                 Privacy expectations
@@ -316,16 +342,18 @@ export function ScannerForm({ tool }: { tool: ToolType }) {
             </div>
           ) : null}
           <p className="form-note">
-            {tool === "accessibility"
+            {overrides?.formNote ?? (tool === "accessibility"
               ? "Enter a public page to check for visible accessibility warning signs. You can use a full URL or just a domain. This hosted pass is intentionally lightweight, capped at 2 free scans per day, and does not replace manual WCAG testing."
-              : tool === "privacy"
+              : tool === "cookie"
+                ? "Enter a public page to check for cookie-policy visibility, cookie-banner cues, reject and manage-preferences options, later settings access, and obvious tracking signals. Choose whether to evaluate only US-facing privacy expectations or to include EU-style consent expectations as well. This hosted pass is capped at 2 free scans per day. This is not legal advice."
+                : tool === "privacy"
                 ? "Enter a public page to check for policy visibility, rights-request paths, tracking signals, and baseline privacy-facing signals. Choose whether to evaluate only US-facing privacy expectations or to include EU-style consent expectations as well. This hosted pass is capped at 2 free scans per day. This is not legal advice."
-                : "Enter a public page to check for visible form and opt-in signals. Deeper flow validation belongs in a broader review."}
+                : "Enter a public page to check for visible form and opt-in signals. Deeper flow validation belongs in a broader review.")}
           </p>
           <div className="inline-row">
             <span className="limit-badge">2 free scans/day</span>
             <button className="button" type="submit" disabled={pending}>
-              {pending ? "Scanning..." : config.ctaLabel}
+              {pending ? "Scanning..." : ctaLabel}
             </button>
           </div>
           {error ? <p className="form-note">{error}</p> : null}
@@ -341,7 +369,7 @@ export function ScannerForm({ tool }: { tool: ToolType }) {
                 <p className="muted">Start URL: {result.normalizedUrl}</p>
               </div>
               <div className="score-pill">
-                {config.scoreLabel}: {result.score}/100
+                {scoreLabel}: {result.score}/100
               </div>
             </div>
             <div className="badge-row hosted-summary-stats">
@@ -436,8 +464,8 @@ export function ScannerForm({ tool }: { tool: ToolType }) {
                 <li key={note}>{note}</li>
               ))}
             </ul>
-            {tool === "privacy" ? <h4>Security Headers Seen</h4> : null}
-            {tool === "privacy" ? (
+            {isPrivacyStyleTool ? <h4>Security Headers Seen</h4> : null}
+            {isPrivacyStyleTool ? (
               result.metadata.securityHeadersPresent.length > 0 ? (
                 <ul className="result-list">
                   {result.metadata.securityHeadersPresent.map((header) => (
@@ -462,10 +490,12 @@ export function ScannerForm({ tool }: { tool: ToolType }) {
         ) : (
           <div className="empty-state">
             <p className="kicker">Result Panel</p>
-            <h3>{tool === "accessibility" ? "Run a first-pass accessibility scan" : "Run a first-pass privacy check"}</h3>
+            <h3>{tool === "accessibility" ? "Run a first-pass accessibility scan" : tool === "cookie" ? "Run a first-pass cookie scan" : "Run a first-pass privacy check"}</h3>
             <p className="tool-copy">
               {tool === "accessibility"
                 ? "You will get a lightweight summary of visible accessibility signals, surfaced issues, and scan limitations for the URL you submit."
+                : tool === "cookie"
+                  ? "You will get a lightweight summary of cookie-facing signals, surfaced issues, tracking detections, and scan limitations for the URL you submit."
                 : tool === "privacy"
                   ? "You will get a lightweight summary of privacy-facing signals, surfaced issues, tracking detections, and scan limitations for the URL you submit."
                   : "This panel will show a lightweight summary, issues, and limitations for the page you submit."}

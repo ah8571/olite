@@ -8,6 +8,7 @@ import {
   buildElementEvidence,
   getAccessibleName,
   hasLabelSignal,
+  isCookiePolicyLinkCandidate,
   isDoNotSellCandidate,
   isPolicyLinkCandidate,
   isPrivacyRightsCandidate,
@@ -94,9 +95,18 @@ const TOOL_ISSUE_TITLES: Record<ToolType, string[]> = {
     "Iframes missing title attributes",
     "Potential focus order override from positive tabindex"
   ],
+  cookie: [
+    "Tracking signals without visible cookie wording",
+    "No obvious cookie policy link detected",
+    "No obvious cookie settings or withdrawal path detected",
+    "Cookie banner without obvious reject or manage controls",
+    "Limited security header coverage"
+  ],
   privacy: [
     "Tracking signals without visible cookie wording",
     "No obvious privacy or cookie policy links detected",
+    "No obvious cookie policy link detected",
+    "No obvious cookie settings or withdrawal path detected",
     "Privacy policy link could not be verified",
     "Cookie banner without obvious reject or manage controls",
     "No obvious privacy rights request path detected",
@@ -352,6 +362,10 @@ function analyzeHtmlPage(
     .filter((_, element) => isPolicyLinkCandidate($, new URL(responseUrl), element))
     .get();
   const policyLinkCount = policyLinkElements.length;
+  const cookiePolicyLinkElements = $("a[href], button, [role='button']")
+    .filter((_, element) => isCookiePolicyLinkCandidate($, new URL(responseUrl), element))
+    .get();
+  const cookiePolicyLinkCount = cookiePolicyLinkElements.length;
   const privacyRightsElements = $("a[href], button, [role='button']")
     .filter((_, element) => isPrivacyRightsCandidate($, new URL(responseUrl), element))
     .get();
@@ -360,11 +374,27 @@ function analyzeHtmlPage(
     .filter((_, element) => isDoNotSellCandidate($, new URL(responseUrl), element))
     .get();
   const doNotSellLinkCount = doNotSellElements.length;
-  const cookieBannerSignal = /(cookie consent|accept cookies|cookie settings|privacy preferences)/i.test($.text());
-  const cookieControlSignal =
-    /(reject all|reject cookies|decline|manage preferences|manage cookies|customi[sz]e|privacy preferences|cookie settings)/i.test(
-      $.text()
+  const pageText = $.text();
+  const controlText = $("button, a[href], input[type='button'], input[type='submit'], [role='button']")
+    .map((_, element) => normalizeText(getAccessibleName($, element) || $(element).text() || $(element).attr("value")))
+    .get()
+    .filter(Boolean)
+    .join(" ");
+  const cookieBannerSignalPresent =
+    /(cookie consent|accept cookies|cookie settings|cookie preferences|privacy preferences|we use cookies|this website uses cookies)/i.test(
+      pageText
     );
+  const cookieAcceptControlPresent =
+    /\b(accept all|accept cookies|allow all|allow cookies|got it|enable all|i agree)\b/i.test(controlText);
+  const cookieRejectControlPresent =
+    /\b(reject all|reject cookies|decline|deny|necessary only|essential only|continue without accepting)\b/i.test(controlText);
+  const cookieManageControlPresent =
+    /\b(manage preferences|manage cookies|cookie settings|cookie preferences|privacy preferences|customi[sz]e|your choices)\b/i.test(controlText);
+  const cookieReopenControlPresent =
+    /\b(cookie settings|cookie preferences|privacy choices|change(?: privacy| cookie)? settings|update preferences|review choices|review preferences|withdraw consent|privacy settings)\b/i.test(
+      controlText
+    );
+  const cookieControlSignal = cookieRejectControlPresent || cookieManageControlPresent;
   const accessRequestSignalPresent =
     /(access request|request access|right to know|access your data|know what personal information)/i.test($.text());
   const correctionRequestSignalPresent =
@@ -797,7 +827,7 @@ function analyzeHtmlPage(
     });
   }
 
-  if (privacyRegion === "eu" && !cookieBannerSignal && trackingSignals.length > 0) {
+  if (privacyRegion === "eu" && !cookieBannerSignalPresent && trackingSignals.length > 0) {
     issues.push({
       layer: "privacy",
       pageUrl: responseUrl,
@@ -812,7 +842,33 @@ function analyzeHtmlPage(
     });
   }
 
-  if (privacyRegion === "eu" && cookieBannerSignal && trackingSignals.length > 0 && !cookieControlSignal) {
+  if (privacyRegion === "eu" && trackingSignals.length > 0 && cookiePolicyLinkCount === 0) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: responseUrl,
+      title: "No obvious cookie policy link detected",
+      detail:
+        policyLinkCount > 0
+          ? "Tracking signals were detected and some privacy-related links were present, but no obvious cookie-policy-specific link or button was found."
+          : "Tracking signals were detected, but no obvious cookie-policy-specific link or button was found on the page.",
+      severity: policyLinkCount > 0 ? "low" : "medium",
+      locationSummary: "Tracking detected without an obvious cookie policy path"
+    });
+  }
+
+  if (privacyRegion === "eu" && trackingSignals.length > 0 && !cookieReopenControlPresent) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: responseUrl,
+      title: "No obvious cookie settings or withdrawal path detected",
+      detail:
+        "Tracking signals were detected, but the page did not expose an obvious Cookie Settings, Privacy Choices, or similar path for revisiting cookie choices later.",
+      severity: cookieBannerSignalPresent || policyLinkCount > 0 ? "low" : "medium",
+      locationSummary: "Tracking detected without an obvious later cookie-settings path"
+    });
+  }
+
+  if (privacyRegion === "eu" && cookieBannerSignalPresent && trackingSignals.length > 0 && !cookieControlSignal) {
     issues.push({
       layer: "privacy",
       pageUrl: responseUrl,
@@ -984,12 +1040,18 @@ function analyzeHtmlPage(
       checkboxCount,
       placeholderOnlyFieldCount,
       policyLinkCount,
+      cookiePolicyLinkCount,
       privacyRightsLinkCount,
       doNotSellLinkCount,
       accessRequestSignalPresent,
       correctionRequestSignalPresent,
       deletionRequestSignalPresent,
       gpcSignalPresent,
+      cookieBannerSignalPresent,
+      cookieAcceptControlPresent,
+      cookieRejectControlPresent,
+      cookieManageControlPresent,
+      cookieReopenControlPresent,
       trackingSignals,
       securityHeadersPresent,
       h1Count,

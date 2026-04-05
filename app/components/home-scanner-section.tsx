@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { ScannerForm } from "@/components/scanner-form";
@@ -17,8 +18,11 @@ export function HomeScannerSection() {
             <p className="kicker">Try It Here</p>
             <h2 className="section-title">Run two free scans per day right on the homepage.</h2>
             <p className="section-copy">
-              Start with a quick hosted pass for accessibility or privacy. If the workflow proves useful,
+              Start with a quick hosted pass for accessibility, cookie, or privacy review. If the workflow proves useful,
               move into the desktop app for broader local scans, repeatable checks, and exports.
+            </p>
+            <p className="section-copy">
+              The homepage scanner now includes the same cookie-focused hosted mode as the dedicated <Link href="/tools/cookie-scanner">cookie scanner landing page</Link>.
             </p>
           </div>
           <div className="scanner-mode-row" role="tablist" aria-label="Scanner mode">

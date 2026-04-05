@@ -517,7 +517,48 @@ Why these matter:
 
 #### 2. Consent And Cookie Controls
 
+Interesting article on cookies: https://noyb.eu/en/noyb-files-422-formal-gdpr-complaints-nerve-wrecking-cookie-banners
+
 High-value checks:
+
+- tracking signals present without visible cookie banner or consent wording
+- cookie banner present but no obvious reject or manage-preferences path
+- accept-only cookie UI patterns
+- banner present but appears purely informational despite marketing or analytics trackers being loaded
+- no obvious distinction between essential and non-essential cookies in the UI or linked policy
+- no obvious later cookie-settings, privacy-choices, or withdrawal path after the initial decision
+
+Sub-checks to start assessing from the noyb complaint themes:
+
+- First-layer choice symmetry
+	- visible reject control on the first layer, not only accept
+	- visible manage-preferences path on the first layer when categories are used
+	- reject action is comparable in effort to accept, not hidden behind extra clicks
+	- reject text is explicit enough to count as a real refusal path
+- Visual prominence and button hierarchy
+	- accept and reject controls use comparable visual weight
+	- reject control is not visually muted through low contrast, tiny size, or low-emphasis styling
+	- manage-preferences control is not visually hidden while accept remains dominant
+	- scanner should later compare rendered size, color contrast, and placement rather than text only
+- Category and toggle fairness
+	- optional categories are not preselected by default
+	- essential-only path is distinguishable from optional analytics or marketing categories
+	- category labels are understandable enough to separate necessary from optional tracking
+	- save or confirm controls do not quietly re-enable optional categories
+- Withdrawal and later control access
+	- persistent cookie-settings or privacy-choices entry point after the banner closes
+	- withdrawing consent later is as easy as giving it
+	- reopen path is visible from common global UI such as footer, floating icon, or account-independent control
+	- changing consent later updates behavior on reload or nearby routes
+- Wording and misleading framing
+	- banner avoids manipulative or confusing wording like neutral-looking okay buttons without a matching refusal path
+	- consent text makes clear that optional tracking is optional
+	- legitimate-interest language is not used as a shortcut around obvious consent expectations for non-essential tracking
+	- banner copy is readable enough that refusal and customization are understandable without hunting through dense text
+- Evidence expectations by scanner surface
+	- hosted checks can assess visible wording, control presence, link presence, and likely reopen paths
+	- runtime checks should assess interaction friction, post-choice behavior, and persistent withdrawal access
+	- findings about visual asymmetry or deceptive hierarchy should start as advisories unless backed by rendered evidence
 
 ## Key Terms
 
@@ -552,12 +593,6 @@ Prioritization means helping users decide what matters first instead of dumping 
 ### Remediation
 
 Remediation means helping users fix the issue, not just telling them it exists.
-
-- tracking signals present without visible cookie banner or consent wording
-- cookie banner present but no obvious reject or manage-preferences path
-- accept-only cookie UI patterns
-- banner present but appears purely informational despite marketing or analytics trackers being loaded
-- no obvious distinction between essential and non-essential cookies in the UI or linked policy
 
 Important note:
 

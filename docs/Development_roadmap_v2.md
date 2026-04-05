@@ -185,38 +185,244 @@ This version keeps the original roadmap intact but breaks the work into a checkl
 
 ## Priority 3: Deepen Privacy And Cookie Auditing
 
-- [ ] Strengthen detection of tracking and likely cookie-setting technologies.
+- [ ] Keep this section as the single source of truth for the cookie scanner MVP.
+  - Note: do not maintain a separate cookie-scanner checklist doc.
+  - Note: each item should record current functionality, expected tests, and progress notes here.
+  - Note: do not check a cookie-scanner subitem off unless the behavior is implemented and covered by a relevant test or fixture path.
 
-- [x] Strengthen detection of consent UI and visible control types.
-  - Note: accept.
-  - Note: reject.
-  - Note: manage preferences.
+- [ ] Keep the implementation and test map current for future agents.
+  - Functionality locations today:
+    - `lib/scanner-core.ts` for public-page privacy cues, policy-link heuristics, cookie wording, tracker presence signals, and GPC text cues.
+    - `desktop/src/runtime-privacy-audit.ts` for Playwright-backed consent interaction, tracker-request sampling, cookie sampling, route sampling, and GPC runtime comparison.
+    - `desktop/src/main.ts`, `desktop/index.html`, and `desktop/renderer.js` for the desktop scan wiring and result presentation.
+    - `lib/issue-guidance.ts` for privacy issue guidance text.
+    - `app/tools/cookie-scanner/page.tsx` for the hosted cookie-scanner landing page that currently reuses the privacy scan logic with cookie-focused copy.
+    - `app/components/scanner-form.tsx` for hosted cookie result badges and cookie-scanner page label overrides.
+  - Test locations today:
+    - `tests/scanner-core.test.ts` for static and heuristic scanner coverage.
+    - `tests/runtime-privacy-audit.test.ts` for Playwright-backed privacy runtime fixtures.
+  - Supporting product docs today:
+    - `desktop/README.md`
+    - `docs/Compliance_foundations.md`
 
-- [ ] Verify privacy-policy and cookie-policy reachability.
-  - Note: detect visible links or buttons.
-  - Note: verify destination pages are reachable.
-  - Note: later verify destination content quality, not just URL reachability.
+- [ ] Freeze the cookie-scanner MVP contract early.
+  - [x] Keep the wedge audit-first, not consent-widget-first.
+    - Note: preserve the product boundary that cookie auditing is the early wedge.
+    - Note: an internal cookie component for `olite.dev` is still allowed as a self-use compliance and reference implementation; that is different from turning Olite into a hosted CMP product.
+  - [x] Anchor the privacy logic to GDPR transparency plus ePrivacy and PECR-style cookie behavior.
+    - Note: foundation is documented in `docs/Compliance_foundations.md`.
+  - [ ] Freeze the first supported scan target shape.
+    - Note: likely one public landing page plus a few same-origin routes.
+  - [ ] Freeze the MVP output level.
+    - Note: issue list plus evidence, not legal pass-fail claims.
+  - [ ] Freeze the MVP success bar.
+    - Note: useful on common CMP and tracker setups, explicit about limitations.
+  - [ ] Freeze the runtime limits.
+    - Note: page cap, route cap, timeout budget, and safe interaction budget should be explicit.
 
-- [x] Expand runtime pre-consent verification.
-  - Note: detect tracker requests before consent.
-  - Note: detect tracking cookies before consent.
+- [ ] Define the scan flow end to end.
+  - [ ] Normalize the input URL and follow safe redirects.
+  - [ ] Load the page in a real browser context.
+  - [ ] Wait for a stable initial state without hanging indefinitely.
+  - [ ] Capture the initial DOM, visible consent and policy cues, and page metadata.
+  - [ ] Capture the initial request log and cookie jar before any consent action.
+  - [ ] Optionally follow a short same-origin route set after the first page completes.
+  - Location:
+    - `desktop/src/runtime-privacy-audit.ts`
+  - Tests:
+    - extend `tests/runtime-privacy-audit.test.ts` with fixtures for redirects, delayed rendering, and route-capped sampling.
 
-- [ ] Expand runtime post-interaction verification.
-  - Note: reject interaction should be tested explicitly.
-  - Note: accept interaction should be tested explicitly.
-  - Note: manage-preferences behavior should be tested where visible.
+- [ ] Deepen visible consent and policy signal detection.
+  - [x] Detect likely consent UI on the page.
+    - Note: current visible-control heuristics are present in `lib/scanner-core.ts` and runtime consent control discovery is present in `desktop/src/runtime-privacy-audit.ts`.
+    - Tests: existing baseline coverage lives in `tests/runtime-privacy-audit.test.ts`.
+  - [x] Detect common visible control types.
+    - Note: accept, reject, and manage-preferences signals already exist.
+    - Tests: `tests/runtime-privacy-audit.test.ts` already covers accept-only versus full-controls fixtures.
+  - [x] Detect cookie-policy-specific links separately from broader privacy links in the hosted scan.
+    - Note: the hosted scan now records `cookiePolicyLinkCount` separately from the broader `policyLinkCount` so a cookie page can be surfaced even when a general privacy page already exists.
+    - Location: `lib/scanner-core.ts`
+    - Tests: `tests/scanner-core.test.ts`
+  - [x] Surface cookie-banner, reject, and manage-preferences metadata in hosted results.
+    - Note: hosted results now expose `cookieBannerSignalPresent`, `cookieRejectControlPresent`, and `cookieManageControlPresent` so the cookie-scanner landing page can show cookie-specific badges.
+    - Location: `lib/scanner-core.ts`, `app/components/scanner-form.tsx`
+    - Tests: `tests/scanner-core.test.ts`
+  - [ ] Improve banner and modal detection across more CMP patterns.
+  - [ ] Detect whether the consent UI is banner, modal, drawer, popover, or inline block.
+  - [ ] Add a dark-pattern review layer for cookie UI.
+    - Note: use complaint and enforcement themes from groups such as noyb as product input even when every pattern is not yet encoded as a hard scanner rule.
+    - Note: this should improve user feedback, remediation advice, and finding taxonomy, not just produce stronger legal claims.
+    - High-value pattern candidates:
+      - accept-only first layer
+      - reject or manage path hidden behind extra clicks
+      - asymmetric button emphasis or misleading visual hierarchy
+      - preselected optional choices
+      - weak distinction between essential and non-essential categories
+      - hard-to-find withdrawal or reopen-preferences path
+      - manipulative or confusing consent wording
+    - Sub-checks to start assessing:
+      - [ ] whether reject is visible on the first layer, not only after opening preferences
+      - [ ] whether manage-preferences is visible on the first layer when granular categories exist
+      - [ ] whether reject requires more clicks than accept
+      - [ ] whether accept appears visually dominant through stronger color, contrast, size, or placement
+      - [ ] whether reject or manage controls appear visually muted or easy to miss
+      - [ ] whether optional categories appear preselected by default
+      - [ ] whether essential-only versus optional categories are explained clearly enough to separate necessary from analytics or marketing
+      - [ ] whether a persistent reopen, withdrawal, or privacy-choices path remains available after the initial banner closes
+      - [ ] whether banner wording uses confusing "okay"-style framing without a comparably clear refusal path
+      - [ ] whether these findings should be static advisories, rendered checks, or runtime interaction checks
+  - [ ] Detect privacy-policy links.
+  - [ ] Detect cookie-policy links.
+  - [ ] Verify privacy-policy and cookie-policy reachability.
+    - Note: detect visible links or buttons first, then verify destination reachability, and only later score destination quality.
+  - [ ] Record where policy links were found.
+    - Note: footer, header, banner, or settings dialog.
+  - Location:
+    - `lib/scanner-core.ts`
+    - `desktop/src/runtime-privacy-audit.ts`
+  - Tests:
+    - extend `tests/scanner-core.test.ts` with privacy-link fixtures.
+    - extend `tests/runtime-privacy-audit.test.ts` with CMP-style rendered consent fixtures.
+    - add future rendered fixtures for dark-pattern cases where hierarchy, extra-click friction, or withdrawal behavior matters.
 
-- [ ] Capture evidence showing whether the consent layer is meaningful or merely decorative.
+- [ ] Deepen tracker and cookie evidence.
+  - [x] Expand runtime pre-consent verification.
+    - Note: current validated slice detects tracker requests before consent.
+    - Note: current validated slice detects tracking-cookie signals before consent.
+    - Location: `desktop/src/runtime-privacy-audit.ts`
+    - Tests: `tests/runtime-privacy-audit.test.ts` includes pre-consent tracking fixtures.
+  - [ ] Strengthen detection of tracking and likely cookie-setting technologies.
+  - [ ] Expand the known tracker-domain and script heuristics.
+  - [ ] Separate likely analytics, marketing, session replay, and essential service signals.
+  - [ ] Record first-party versus third-party cookie context where possible.
+  - [ ] Record which requests appear to set or depend on identifiers.
+  - [ ] Distinguish strong evidence from weak heuristics.
+  - Location:
+    - `lib/scanner-core.ts`
+    - `desktop/src/runtime-privacy-audit.ts`
+  - Tests:
+    - extend `tests/scanner-core.test.ts` with tracker-heuristic fixtures.
+    - extend `tests/runtime-privacy-audit.test.ts` with mixed tracker and cookie fixtures.
 
-- [x] Add Global Privacy Control checks as runtime behavior, not just text detection.
-  - Note: compare request and cookie behavior with and without the browser privacy signal.
+- [ ] Expand consent interaction verification.
+  - [x] Support a first detected accept or reject interaction path.
+    - Note: current runtime audit samples one consent interaction when a safe target is found.
+    - Location: `desktop/src/runtime-privacy-audit.ts`
+    - Tests: `tests/runtime-privacy-audit.test.ts`
+  - [ ] Test reject explicitly when both accept and reject are visible.
+  - [ ] Test accept explicitly when both accept and reject are visible.
+  - [ ] Test manage-preferences behavior where a settings path is visible.
+  - [ ] Compare request and cookie behavior before and after each interaction.
+  - [ ] Detect when the consent layer is meaningful or merely decorative.
+  - [ ] Detect whether consent state persists on reload.
+  - [ ] Detect whether changing or withdrawing consent later is as easy as giving it.
+    - Note: a visible reopen-preferences or withdrawal path should become a meaningful later check.
+  - [x] Add route-by-route privacy verification for sites where tracker behavior changes beyond the landing page.
+    - Note: current runtime audit samples a few same-origin routes and can flag post-reject tracker persistence.
+    - Location: `desktop/src/runtime-privacy-audit.ts`
+    - Tests: `tests/runtime-privacy-audit.test.ts` covers same-origin route sampling and reject persistence.
+  - Location:
+    - `desktop/src/runtime-privacy-audit.ts`
+  - Tests:
+    - extend `tests/runtime-privacy-audit.test.ts` with explicit accept, reject, manage-preferences, reload-persistence, and decorative-banner fixtures.
+    - add future fixtures where a site exposes accept immediately but hides rejection or withdrawal behind extra friction.
 
-- [x] Add route-by-route privacy verification for sites where tracker behavior changes beyond the landing page.
-  - Note: follow a few same-origin routes so consent state can be checked beyond the landing page.
+- [ ] Define and stabilize the first cookie-scanner findings.
+  - [ ] Freeze the first finding list.
+    - Note: likely findings include tracking before consent, tracking cookies before consent, missing visible reject path, missing manage-preferences path, missing privacy policy link, missing cookie policy link where tracking is present, and decorative consent behavior.
+  - [x] Add the first hosted cookie-policy finding.
+    - Note: the hosted scan now flags `No obvious cookie policy link detected` when tracking signals appear without an obvious cookie-policy path.
+    - Location: `lib/scanner-core.ts`, `lib/issue-guidance.ts`
+    - Tests: `tests/scanner-core.test.ts`
+  - [ ] Define confidence levels for each finding.
+  - [ ] Mark which findings require manual review.
+  - [ ] Keep wording evidence-based and avoid legal overclaiming.
+  - [ ] Ensure issue guidance stays aligned with the finding set.
+  - [ ] Add a softer advisory layer for likely cookie dark patterns.
+    - Note: examples may include accept-only design, hidden reject path, hidden withdrawal path, or manipulative consent friction.
+    - Note: these should initially use careful wording until the scanner has stronger rendered and interaction evidence.
+  - Location:
+    - `desktop/src/runtime-privacy-audit.ts`
+    - `lib/scanner-core.ts`
+    - `lib/issue-guidance.ts`
+  - Tests:
+    - add or update fixture assertions in `tests/runtime-privacy-audit.test.ts` and `tests/scanner-core.test.ts` whenever a finding title or threshold changes.
+
+- [ ] Improve evidence capture and reporting.
+  - [ ] Store the relevant requests behind each finding.
+  - [ ] Store the relevant cookies behind each finding.
+  - [ ] Store the consent-control text used for interactions.
+  - [ ] Capture screenshots for initial and post-interaction states.
+  - [ ] Attach page URL and route context to each finding.
+  - [ ] Add suggested next-step guidance for each finding.
+  - [ ] Ensure exports carry machine-readable issue family, method, confidence, and manual-review flags.
+  - Location:
+    - `desktop/src/runtime-privacy-audit.ts`
+    - `desktop/renderer.js`
+    - `lib/issue-guidance.ts`
+  - Tests:
+    - extend `tests/runtime-privacy-audit.test.ts` to assert evidence payload shape.
+    - extend export coverage where export tests are added later.
+
+- [ ] Keep GPC runtime checks as a test-backed slice, not just a wording heuristic.
+  - [x] Add Global Privacy Control checks as runtime behavior, not just text detection.
+    - Note: current runtime comparison simulates `Sec-GPC: 1` and compares request and cookie behavior.
+    - Location: `desktop/src/runtime-privacy-audit.ts`
+    - Tests: `tests/runtime-privacy-audit.test.ts` includes GPC honor versus ignore fixtures.
+  - [ ] Clarify whether GPC remains in the cookie-scanner MVP or is framed as an advanced privacy mode.
+  - [ ] Keep the public-page GPC wording cue distinct from the deeper runtime behavior check.
+    - Location: `lib/scanner-core.ts`
+    - Tests: extend `tests/scanner-core.test.ts` if the visible GPC wording heuristic changes.
+
+- [ ] Build the cookie-scanner validation matrix alongside the implementation.
+  - [ ] Maintain a small internal site list for manual validation.
+    - Note: no banner but tracking present, accept-only banner, accept plus reject banner, settings flow, low-script site, route-specific tracker changes.
+  - [ ] Save stable fixtures where practical so regressions can be tested locally.
+  - [ ] Add fixture-backed tests for tracker detection.
+  - [ ] Add fixture-backed tests for consent-control detection.
+  - [ ] Add fixture-backed tests for pre- versus post-consent comparisons.
+  - [ ] Add a few live smoke-test targets for occasional manual verification.
+  - Tests:
+    - `tests/runtime-privacy-audit.test.ts`
+    - `tests/scanner-core.test.ts`
 
 - [ ] Keep the cookie-audit wedge clear.
-  - Note: near-term opportunity is auditing cookie compliance behavior.
+  - Note: near-term opportunity is auditing cookie-compliance behavior.
   - Note: do not jump straight into building a hosted consent widget.
+  - Note: building a consent component for Olite's own site is still useful as an internal compliance measure and reference implementation, but it should not automatically expand the product promise.
+  - Note: revisit a hosted consent layer only after the audit-first scanner proves useful.
+  - Progress: a first hosted cookie-scanner landing page now exists at `/tools/cookie-scanner`, but it still intentionally rides on the broader privacy engine rather than pretending runtime consent enforcement is solved.
+
+- [ ] Maintain a cookie dark-pattern research thread.
+  - Note: track groups and enforcement themes such as noyb's cookie-banner complaints as recurring input for scanner and remediation design.
+  - Note: not every research theme should become a hard rule immediately; some should first land as softer advisory feedback until the evidence model is stronger.
+
+- [ ] Build an internal cookie consent component for `olite.dev` as a reference implementation.
+  - Goal: make Olite's own site handle cookies more cleanly while creating a practical reference pattern for future product thinking.
+  - Scope boundary:
+    - this is for Olite's own site first
+    - this is not yet a reusable hosted CMP product for customer sites
+  - [ ] Inventory which cookies, storage keys, and third-party scripts Olite actually uses today.
+    - Note: separate essential from analytics, marketing, and future optional categories.
+  - [ ] Define the first consent model for Olite.
+    - Note: likely categories are essential plus optional analytics.
+    - Note: decide default behavior before consent for non-essential scripts.
+  - [ ] Build the first reusable cookie banner and preferences component.
+    - Note: include accept, reject, and manage-preferences flows.
+    - Note: include a persistent way to reopen preferences later.
+  - [ ] Wire consent state into script loading for Olite's own site.
+    - Note: non-essential scripts should not load before consent when they are in scope.
+  - [ ] Add a visible cookie-policy and preferences path in the footer or equivalent global UI.
+  - [ ] Document the component as a reference implementation.
+    - Note: record what the component does well, where it is intentionally narrow, and what would need to change before treating it as a reusable product surface.
+  - Location:
+    - likely `app/layout.tsx`
+    - likely a new component under `app/components/`
+    - likely a small consent config or helper under `lib/`
+  - Tests:
+    - add component-level tests for banner and preferences state transitions
+    - add browser-backed tests for accept, reject, reopen-preferences, and no-non-essential-script-before-consent behavior
+    - add at least one verification note in this roadmap pointing to the exact test file once implemented
 
 ## Priority 4: Add Pre-Scan Qualification And Platform Awareness
 

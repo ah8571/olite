@@ -24,12 +24,18 @@ function buildPage(url: string, privacyRegion: "eu" | "us" = "eu"): PageScanResu
       checkboxCount: 0,
       placeholderOnlyFieldCount: 0,
       policyLinkCount: 1,
+      cookiePolicyLinkCount: 0,
       privacyRightsLinkCount: 0,
       doNotSellLinkCount: 0,
       accessRequestSignalPresent: false,
       correctionRequestSignalPresent: false,
       deletionRequestSignalPresent: false,
       gpcSignalPresent: false,
+      cookieBannerSignalPresent: false,
+      cookieAcceptControlPresent: false,
+      cookieRejectControlPresent: false,
+      cookieManageControlPresent: false,
+      cookieReopenControlPresent: false,
       trackingSignals: [],
       securityHeadersPresent: [],
       h1Count: 1,
@@ -127,6 +133,38 @@ function consentControlsTemplate(mode: "accept-only" | "full-controls") {
     </html>`;
 }
 
+function postConsentReopenTemplate(mode: "no-reopen" | "with-reopen") {
+  const reopenControl =
+    mode === "with-reopen"
+      ? `<button id="cookie-settings" hidden>Cookie Settings</button>`
+      : "";
+
+  return `<!doctype html>
+    <html lang="en">
+      <body>
+        <section id="banner">
+          <button id="accept-all">Accept all</button>
+          <button id="reject-all">Reject all</button>
+          <button id="manage-preferences">Manage preferences</button>
+        </section>
+        ${reopenControl}
+        <script>
+          const banner = document.getElementById('banner');
+          const reopenControl = document.getElementById('cookie-settings');
+
+          function closeBanner(consentValue) {
+            document.cookie = 'consent=' + consentValue + '; path=/';
+            banner?.remove();
+            reopenControl?.removeAttribute('hidden');
+          }
+
+          document.getElementById('accept-all')?.addEventListener('click', () => closeBanner('accept'));
+          document.getElementById('reject-all')?.addEventListener('click', () => closeBanner('reject'));
+        </script>
+      </body>
+    </html>`;
+}
+
 function preConsentTrackingTemplate() {
   return `<!doctype html>
     <html lang="en">
@@ -139,6 +177,17 @@ function preConsentTrackingTemplate() {
             document.cookie = 'consent=accept; path=/';
           });
         </script>
+      </body>
+    </html>`;
+}
+
+function cookieAuditLinkOnlyTemplate() {
+  return `<!doctype html>
+    <html lang="en">
+      <body>
+        <footer>
+          <a href="/blog/cookie-audit">Cookie Audit Tool</a>
+        </footer>
       </body>
     </html>`;
 }
@@ -215,6 +264,24 @@ function handleFixtureRequest(request: IncomingMessage, response: ServerResponse
   if (path === "/pre-consent-tracking") {
     response.writeHead(200, { "content-type": "text/html" });
     response.end(preConsentTrackingTemplate());
+    return;
+  }
+
+  if (path === "/post-consent-no-reopen") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(postConsentReopenTemplate("no-reopen"));
+    return;
+  }
+
+  if (path === "/post-consent-with-reopen") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(postConsentReopenTemplate("with-reopen"));
+    return;
+  }
+
+  if (path === "/cookie-audit-link-only") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(cookieAuditLinkOnlyTemplate());
     return;
   }
 
@@ -307,5 +374,36 @@ describe("augmentSiteResultWithRuntimePrivacyAudit", () => {
     expect(runtimeAudit?.initialTrackerCookieCount).toBeGreaterThan(0);
     expect(titles).toContain("Tracking requests fired before consent interaction");
     expect(titles).toContain("Tracking cookies set before consent interaction");
+  }, 15000);
+
+  it("flags consent flows that do not leave an obvious reopen or withdrawal path after interaction", async () => {
+    const result = await augmentSiteResultWithRuntimePrivacyAudit(buildSite(`${baseUrl}/post-consent-no-reopen`, "eu"));
+    const runtimeAudit = result.pages[0].metadata.runtimeAudit;
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(runtimeAudit?.interactionAttempted).toBe("reject");
+    expect(runtimeAudit?.postInteractionControls.some((entry) => entry.kind === "reopen")).toBe(false);
+    expect(titles).toContain("No obvious cookie settings or withdrawal path was detected after consent interaction");
+  }, 15000);
+
+  it("keeps persistent cookie-settings paths free of that reopen advisory", async () => {
+    const result = await augmentSiteResultWithRuntimePrivacyAudit(buildSite(`${baseUrl}/post-consent-with-reopen`, "eu"));
+    const runtimeAudit = result.pages[0].metadata.runtimeAudit;
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(runtimeAudit?.interactionAttempted).toBe("reject");
+    expect(runtimeAudit?.postInteractionControls.some((entry) => entry.kind === "reopen")).toBe(true);
+    expect(titles).not.toContain("No obvious cookie settings or withdrawal path was detected after consent interaction");
+  }, 15000);
+
+  it("does not mistake a cookie-related navigation link for an accept control", async () => {
+    const result = await augmentSiteResultWithRuntimePrivacyAudit(buildSite(`${baseUrl}/cookie-audit-link-only`, "eu"));
+    const runtimeAudit = result.pages[0].metadata.runtimeAudit;
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(runtimeAudit?.consentControls).toEqual([]);
+    expect(runtimeAudit?.interactionAttempted).toBe("none");
+    expect(titles).not.toContain("Consent UI does not expose an obvious reject control");
+    expect(titles).not.toContain("Consent UI does not expose an obvious manage-preferences control");
   }, 15000);
 });

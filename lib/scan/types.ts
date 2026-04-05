@@ -37,7 +37,7 @@ export type RuntimeAuditCookie = {
 };
 
 export type RuntimeAuditControl = {
-  kind: "accept" | "reject" | "manage";
+  kind: "accept" | "reject" | "manage" | "reopen";
   label: string;
   selector: string;
 };
@@ -54,6 +54,7 @@ export type RuntimeAuditGpcComparison = {
 export type PageRuntimeAudit = {
   ran: boolean;
   consentControls: RuntimeAuditControl[];
+  postInteractionControls: RuntimeAuditControl[];
   interactionAttempted: RuntimeAuditInteraction;
   sampledUrls: string[];
   gpcComparison?: RuntimeAuditGpcComparison;
@@ -89,12 +90,18 @@ export type PageScanMetadata = {
   checkboxCount: number;
   placeholderOnlyFieldCount: number;
   policyLinkCount: number;
+  cookiePolicyLinkCount: number;
   privacyRightsLinkCount: number;
   doNotSellLinkCount: number;
   accessRequestSignalPresent: boolean;
   correctionRequestSignalPresent: boolean;
   deletionRequestSignalPresent: boolean;
   gpcSignalPresent: boolean;
+  cookieBannerSignalPresent: boolean;
+  cookieAcceptControlPresent: boolean;
+  cookieRejectControlPresent: boolean;
+  cookieManageControlPresent: boolean;
+  cookieReopenControlPresent: boolean;
   trackingSignals: string[];
   securityHeadersPresent: string[];
   h1Count: number;

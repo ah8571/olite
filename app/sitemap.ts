@@ -8,9 +8,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     "",
     "/blog",
-    "/cookie-audit-tool",
     "/what-olite-checks",
     "/tools/accessibility",
+    "/tools/cookie-scanner",
     "/tools/privacy",
     ...blogPages.map((page) => page.href)
   ].map((path) => ({

@@ -16,6 +16,50 @@ Important positioning note:
 - Olite is closer to a verification scanner than a policy-generation, consent-management, or enterprise governance suite
 - some products are still strong SEO or buyer-comparison targets even when they are not doing the same core job
 
+## Quick Company Scan
+
+Use this section as a fast index of the companies currently tracked in this document.
+
+### Accessibility Testing And Monitoring
+
+- Siteimprove
+- axe DevTools / Deque
+- WAVE / WebAIM
+- AudioEye
+- DubBot
+- accessiBe
+- UsableNet
+- BrowserStack Accessibility Testing
+- Silktide
+- Level Access
+- Monsido
+- Crownpeak Digital Quality Management
+- Allyable
+- UserWay
+- EqualWeb
+
+### Privacy And Consent Adjacent Scanner Overlap
+
+- Cookiebot
+- Piwik PRO
+- CookieYes
+- CookieScript
+- Cookie Scanner
+- Captain Compliance
+- CookieServe
+- CookieChecker
+- Usercentrics
+- CookieHub
+- ComplyDog
+
+### Adjacent, But Not The Same Core Job
+
+- OneTrust
+- Termly
+- iubenda
+- Osano
+
+
 ## Quick Positioning Summary
 
 - Closest overlap: accessibility testing and website verification tools
@@ -127,11 +171,55 @@ For Olite, EqualWeb is relevant because it competes at the same "help me make my
 
 These products overlap with Olite on the privacy side, but not always on the broader product shape.
 
+This category matters more than it first appears because "free cookie scanner" is a real acquisition wedge. Multiple vendors use a free scan or cookie checker as the entry point, then expand into banner deployment, consent records, policy tooling, or broader privacy operations.
+
 ##### Cookiebot
 
 Cookiebot is a strong consent-management comparison target because it combines cookie and tracker scanning with banner deployment, consent collection, consent signaling, and integrations for ad and analytics platforms. Its positioning is very practical: scan the site, categorize trackers, deploy a banner, and stay aligned with evolving privacy requirements.
 
 For Olite, Cookiebot is relevant because it starts from website privacy surface area, not just legal paperwork. The major difference is that Cookiebot is fundamentally a CMP and consent implementation product, whereas Olite is better understood as a verification and auditing layer.
+
+##### Piwik PRO
+
+Piwik PRO uses a free online cookie scanner as an entry point into a broader privacy and analytics platform. Its messaging emphasizes detailed cookie audits, first- and third-party cookie identification, and before-and-after-consent reporting so teams can see what loads before user choice is recorded.
+
+For Olite, this is an important comparison because it shows that cookie scanning can be positioned as both a quick website check and a path into a larger compliance stack. The difference is that Piwik PRO clearly wants to pull users toward a broader consent and privacy platform, while Olite can stay more neutral and verification-first.
+
+##### CookieYes
+
+CookieYes positions its free website cookie checker as instant, free, and low-friction, with no-email-required scanning. The scanner is tightly connected to a larger consent-management and privacy-tool suite, so the free tool functions as a discovery surface for CMP adoption.
+
+This is highly relevant to Olite because it validates the landing-page pattern directly: promise a fast scan, surface concrete cookies and compliance gaps, then create a natural path into deeper workflow value. Olite should note that CookieYes is still mainly a consent and implementation product, not an independent verification layer.
+
+##### CookieScript
+
+CookieScript pushes the scanner wedge very explicitly. Its cookie scanner messaging centers on fast no-email-required scans, limited free crawling, automatic cookie categorization, and a large cookie database with recurring updates.
+
+For Olite, CookieScript is one of the clearest examples of a scanner-led acquisition page in this market. The lesson is less about copying the CMP shape and more about recognizing how strong the "scan your site and see what is actually there" promise is for privacy-conscious buyers.
+
+##### Cookie Scanner
+
+Cookie Scanner, at cookie-scanner.com, appears closer to a privacy-audit tool than a classic CMP-first product page. Its positioning emphasizes auditing websites for cookies, privacy issues, tracking tags, and banner behavior, which makes it feel more verification-oriented than some banner-led competitors.
+
+That makes it useful for Olite because it suggests there is room in the market for a scanner-first privacy product story, not only a banner-first one. It is still privacy-specific, but the posture is directionally closer to an auditing tool than to policy generation.
+
+##### Captain Compliance
+
+Captain Compliance appears, based on indexed search snippets and third-party listings, to package cookie scanning, cookie consent management, consent records, DSAR workflows, and broader privacy compliance operations. Direct site fetches were blocked during this research pass, but the available indexed descriptions consistently frame it as a CMP and privacy-compliance platform with an explicit cookie scanner entry point.
+
+For Olite, Captain Compliance is worth tracking because it reinforces the same market pattern: a free or instant scanner can be the front door into a wider privacy product. It should remain on the watch list even if this summary is lower confidence than the vendors whose first-party pages were accessible.
+
+##### CookieServe
+
+CookieServe presents a free cookie checker, but in this research pass it appeared closely tied to CookieYes and may function more like a feeder property or alternate acquisition surface than a fully distinct product. It still matters because it shows how aggressively vendors may distribute scanner-led entry points across separate domains and landing pages.
+
+For Olite, the practical lesson is not that CookieServe is a must-watch standalone platform, but that the free cookie scanner wedge can justify dedicated standalone surfaces and SEO capture pages.
+
+##### CookieChecker
+
+CookieChecker is relevant because it leans directly into the checker language that searchers use when they want a fast answer about whether their site is dropping cookies or handling consent correctly. Even when products in this bucket are lighter-weight than full CMP suites, they still compete for the same early research intent and can shape buyer expectations around what a free scan should show.
+
+For Olite, CookieChecker matters less as a broad platform competitor and more as proof that scanner-first privacy search intent supports standalone tools and narrow landing pages. It belongs in the map because it competes for the same discovery moment as a future Olite cookie scanner page.
 
 ### 2. Adjacent, But Not The Same Core Job
 
@@ -162,6 +250,24 @@ This makes iubenda particularly interesting because it sits closer to the line b
 Osano is a broader privacy-management platform that goes beyond cookie consent into subject rights, preference management, data mapping, vendor privacy risk, assessments, and audit-readiness. Its messaging leans toward privacy operations, governance, risk management, and expert support, with unusually strong assurance language.
 
 For Olite, Osano is best understood as a privacy program platform rather than a direct scanner competitor. It is useful in comparison content because it represents the "run our privacy operations" category that Olite can complement with verification and site-level checking.
+
+##### Usercentrics
+
+Usercentrics is an important adjacent privacy competitor because it sits squarely in the consent-management category while also using scanning, enforcement, and website-level compliance workflows as part of its product story. It is broader than a simple cookie checker, with stronger emphasis on CMP deployment, preference management, and enterprise-ready privacy operations.
+
+For Olite, Usercentrics is useful both as a comparison target and as a category anchor. It represents the kind of vendor many buyers will recognize when they think about website privacy compliance, even if the core product job is implementation and consent operations rather than neutral verification.
+
+##### CookieHub
+
+CookieHub belongs in the adjacent group because it is primarily a consent-management platform rather than a verification scanner, but it still overlaps at the website privacy layer through cookie scanning, categorization, banner deployment, and compliance support. The product shape is closer to a practical CMP than to a broader privacy-ops suite.
+
+For Olite, CookieHub is a good mid-market comparison reference. It helps clarify the line between a product that helps teams implement and run cookie consent and a product that independently verifies what the site is doing.
+
+##### ComplyDog
+
+ComplyDog is relevant as a GDPR compliance-oriented vendor because it reflects the broader class of tools that package website privacy compliance into an easier operational workflow for small and mid-sized teams. Even where the product emphasis is broader than cookie scanning alone, it still competes for users who want practical compliance help without buying into a full enterprise governance stack.
+
+For Olite, ComplyDog is best treated as an adjacent compliance competitor rather than a direct scanner match. It is useful because it shows how GDPR-focused positioning can package multiple needs together, while Olite can stay more precise about independent website verification.
 
 ### 3. Broader Website Governance And Experience Platforms
 
@@ -200,6 +306,8 @@ Why this matters for Olite:
 
 - Accessibility platforms are the closest product family to Olite's scanner identity.
 - CMPs and privacy platforms overlap on website signals, but usually monetize implementation, governance, or legal workflows instead of verification.
+- Free cookie scanner pages are a real top-of-funnel pattern in privacy software, not a minor supporting feature.
+- Some privacy vendors use the scanner as a lightweight audit promise, while others use it mainly as lead capture for a broader CMP or privacy-ops suite.
 - Enterprise governance suites package cross-team reporting, recurring oversight, and operational workflows more than point-in-time issue discovery.
 - Developer-first scanner patterns should be tracked separately in Product_patterns instead of mixed into the competitor map.
 
@@ -231,6 +339,8 @@ Second wave later:
 - BrowserStack accessibility review or comparison page
 - DubBot review
 - Best cookie consent tools
+- Best free cookie scanners
+- Free cookie scanner landing page for Olite
 
 Adjacent-content wave later:
 
