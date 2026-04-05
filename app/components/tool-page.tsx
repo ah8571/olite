@@ -28,18 +28,18 @@ const toolPageSections: Record<
       "If the scanner flags issues, use the output to identify the template, component, or form pattern behind them. Then move into the desktop app when you need broader local scans and more than the hosted daily limit."
   },
   cookie: {
-    scopeTitle: "Cookie signals that are visible without runtime guesswork",
+    scopeTitle: "Plain-English cookie checks from the outside",
     scopeCopy:
-      "The cookie scanner focuses on public-page signs that are useful immediately: cookie-policy visibility, banner wording, obvious reject and manage controls, revisit-settings access, and tracker signals that make those UI gaps more important.",
+      "This hosted cookie scan checks what a visitor can see from the outside: the cookie policy path, the banner wording, whether reject and settings are easy to spot, and whether known tracker tags are present on the page.",
     scopePoints: [
       "2 free hosted scans per day",
-      "Focused on cookie-policy and cookie-banner surface checks",
+      "Focused on visible cookie-policy and banner checks",
       "Useful for quick pre-launch cookie reviews and prospect audits",
-      "Does not yet verify full CMP behavior or all post-click consent flows in the hosted pass"
+      "Does not prove whether the site waits for your choice before tracking"
     ],
-    nextStepTitle: "How to use the result",
+    nextStepTitle: "What this can and cannot confirm",
     nextStepCopy:
-      "Use the findings to review your cookie-policy path, reject visibility, and later settings access. Then move into the desktop app when you need runtime evidence rather than public-page signals."
+      "Use this page for an honest first pass. If you need proof about whether tracking starts before consent, whether reject sticks after reload, or whether a consent platform behaves properly after clicks, that stronger browser check belongs in the desktop app."
   },
   privacy: {
     scopeTitle: "Public privacy signals, not legal theater",

@@ -350,6 +350,16 @@ export function ScannerForm({
                 ? "Enter a public page to check for policy visibility, rights-request paths, tracking signals, and baseline privacy-facing signals. Choose whether to evaluate only US-facing privacy expectations or to include EU-style consent expectations as well. This hosted pass is capped at 2 free scans per day. This is not legal advice."
                 : "Enter a public page to check for visible form and opt-in signals. Deeper flow validation belongs in a broader review.")}
           </p>
+          {tool === "cookie" ? (
+            <div className="info-panel">
+              <p className="form-note">
+                This hosted scan is a surface check. It can spot tracker tags and cookie controls that are visible on the page, but it cannot prove from the website alone whether the site truly waits for your choice before tracking.
+              </p>
+              <p className="form-note">
+                The stronger browser check lives in the desktop app, where Olite can click reject, reload the page, and watch what requests or cookies appear next.
+              </p>
+            </div>
+          ) : null}
           <div className="inline-row">
             <span className="limit-badge">2 free scans/day</span>
             <button className="button" type="submit" disabled={pending}>

@@ -133,6 +133,34 @@ function consentControlsTemplate(mode: "accept-only" | "full-controls") {
     </html>`;
 }
 
+function manageFirstRejectTemplate() {
+  return `<!doctype html>
+    <html lang="en">
+      <body>
+        <section id="banner">
+          <button id="accept-all">Accept all</button>
+          <button id="manage-preferences">Manage preferences</button>
+        </section>
+        <section id="preferences" hidden>
+          <button id="reject-all">Reject all</button>
+        </section>
+        <script>
+          const banner = document.getElementById('banner');
+          const preferences = document.getElementById('preferences');
+
+          document.getElementById('manage-preferences')?.addEventListener('click', () => {
+            preferences?.removeAttribute('hidden');
+          });
+
+          document.getElementById('reject-all')?.addEventListener('click', () => {
+            document.cookie = 'consent=reject; path=/';
+            banner?.remove();
+          });
+        </script>
+      </body>
+    </html>`;
+}
+
 function postConsentReopenTemplate(mode: "no-reopen" | "with-reopen") {
   const reopenControl =
     mode === "with-reopen"
@@ -176,6 +204,34 @@ function preConsentTrackingTemplate() {
           document.getElementById('accept-all')?.addEventListener('click', () => {
             document.cookie = 'consent=accept; path=/';
           });
+        </script>
+      </body>
+    </html>`;
+}
+
+function rejectReloadTemplate(mode: "persists" | "forgets") {
+  return `<!doctype html>
+    <html lang="en">
+      <body>
+        <button id="reject-all">Reject all</button>
+        <script>
+          let rejectedInMemory = false;
+
+          function clearTrackingState() {
+            document.cookie = '_ga=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+          }
+
+          document.getElementById('reject-all')?.addEventListener('click', () => {
+            clearTrackingState();
+            ${mode === "persists" ? "document.cookie = 'consent=reject; path=/';" : "rejectedInMemory = true;"}
+          });
+
+          const consentRejected = ${mode === "persists" ? "document.cookie.includes('consent=reject')" : "rejectedInMemory"};
+
+          if (!consentRejected) {
+            document.cookie = '_ga=fixture-cookie; path=/';
+            fetch('/googletagmanager.com/collect?v=1', { mode: 'no-cors' }).catch(() => {});
+          }
         </script>
       </body>
     </html>`;
@@ -261,9 +317,27 @@ function handleFixtureRequest(request: IncomingMessage, response: ServerResponse
     return;
   }
 
+  if (path === "/manage-first-reject") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(manageFirstRejectTemplate());
+    return;
+  }
+
   if (path === "/pre-consent-tracking") {
     response.writeHead(200, { "content-type": "text/html" });
     response.end(preConsentTrackingTemplate());
+    return;
+  }
+
+  if (path === "/reject-reload-persists") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(rejectReloadTemplate("persists"));
+    return;
+  }
+
+  if (path === "/reject-reload-forgets") {
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(rejectReloadTemplate("forgets"));
     return;
   }
 
@@ -365,6 +439,17 @@ describe("augmentSiteResultWithRuntimePrivacyAudit", () => {
     expect(titles).not.toContain("Consent UI does not expose an obvious manage-preferences control");
   }, 15000);
 
+  it("flags reject paths that only appear after opening settings first", async () => {
+    const result = await augmentSiteResultWithRuntimePrivacyAudit(buildSite(`${baseUrl}/manage-first-reject`, "eu"));
+    const runtimeAudit = result.pages[0].metadata.runtimeAudit;
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(runtimeAudit?.interactionAttempted).toBe("reject");
+    expect(runtimeAudit?.rejectRevealedAfterManage).toBe(true);
+    expect(titles).toContain("Reject path required opening settings first");
+    expect(titles).not.toContain("Consent UI does not expose an obvious reject control");
+  }, 15000);
+
   it("flags tracker requests and tracking cookies observed before any consent interaction", async () => {
     const result = await augmentSiteResultWithRuntimePrivacyAudit(buildSite(`${baseUrl}/pre-consent-tracking`, "eu"));
     const runtimeAudit = result.pages[0].metadata.runtimeAudit;
@@ -374,6 +459,34 @@ describe("augmentSiteResultWithRuntimePrivacyAudit", () => {
     expect(runtimeAudit?.initialTrackerCookieCount).toBeGreaterThan(0);
     expect(titles).toContain("Tracking requests fired before consent interaction");
     expect(titles).toContain("Tracking cookies set before consent interaction");
+  }, 15000);
+
+  it("keeps reload-persistent reject handling free of the new reload persistence issues", async () => {
+    const result = await augmentSiteResultWithRuntimePrivacyAudit(buildSite(`${baseUrl}/reject-reload-persists`, "eu"));
+    const runtimeAudit = result.pages[0].metadata.runtimeAudit;
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(runtimeAudit?.interactionAttempted).toBe("reject");
+    expect(runtimeAudit?.rejectStatePersistedOnReload).toBe(true);
+    expect(runtimeAudit?.postReloadTrackerRequestCount).toBe(0);
+    expect(runtimeAudit?.postReloadTrackerCookieCount).toBe(0);
+    expect(titles).not.toContain("Tracking resumed after reject when the page was reloaded");
+    expect(titles).not.toContain("Tracking cookies returned after reject when the page was reloaded");
+    expect(titles).not.toContain("Reject choice may not persist after page reload");
+  }, 15000);
+
+  it("flags reject flows that fall back to tracking again after reload", async () => {
+    const result = await augmentSiteResultWithRuntimePrivacyAudit(buildSite(`${baseUrl}/reject-reload-forgets`, "eu"));
+    const runtimeAudit = result.pages[0].metadata.runtimeAudit;
+    const titles = result.pages[0].issues.map((issue) => issue.title);
+
+    expect(runtimeAudit?.interactionAttempted).toBe("reject");
+    expect(runtimeAudit?.rejectStatePersistedOnReload).toBe(false);
+    expect(runtimeAudit?.postReloadTrackerRequestCount).toBeGreaterThan(0);
+    expect(runtimeAudit?.postReloadTrackerCookieCount).toBeGreaterThan(0);
+    expect(titles).toContain("Tracking resumed after reject when the page was reloaded");
+    expect(titles).toContain("Tracking cookies returned after reject when the page was reloaded");
+    expect(titles).toContain("Reject choice may not persist after page reload");
   }, 15000);
 
   it("flags consent flows that do not leave an obvious reopen or withdrawal path after interaction", async () => {

@@ -70,14 +70,37 @@ function buildRuntimeIssues(page: PageScanResult, runtimeAudit: PageRuntimeAudit
   const issues: ScanIssue[] = [];
   const initialRequests = runtimeAudit.trackerRequests.filter((entry) => entry.phase === "before-interaction");
   const initialCookies = runtimeAudit.trackerCookies.filter((entry) => entry.phase === "before-interaction");
-  const postInteractionRequests = runtimeAudit.trackerRequests.filter((entry) => entry.phase !== "before-interaction");
-  const postInteractionCookies = runtimeAudit.trackerCookies.filter((entry) => entry.phase !== "before-interaction");
+  const postInteractionRequests = runtimeAudit.trackerRequests.filter(
+    (entry) => entry.phase === "after-reject" || entry.phase === "after-accept"
+  );
+  const postInteractionCookies = runtimeAudit.trackerCookies.filter(
+    (entry) => entry.phase === "after-reject" || entry.phase === "after-accept"
+  );
+  const postReloadRequests = runtimeAudit.trackerRequests.filter((entry) => entry.phase === "after-reject-reload");
+  const postReloadCookies = runtimeAudit.trackerCookies.filter((entry) => entry.phase === "after-reject-reload");
   const hasConsentControls = runtimeAudit.consentControls.length > 0;
   const hasRejectControl = runtimeAudit.consentControls.some((control) => control.kind === "reject");
   const hasManageControl = runtimeAudit.consentControls.some((control) => control.kind === "manage");
   const hasPostInteractionReopenControl = runtimeAudit.postInteractionControls.some((control) => control.kind === "reopen");
 
-  if (page.metadata.privacyRegion === "eu" && hasConsentControls && !hasRejectControl) {
+  if (page.metadata.privacyRegion === "eu" && hasConsentControls && !hasRejectControl && runtimeAudit.rejectRevealedAfterManage) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: page.normalizedUrl,
+      title: "Reject path required opening settings first",
+      detail:
+        "The runtime browser audit found a reject option only after opening the settings or preferences step, so refusing took more effort than the first visible accept path.",
+      severity: "low",
+      locationSummary: "Reject was only exposed after opening settings or preferences",
+      evidence: runtimeAudit.consentControls.slice(0, 5).map((entry) => ({
+        selector: entry.selector,
+        snippet: entry.label,
+        note: `${entry.kind} control detected before the settings step was opened.`
+      }))
+    });
+  }
+
+  if (page.metadata.privacyRegion === "eu" && hasConsentControls && !hasRejectControl && !runtimeAudit.rejectRevealedAfterManage) {
     issues.push({
       layer: "privacy",
       pageUrl: page.normalizedUrl,
@@ -191,6 +214,54 @@ function buildRuntimeIssues(page: PageScanResult, runtimeAudit: PageRuntimeAudit
         selector: "runtime cookie jar",
         snippet: `${entry.name} @ ${entry.domain}${entry.path}`,
         note: `${entry.label} cookie observed during ${entry.phase}.`
+      }))
+    });
+  }
+
+  if (hasRejectControl && runtimeAudit.interactionAttempted === "reject" && postReloadRequests.length > 0) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: page.normalizedUrl,
+      title: "Tracking resumed after reject when the page was reloaded",
+      detail: `${postReloadRequests.length} tracker request${postReloadRequests.length === 1 ? " was" : "s were"} observed after the page was reloaded following a reject-style consent choice.`,
+      severity: "medium",
+      locationSummary: "Tracker requests appeared again after reload following a reject interaction",
+      evidence: postReloadRequests.slice(0, 5).map((entry) => ({
+        selector: "runtime network",
+        snippet: entry.url,
+        note: `${entry.label} request observed during ${entry.phase}.`
+      }))
+    });
+  }
+
+  if (hasRejectControl && runtimeAudit.interactionAttempted === "reject" && postReloadCookies.length > 0) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: page.normalizedUrl,
+      title: "Tracking cookies returned after reject when the page was reloaded",
+      detail: `${postReloadCookies.length} tracking cookie${postReloadCookies.length === 1 ? " was" : "s were"} present after the page was reloaded following a reject-style consent choice.`,
+      severity: "medium",
+      locationSummary: "Tracking cookies returned after reload following a reject interaction",
+      evidence: postReloadCookies.slice(0, 5).map((entry) => ({
+        selector: "runtime cookie jar",
+        snippet: `${entry.name} @ ${entry.domain}${entry.path}`,
+        note: `${entry.label} cookie observed during ${entry.phase}.`
+      }))
+    });
+  }
+
+  if (hasRejectControl && runtimeAudit.interactionAttempted === "reject" && runtimeAudit.rejectStatePersistedOnReload === false) {
+    issues.push({
+      layer: "privacy",
+      pageUrl: page.normalizedUrl,
+      title: "Reject choice may not persist after page reload",
+      detail: "After choosing reject, the runtime browser audit reloaded the page and the site appeared to fall back to its pre-choice state.",
+      severity: "medium",
+      locationSummary: "The reject choice did not appear to stick after a reload",
+      evidence: runtimeAudit.postInteractionControls.slice(0, 5).map((entry) => ({
+        selector: entry.selector,
+        snippet: entry.label,
+        note: `${entry.kind} control was still visible after the reload check.`
       }))
     });
   }
@@ -522,6 +593,34 @@ async function detectConsentControls(page: Page): Promise<RuntimeAuditControl[]>
   });
 }
 
+async function expandManageControlsForReject(
+  page: Page,
+  controls: RuntimeAuditControl[]
+): Promise<{ controlsForInteraction: RuntimeAuditControl[]; rejectRevealedAfterManage: boolean }> {
+  if (controls.some((entry) => entry.kind === "reject")) {
+    return { controlsForInteraction: controls, rejectRevealedAfterManage: false };
+  }
+
+  const manage = controls.find((entry) => entry.kind === "manage");
+
+  if (!manage) {
+    return { controlsForInteraction: controls, rejectRevealedAfterManage: false };
+  }
+
+  try {
+    await page.locator(manage.selector).first().click({ timeout: 4000 });
+    await delay(1400);
+    const expandedControls = await detectConsentControls(page);
+
+    return {
+      controlsForInteraction: expandedControls.length > 0 ? expandedControls : controls,
+      rejectRevealedAfterManage: expandedControls.some((entry) => entry.kind === "reject")
+    };
+  } catch {
+    return { controlsForInteraction: controls, rejectRevealedAfterManage: false };
+  }
+}
+
 async function attemptConsentInteraction(page: Page, controls: RuntimeAuditControl[]): Promise<RuntimeAuditInteraction> {
   const target = controls.find((entry) => entry.kind === "reject") ?? controls.find((entry) => entry.kind === "accept");
 
@@ -571,7 +670,10 @@ async function inspectRuntimePrivacy(url: string, privacyRegion: PrivacyRegion):
     const consentControls = await detectConsentControls(page);
     const sameOriginRoutes = await collectSameOriginRouteSamples(page, new URL(page.url()).origin);
     const initialCookies = extractTrackingCookies(await context.cookies(), "before-interaction");
-    const interactionAttempted = await attemptConsentInteraction(page, consentControls);
+    const { controlsForInteraction, rejectRevealedAfterManage } = await expandManageControlsForReject(page, consentControls);
+    const interactionAttempted = await attemptConsentInteraction(page, controlsForInteraction);
+    let rejectStatePersistedOnReload: boolean | undefined;
+    let postReloadCookies: RuntimeAuditCookie[] = [];
 
     if (interactionAttempted === "reject") {
       currentPhase = "after-reject";
@@ -587,11 +689,21 @@ async function inspectRuntimePrivacy(url: string, privacyRegion: PrivacyRegion):
 
     const postInteractionControls =
       interactionAttempted === "none" || interactionAttempted === "failed" ? [] : await detectConsentControls(page);
-
     const postInteractionCookies =
       interactionAttempted === "none" || interactionAttempted === "failed"
         ? []
         : extractTrackingCookies(await context.cookies(), currentPhase);
+
+    let controlsAfterReload: RuntimeAuditControl[] = [];
+    if (interactionAttempted === "reject") {
+      currentPhase = "after-reject-reload";
+      await page.reload({ waitUntil: "domcontentloaded", timeout: 20000 });
+      await delay(1500);
+      controlsAfterReload = await detectConsentControls(page);
+      postReloadCookies = extractTrackingCookies(await context.cookies(), "after-reject-reload");
+      const postReloadTrackerCount = trackerRequests.filter((entry) => entry.phase === "after-reject-reload").length;
+      rejectStatePersistedOnReload = postReloadTrackerCount === 0 && postReloadCookies.length === 0;
+    }
     const gpcComparison = privacyRegion === "us" ? await inspectGpcComparison(browser, url) : undefined;
 
     const runtimeAudit: PageRuntimeAudit = {
@@ -602,15 +714,19 @@ async function inspectRuntimePrivacy(url: string, privacyRegion: PrivacyRegion):
       sampledUrls,
       ...(gpcComparison ? { gpcComparison } : {}),
       trackerRequests,
-      trackerCookies: [...initialCookies, ...postInteractionCookies],
+      trackerCookies: [...initialCookies, ...postInteractionCookies, ...postReloadCookies],
       initialTrackerRequestCount: trackerRequests.filter((entry) => entry.phase === "before-interaction").length,
       initialTrackerCookieCount: initialCookies.length,
-      postInteractionTrackerRequestCount: trackerRequests.filter((entry) => entry.phase !== "before-interaction").length,
-      postInteractionTrackerCookieCount: postInteractionCookies.length
+      postInteractionTrackerRequestCount: trackerRequests.filter((entry) => entry.phase === "after-reject" || entry.phase === "after-accept").length,
+      postInteractionTrackerCookieCount: postInteractionCookies.length,
+      postReloadTrackerRequestCount: trackerRequests.filter((entry) => entry.phase === "after-reject-reload").length,
+      postReloadTrackerCookieCount: postReloadCookies.length,
+      ...(typeof rejectStatePersistedOnReload === "boolean" ? { rejectStatePersistedOnReload } : {}),
+      ...(rejectRevealedAfterManage ? { rejectRevealedAfterManage } : {}),
     };
 
     const limitationNotes = [
-      `Runtime browser audit sampled ${sampledUrls.length} same-origin page${sampledUrls.length === 1 ? "" : "s"} in a headless browser and observed request and cookie signals before and immediately after one consent interaction.`,
+      `Runtime browser audit sampled ${sampledUrls.length} same-origin page${sampledUrls.length === 1 ? "" : "s"} in a headless browser and observed request and cookie signals before and after one consent interaction${interactionAttempted === "reject" ? ", including a reload after reject," : ""}.`,
       ...(gpcComparison ? ["Runtime browser audit also compared tracker behavior with and without a simulated Global Privacy Control signal."] : []),
       "This runtime audit does not prove full sitewide consent compliance and does not replace route-by-route or authenticated flow testing."
     ];

@@ -63,11 +63,11 @@ export function getIssueClassification(layer: ScanIssue["layer"], title: string)
   }
 
   if (layer === "privacy" || layer === "consent" || layer === "security") {
-    if (["Tracking requests fired before consent interaction", "Tracking cookies set before consent interaction", "Tracking requests continued after reject interaction", "Tracking cookies persisted after reject interaction", "Tracking behavior did not change when GPC was simulated", "Consent UI does not expose an obvious reject control", "Consent UI does not expose an obvious manage-preferences control"].includes(title)) {
+    if (["Tracking requests fired before consent interaction", "Tracking cookies set before consent interaction", "Tracking requests still observed after reject interaction", "Tracking cookies still present after reject interaction", "Tracking resumed after reject when the page was reloaded", "Tracking cookies returned after reject when the page was reloaded", "Tracking behavior did not change when GPC was simulated", "Consent UI does not expose an obvious reject control", "Consent UI does not expose an obvious manage-preferences control", "Reject choice may not persist after page reload"].includes(title)) {
       return { issueFamily: "consent-runtime", verificationMethod: "network-runtime", confidenceLevel: "medium", manualReviewRecommended: true };
     }
 
-    if (["No obvious cookie settings or withdrawal path was detected after consent interaction"].includes(title)) {
+    if (["No obvious cookie settings or withdrawal path was detected after consent interaction", "Reject path required opening settings first"].includes(title)) {
       return { issueFamily: "consent-runtime", verificationMethod: "interaction-flow", confidenceLevel: "low", manualReviewRecommended: true };
     }
 
@@ -130,8 +130,12 @@ export function getIssueSuggestedFix(layer: ScanIssue["layer"], title: string): 
     if (title === "Limited visible US privacy rights cues") return "Make sure the public privacy flow clearly surfaces access, correction, and deletion request options instead of burying them in a general notice.";
     if (title === "No visible Global Privacy Control cue detected") return "If US opt-out workflows are relevant, clarify whether and how browser-based opt-out signals such as GPC are honored.";
     if (title === "Consent UI does not expose an obvious reject control") return "Add a visible reject-all or decline option alongside accept so the consent choice is real and not effectively accept-only.";
+    if (title === "Reject path required opening settings first") return "Put the reject choice on the first banner step or make it just as easy to reach as accept, so saying no does not take extra effort.";
     if (title === "Consent UI does not expose an obvious manage-preferences control") return "Add a visible manage-preferences or settings path when consent choices are granular, so users can review and change categories.";
     if (title === "No obvious cookie settings or withdrawal path was detected after consent interaction") return "Keep a persistent Cookie Settings, Privacy Choices, or withdrawal path available after the initial banner so visitors can revisit and change their choice later.";
+    if (title === "Tracking resumed after reject when the page was reloaded") return "Make sure the reject choice survives a reload and keeps non-essential trackers blocked when the page opens again.";
+    if (title === "Tracking cookies returned after reject when the page was reloaded") return "Keep non-essential cookies blocked after reload when a visitor has already rejected tracking, and make sure the stored choice is applied before optional scripts run.";
+    if (title === "Reject choice may not persist after page reload") return "Store the reject choice in a way the site can read on the next page load so the banner does not behave like the refusal never happened.";
     if (title === "Tracking requests fired before consent interaction") return "Delay non-essential tracker requests until consent is granted, and verify that marketing or analytics libraries do not initialize on first load.";
     if (title === "Tracking cookies set before consent interaction") return "Block non-essential cookies until consent is granted and verify that third-party or analytics scripts are not setting them on initial load.";
     if (title === "Tracking requests continued after reject interaction") return "Make the reject path disable non-essential trackers immediately and confirm the page stops emitting those requests after the refusal is recorded.";

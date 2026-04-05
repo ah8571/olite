@@ -18,7 +18,7 @@ export type IssueVerificationMethod =
   | "interaction-flow"
   | "network-runtime";
 
-export type RuntimeAuditPhase = "before-interaction" | "after-reject" | "after-accept";
+export type RuntimeAuditPhase = "before-interaction" | "after-reject" | "after-accept" | "after-reject-reload";
 export type RuntimeAuditInteraction = "none" | "reject" | "accept" | "failed";
 
 export type RuntimeAuditTrackerRequest = {
@@ -64,6 +64,10 @@ export type PageRuntimeAudit = {
   initialTrackerCookieCount: number;
   postInteractionTrackerRequestCount: number;
   postInteractionTrackerCookieCount: number;
+  postReloadTrackerRequestCount: number;
+  postReloadTrackerCookieCount: number;
+  rejectStatePersistedOnReload?: boolean;
+  rejectRevealedAfterManage?: boolean;
 };
 
 export type ScanIssue = {

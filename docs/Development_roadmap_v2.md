@@ -263,7 +263,10 @@ This version keeps the original roadmap intact but breaks the work into a checkl
     - Sub-checks to start assessing:
       - [ ] whether reject is visible on the first layer, not only after opening preferences
       - [ ] whether manage-preferences is visible on the first layer when granular categories exist
-      - [ ] whether reject requires more clicks than accept
+      - [x] whether reject requires more clicks than accept
+        - Note: current runtime audit can flag a reject option that only appears after opening settings first.
+        - Location: `desktop/src/runtime-privacy-audit.ts`
+        - Tests: `tests/runtime-privacy-audit.test.ts`
       - [ ] whether accept appears visually dominant through stronger color, contrast, size, or placement
       - [ ] whether reject or manage controls appear visually muted or easy to miss
       - [ ] whether optional categories appear preselected by default
@@ -314,7 +317,10 @@ This version keeps the original roadmap intact but breaks the work into a checkl
   - [ ] Test manage-preferences behavior where a settings path is visible.
   - [ ] Compare request and cookie behavior before and after each interaction.
   - [ ] Detect when the consent layer is meaningful or merely decorative.
-  - [ ] Detect whether consent state persists on reload.
+  - [x] Detect whether consent state persists on reload.
+    - Note: current runtime audit reloads the page after a reject interaction and can flag trackers or cookies that return.
+    - Location: `desktop/src/runtime-privacy-audit.ts`
+    - Tests: `tests/runtime-privacy-audit.test.ts`
   - [ ] Detect whether changing or withdrawing consent later is as easy as giving it.
     - Note: a visible reopen-preferences or withdrawal path should become a meaningful later check.
   - [x] Add route-by-route privacy verification for sites where tracker behavior changes beyond the landing page.
