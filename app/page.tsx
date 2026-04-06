@@ -114,69 +114,6 @@ export default function HomePage() {
       <section className="page-section">
         <div className="container split-grid">
           <div>
-            <p className="kicker">Two Free Scans Per Day</p>
-            <h2 className="section-title">Use the integrated homepage scanner first. Go deeper only when it is justified.</h2>
-            <p className="section-copy">
-              The homepage scanner is now the fast integrated first pass across accessibility, cookies, and privacy. If you need broader local crawls, repeatable
-              workflows, or richer exports, move into the desktop app after the free scans prove useful.
-            </p>
-          </div>
-          <div className="section-panel">
-            <p className="kicker">What This Means</p>
-            <ul className="bullet-list">
-              <li>Use the homepage scanner for a combined first pass across accessibility, cookie, and privacy checks</li>
-              <li>Use the dedicated cookie scanner when cookie-policy and banner cues are the main question</li>
-              <li>Keep the dedicated tool pages as landing pages for search and category clarity</li>
-              <li>Use What Olite Checks as the main explainer hub for the product's public coverage and limits</li>
-            </ul>
-            <div className="hero-actions compact">
-              <Link className="button-secondary" href="/tools/cookie-scanner">
-                Open cookie scanner
-              </Link>
-              <Link className="button-secondary" href="/what-olite-checks">
-                Open What Olite Checks
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="page-section">
-        <div className="container split-grid">
-          <div className="section-panel">
-            <p className="kicker">Accessibility Coverage</p>
-            <h2>What the free accessibility scanner looks for</h2>
-            <ul className="bullet-list">
-              <li>Missing alt text on images</li>
-              <li>Unlabeled form controls and weak page language signals</li>
-              <li>Fast public-page checks for obvious issues before a fuller audit</li>
-            </ul>
-            <div className="hero-actions compact">
-              <Link className="button-secondary" href="/what-olite-checks">
-                View accessibility coverage
-              </Link>
-            </div>
-          </div>
-          <div className="section-panel">
-            <p className="kicker">Cookie Coverage</p>
-            <h2>What the free cookie scanner looks for tonight</h2>
-            <ul className="bullet-list">
-              <li>Cookie policy link visibility separate from broader privacy links</li>
-              <li>Cookie banner cues plus obvious reject, manage, and reopen paths</li>
-              <li>Known tracking signals that help interpret consent and cookie gaps</li>
-            </ul>
-            <div className="hero-actions compact">
-              <Link className="button-secondary" href="/tools/cookie-scanner">
-                Open cookie scanner
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="page-section">
-        <div className="container split-grid">
-          <div>
             <p className="kicker">Open Source</p>
             <h2 className="section-title">Not a black-box compliance product.</h2>
             <p className="section-copy">

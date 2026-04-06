@@ -202,7 +202,7 @@ export function HomeIntegratedScanner() {
               <article className="feature-card" key={tool}>
                 <p className="kicker">{toolConfig[tool].title}</p>
                 <h3>{toolConfig[tool].sampleChecks[0]}</h3>
-                <p className="muted">{toolConfig[tool].sampleChecks.slice(1, 3).join(" • ")}</p>
+                <p className="muted">Ex. {toolConfig[tool].sampleChecks.slice(1).join("; Ex. ")}</p>
               </article>
             ))}
           </div>
@@ -210,7 +210,7 @@ export function HomeIntegratedScanner() {
 
         <div className="split-grid">
           <section className="scanner-panel">
-            <p className="kicker">Free Website Scanner</p>
+            <p className="kicker">Free Website Scanner for Accessibility, Privacy and Cookie Functionality</p>
             <form className="scanner-form" onSubmit={onSubmit}>
               <label className="label">
                 Website URL
