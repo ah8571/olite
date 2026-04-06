@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { runBasicScan } from "@/lib/scanner";
+import { runBasicScan, runHomepageScan } from "@/lib/scanner";
 import type { PrivacyRegion } from "@/lib/scan/types";
 import type { ToolType } from "@/lib/scanner-config";
 
@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type RequestBody = {
+  mode?: "integrated";
   tool?: ToolType;
   url?: string;
   privacyRegion?: PrivacyRegion;
@@ -112,14 +113,27 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as RequestBody;
 
-    if (!body.url || !body.tool || !isTool(body.tool)) {
+    if (!body.url) {
+      return NextResponse.json(
+        { error: "A valid URL is required." },
+        { status: 400, headers: buildRateLimitHeaders(rateLimit.remaining) }
+      );
+    }
+
+    const privacyRegion = isPrivacyRegion(body.privacyRegion ?? "") ? body.privacyRegion : undefined;
+
+    if (body.mode === "integrated") {
+      const result = await runHomepageScan(body.url, privacyRegion);
+      return NextResponse.json(result, { headers: buildRateLimitHeaders(rateLimit.remaining) });
+    }
+
+    if (!body.tool || !isTool(body.tool)) {
       return NextResponse.json(
         { error: "A valid tool and URL are required." },
         { status: 400, headers: buildRateLimitHeaders(rateLimit.remaining) }
       );
     }
 
-    const privacyRegion = isPrivacyRegion(body.privacyRegion ?? "") ? body.privacyRegion : undefined;
     const result = await runBasicScan(body.tool, body.url, privacyRegion);
     return NextResponse.json(result, { headers: buildRateLimitHeaders(rateLimit.remaining) });
   } catch (error) {

@@ -115,16 +115,16 @@ export default function HomePage() {
         <div className="container split-grid">
           <div>
             <p className="kicker">Two Free Scans Per Day</p>
-            <h2 className="section-title">Use the homepage scanner first. Go deeper only when it is justified.</h2>
+            <h2 className="section-title">Use the integrated homepage scanner first. Go deeper only when it is justified.</h2>
             <p className="section-copy">
-              The hosted scanner is the fast first pass. If you need broader local crawls, repeatable
+              The homepage scanner is now the fast integrated first pass across accessibility, cookies, and privacy. If you need broader local crawls, repeatable
               workflows, or richer exports, move into the desktop app after the free scans prove useful.
             </p>
           </div>
           <div className="section-panel">
             <p className="kicker">What This Means</p>
             <ul className="bullet-list">
-              <li>Use the homepage scanner for quick accessibility or privacy review</li>
+              <li>Use the homepage scanner for a combined first pass across accessibility, cookie, and privacy checks</li>
               <li>Use the dedicated cookie scanner when cookie-policy and banner cues are the main question</li>
               <li>Keep the dedicated tool pages as landing pages for search and category clarity</li>
               <li>Use What Olite Checks as the main explainer hub for the product's public coverage and limits</li>

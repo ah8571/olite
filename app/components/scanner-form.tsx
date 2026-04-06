@@ -506,9 +506,9 @@ export function ScannerForm({
                 ? "You will get a lightweight summary of visible accessibility signals, surfaced issues, and scan limitations for the URL you submit."
                 : tool === "cookie"
                   ? "You will get a lightweight summary of cookie-facing signals, surfaced issues, tracking detections, and scan limitations for the URL you submit."
-                : tool === "privacy"
-                  ? "You will get a lightweight summary of privacy-facing signals, surfaced issues, tracking detections, and scan limitations for the URL you submit."
-                  : "This panel will show a lightweight summary, issues, and limitations for the page you submit."}
+                  : tool === "privacy"
+                    ? "You will get a lightweight summary of privacy-facing signals, surfaced issues, tracking detections, and scan limitations for the URL you submit."
+                    : "This panel will show a lightweight summary, issues, and limitations for the page you submit."}
             </p>
           </div>
         )}
