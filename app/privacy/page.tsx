@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "Privacy Policy for Nudadequa LLC DBA Olite."
+  description: "Privacy Policy for Planting Moon LLC DBA Olite."
 };
 
 export default function PrivacyPolicyPage() {
@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
         <h1 className="section-title">Privacy Policy for Olite</h1>
         <p className="section-copy">Effective date: March 29, 2026</p>
         <p className="section-copy">
-          Nudadequa LLC, doing business as Olite, provides hosted website scanning tools, a local-first desktop
+          Planting Moon LLC, doing business as Olite, provides hosted website scanning tools, a local-first desktop
           application, documentation, and related support. This page explains the basic categories of information we
           collect and how we use them.
         </p>

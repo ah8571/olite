@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms and Conditions",
-  description: "Terms and Conditions for Nudadequa LLC DBA Olite."
+  description: "Terms and Conditions for Planting Moon LLC DBA Olite."
 };
 
 export default function TermsPage() {
@@ -14,7 +14,7 @@ export default function TermsPage() {
         <p className="section-copy">Effective date: March 29, 2026</p>
         <p className="section-copy">
           These terms govern use of the Olite website, hosted tools, desktop application, documentation, and related
-          services offered by Nudadequa LLC DBA Olite.
+          services offered by Planting Moon LLC DBA Olite.
         </p>
 
         <h2>Use of the Service</h2>
@@ -65,7 +65,7 @@ export default function TermsPage() {
 
         <h2>Limitation of Liability</h2>
         <p className="section-copy">
-          To the maximum extent permitted by law, Nudadequa LLC DBA Olite will not be liable for indirect, incidental,
+          To the maximum extent permitted by law, Planting Moon LLC DBA Olite will not be liable for indirect, incidental,
           special, consequential, or similar damages arising from use of the service.
         </p>
 
