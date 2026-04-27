@@ -15,8 +15,9 @@ export default function PrivacyPolicyPage() {
         <p className="section-copy">Effective date: April 27, 2026</p>
         <p className="section-copy">
           Planting Moon LLC, doing business as Olite, provides hosted website scanning tools, a local-first desktop
-          application, documentation, and related support. This page explains the basic categories of information we
-          collect and how we use them.
+          application, documentation, and related support. Our mailing address is 5830 E 2nd St, Ste 7000 #35119,
+          Casper, Wyoming 82609 US. This page explains the basic categories of information we collect and how we use
+          them.
         </p>
 
         <h2>Information We Collect</h2>
@@ -107,7 +108,8 @@ export default function PrivacyPolicyPage() {
 
         <h2>Contact</h2>
         <p className="section-copy">
-          For privacy questions, contact hello@olite.dev. You can also review our <Link href="/terms">Terms and Conditions</Link>.
+          For privacy questions, contact hello@olite.dev or write to Planting Moon LLC, 5830 E 2nd St, Ste 7000 #35119,
+          Casper, Wyoming 82609 US. You can also review our <Link href="/terms">Terms and Conditions</Link>.
         </p>
       </div>
     </section>

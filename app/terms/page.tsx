@@ -15,7 +15,7 @@ export default function TermsPage() {
         <p className="section-copy">Effective date: April 27, 2026</p>
         <p className="section-copy">
           These terms govern use of the Olite website, hosted tools, desktop application, documentation, and related
-          services offered by Planting Moon LLC DBA Olite.
+          services offered by Planting Moon LLC DBA Olite, 5830 E 2nd St, Ste 7000 #35119, Casper, Wyoming 82609 US.
         </p>
 
         <h2>Acceptance of These Terms</h2>
@@ -119,7 +119,8 @@ export default function TermsPage() {
 
         <h2>Contact</h2>
         <p className="section-copy">
-          For questions about these terms, contact hello@olite.dev. You can also review our <Link href="/privacy">Privacy Policy</Link>.
+          For questions about these terms, contact hello@olite.dev or write to Planting Moon LLC, 5830 E 2nd St, Ste
+          7000 #35119, Casper, Wyoming 82609 US. You can also review our <Link href="/privacy">Privacy Policy</Link>.
         </p>
       </div>
     </section>
